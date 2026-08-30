@@ -486,5 +486,126 @@ document.addEventListener('click',function(e){
   else if(tx.includes('NASTAVENIA')){e.preventDefault();cncOpen('cnc-settings');cncLoadSettings()}
 });
 </script>
+
+<!-- CNC AI TECHNOLOG V3: step-by-step technology workflow -->
+<style>
+#cncAiWorkflow{margin:20px auto;max-width:900px;padding:18px;border:1px solid rgba(0,180,255,.35);border-radius:18px;background:rgba(5,12,20,.94);color:#eef6ff;font-family:inherit}
+#cncAiWorkflow h2{margin:0 0 6px}.cai-muted{opacity:.72;font-size:.92em}.cai-steps{display:flex;gap:6px;margin:15px 0}.cai-steps span{flex:1;height:7px;border-radius:8px;background:#20313f}.cai-steps .on{background:#16a8ff}.cai-steps .done{background:#54d46b}
+.cai-panel{padding:14px;border:1px solid #294352;border-radius:14px;margin-top:10px}.cai-panel[hidden]{display:none}
+.cai-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cai-field{display:block;font-size:13px;margin:9px 0}.cai-field input,.cai-field select,.cai-field textarea{width:100%;box-sizing:border-box;margin-top:5px;padding:10px;border-radius:9px;border:1px solid #345261;background:#09131b;color:#fff}
+.cai-btn{border:0;border-radius:10px;padding:11px 14px;background:#149fe9;color:#fff;font-weight:800;margin-top:8px}.cai-btn.alt{background:#172934;border:1px solid #345261}.cai-nav{display:flex;gap:8px;justify-content:space-between}.cai-item{padding:11px;margin:8px 0;background:#09151e;border:1px solid #2a4352;border-radius:10px}.cai-code{white-space:pre-wrap;background:#03070a;padding:12px;border-radius:10px;font:12px ui-monospace,monospace;overflow:auto}
+@media(max-width:600px){.cai-grid{grid-template-columns:1fr}}
+</style>
+
+<section id="cncAiWorkflow">
+  <h2>🤖 CNC AI Technológ</h2>
+  <div class="cai-muted">Výkres → upnutie → technologický postup → nástroje → parametre → CNC program</div>
+  <div class="cai-steps" id="caiProgress"><span class="on"></span><span></span><span></span><span></span><span></span></div>
+
+  <div class="cai-panel" data-cai-step="1">
+    <h3>1. Výkres a vstupné údaje</h3>
+    <label class="cai-field">Výkres
+      <input id="caiFile" type="file" accept=".pdf,.png,.jpg,.jpeg">
+    </label>
+    <div class="cai-grid">
+      <label class="cai-field">Typ obrábania
+        <select id="caiType"><option>Sústruženie</option><option>Frézovanie</option></select>
+      </label>
+      <label class="cai-field">Materiál
+        <input id="caiMaterial" placeholder="C45 / 42CrMo4 / S355...">
+      </label>
+      <label class="cai-field">Polotovar
+        <input id="caiStock" placeholder="napr. Ø60 × 120">
+      </label>
+      <label class="cai-field">Stroj / riadenie
+        <input id="caiMachine" placeholder="napr. Fanuc / Siemens">
+      </label>
+    </div>
+    <button class="cai-btn" onclick="caiAnalyze()">🤖 ANALYZOVAŤ VÝKRES</button>
+    <div id="caiStatus" class="cai-muted" style="margin-top:10px"></div>
+  </div>
+
+  <div class="cai-panel" data-cai-step="2" hidden>
+    <h3>2. Upnutie a nulový bod</h3>
+    <div id="caiSetup"></div>
+    <label class="cai-field">Úprava technológa<textarea id="caiSetupEdit" placeholder="Doplň alebo oprav návrh AI..."></textarea></label>
+    <div class="cai-nav"><button class="cai-btn alt" onclick="caiShow(1)">← Späť</button><button class="cai-btn" onclick="caiConfirmSetup()">Potvrdiť →</button></div>
+  </div>
+
+  <div class="cai-panel" data-cai-step="3" hidden>
+    <h3>3. Technologický postup</h3>
+    <div id="caiOperations"></div>
+    <button class="cai-btn alt" onclick="caiAddOperation()">＋ Pridať operáciu</button>
+    <div class="cai-nav"><button class="cai-btn alt" onclick="caiShow(2)">← Späť</button><button class="cai-btn" onclick="caiConfirmOperations()">Potvrdiť →</button></div>
+  </div>
+
+  <div class="cai-panel" data-cai-step="4" hidden>
+    <h3>4. Nástroje a rezné podmienky</h3>
+    <div id="caiTools"></div>
+    <button class="cai-btn alt" onclick="caiAddTool()">＋ Pridať nástroj</button>
+    <div class="cai-nav"><button class="cai-btn alt" onclick="caiShow(3)">← Späť</button><button class="cai-btn" onclick="caiShow(5)">Potvrdiť →</button></div>
+  </div>
+
+  <div class="cai-panel" data-cai-step="5" hidden>
+    <h3>5. CNC program</h3>
+    <div class="cai-grid">
+      <label class="cai-field">Riadenie<select id="caiControl"><option>Fanuc / ISO</option><option>Siemens</option><option>Heidenhain</option></select></label>
+      <label class="cai-field">Nulový bod<input id="caiZero" value="G54"></label>
+    </div>
+    <button class="cai-btn" onclick="caiGenerateProgram()">⚙ VYGENEROVAŤ CNC PROGRAM</button>
+    <div id="caiProgram" style="margin-top:10px"></div>
+    <div class="cai-muted" style="margin-top:10px">⚠️ Program je návrh. Pred výrobou over simuláciu, nulový bod, korekcie, nástroje a bezpečné vzdialenosti.</div>
+  </div>
+</section>
+
+<script>
+(function(){
+let plan={setup:{},operations:[],tools:[]},fileData=null;
+const $=id=>document.getElementById(id);
+function esc(s){return String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+window.caiShow=function(n){
+ document.querySelectorAll('#cncAiWorkflow [data-cai-step]').forEach((x,i)=>x.hidden=i+1!==n);
+ document.querySelectorAll('#caiProgress span').forEach((x,i)=>x.className=i+1<n?'done':i+1===n?'on':'');
+};
+$('caiFile').addEventListener('change',function(){
+ const f=this.files[0]; fileData=null;
+ if(f){const r=new FileReader();r.onload=()=>fileData=r.result;r.readAsDataURL(f);}
+});
+window.caiAnalyze=async function(){
+ const f=$('caiFile').files[0];
+ if(!f)return alert('Najprv vyber výkres.');
+ if(f.size>3500000)return alert('Súbor je príliš veľký. Použi výkres do 3,5 MB.');
+ $('caiStatus').textContent='AI analyzuje výkres…';
+ try{
+  if(!fileData)await new Promise(r=>{const x=new FileReader();x.onload=()=>{fileData=x.result;r()};x.readAsDataURL(f)});
+  const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+   fileName:f.name,fileData,type:$('caiType').value,material:$('caiMaterial').value,stock:$('caiStock').value,machine:$('caiMachine').value
+  })});
+  const d=await r.json();if(!r.ok)throw Error(d.error||'Analýza zlyhala');
+  plan=d;caiRender();caiShow(2);$('caiStatus').textContent='';
+ }catch(e){$('caiStatus').textContent='CHYBA: '+e.message;}
+};
+function caiRender(){
+ const s=plan.setup||{};
+ $('caiSetup').innerHTML='<div class="cai-item"><b>Upnutie:</b> '+esc(s.clamping)+'<br><b>Nulový bod:</b> '+esc(s.datum)+'<br><b>Opory:</b> '+esc(s.supports)+'<br><b>Riziká:</b> '+esc(s.risks)+'</div>';
+ $('caiOperations').innerHTML=(plan.operations||[]).map((o,i)=>'<div class="cai-item"><b>'+esc(o.order)+'.</b> <input value="'+esc(o.name)+'" style="background:#09131b;color:white;border:1px solid #345261;border-radius:6px;padding:6px" oninput="window.caiPlan.operations['+i+'].name=this.value"><br><span class="cai-muted">'+esc(o.description)+'</span></div>').join('');
+ $('caiTools').innerHTML=(plan.tools||[]).map((t,i)=>'<div class="cai-item"><b>'+esc(t.operation)+'</b><br>Nástroj: '+esc(t.tool)+' | Držiak: '+esc(t.holder)+' | Plátok: '+esc(t.insert)+'<br>Vc: '+esc(t.vc)+' | f: '+esc(t.feed)+' | n: '+esc(t.rpm)+'</div>').join('');
+ window.caiPlan=plan;
+}
+window.caiConfirmSetup=function(){plan.setup.user=$('caiSetupEdit').value;if(!plan.operations.length)plan.operations=[{order:1,name:'Príprava a upnutie',description:'Nastavenie polotovaru a nulového bodu'},{order:2,name:'Hrubovanie',description:'Odstránenie prídavku'},{order:3,name:'Dokončenie',description:'Dosiahnutie rozmeru a tolerancie'},{order:4,name:'Kontrola',description:'Kontrola kritických rozmerov'}];caiRender();caiShow(3)};
+window.caiConfirmOperations=function(){if(!plan.tools.length)plan.tools=[{operation:'Hrubovanie',tool:'Určí AI/technológ',holder:'Podľa stroja',insert:'Podľa materiálu',vc:'',feed:'',rpm:''},{operation:'Dokončenie',tool:'Určí AI/technológ',holder:'Podľa stroja',insert:'Podľa materiálu',vc:'',feed:'',rpm:''}];caiRender();caiShow(4)};
+window.caiAddOperation=function(){plan.operations.push({order:plan.operations.length+1,name:'Nová operácia',description:''});caiRender()};
+window.caiAddTool=function(){plan.tools.push({operation:'Nová operácia',tool:'',holder:'',insert:'',vc:'',feed:'',rpm:''});caiRender()};
+window.caiGenerateProgram=async function(){
+ $('caiProgram').innerHTML='<div class="cai-muted">Generujem program…</div>';
+ try{
+  const r=await fetch('/api/program',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({control:$('caiControl').value,zero:$('caiZero').value,plan})});
+  const d=await r.json();if(!r.ok)throw Error(d.error||'Generovanie zlyhalo');
+  $('caiProgram').innerHTML='<pre class="cai-code">'+esc(d.program)+'</pre><div class="cai-muted">'+esc(d.notes||'')+'</div>';
+ }catch(e){$('caiProgram').innerHTML='<div class="cai-muted">CHYBA: '+esc(e.message)+'</div>'}
+};
+})();
+</script>
+
 </body>
 </html>

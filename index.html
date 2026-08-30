@@ -101,27 +101,22 @@ body{
  font-size:35px;color:#2db5ff;background:#0b2337;border:2px solid #159eff;box-shadow:0 0 28px rgba(21,158,255,.55)
 }
 @media(min-width:600px){body{background:#020408}.app{box-shadow:0 0 80px #000}}
+</style>
 
-button.nav{font-family:inherit;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.viewPanel{padding:18px 15px 30px;min-height:560px}
-.viewHeader{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.backBtn{border:1px solid #26384a;background:#101923;color:#dfe8f1;border-radius:12px;padding:10px 14px;font-size:15px}
-.viewTitle{font-size:24px;font-weight:800}
-.panelBox{background:linear-gradient(145deg,#101923,#0a1119);border:1px solid #243447;border-radius:18px;padding:16px;margin-bottom:12px}
-.panelBox h3{margin:0 0 12px;font-size:18px}
-.formRow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.field{margin-bottom:12px}
-.field label{display:block;color:#9eabb8;font-size:12px;margin-bottom:6px}
-.field input,.field select{width:100%;padding:12px;border-radius:11px;border:1px solid #2a3a4b;background:#071019;color:#f5f8fc;font-size:15px;outline:none}
-.field input:focus,.field select:focus{border-color:#159fff}
-.primaryBtn{width:100%;padding:13px;border:0;border-radius:12px;background:#168fff;color:white;font-weight:800;font-size:15px}
-.secondaryBtn{padding:11px 14px;border:1px solid #2b4054;border-radius:11px;background:#101a24;color:#dfe8f1;font-weight:700}
-.dropzone{border:1px dashed #2d9fff;border-radius:15px;padding:24px 12px;text-align:center;background:rgba(22,168,255,.05);color:#b8c7d5}
-.result{margin-top:12px;padding:12px;border-radius:12px;background:#081b12;border:1px solid #275f3b;color:#9be878}
-.calcResult{font-size:26px;font-weight:800;color:#46b8ff;margin-top:10px}
-.listItem{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid #1e2b38}
-.listItem:last-child{border-bottom:0}
-.muted{color:#8e9baa;font-size:13px}
+<style id="cnc-v4-css">
+.cnc-v4-panel{display:none;position:fixed;inset:0;z-index:9999;background:#070b12;color:#f7f9fc;overflow:auto;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.cnc-v4-panel.show{display:block}
+.cnc-v4-inner{max-width:760px;margin:auto;padding:22px 16px 110px}
+.cnc-v4-top{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.cnc-v4-back{background:#172433;border:1px solid #2b4052;color:#fff;border-radius:12px;padding:10px 14px}
+.cnc-v4-card{background:#101a26;border:1px solid #294052;border-radius:20px;padding:18px;margin:12px 0}
+.cnc-v4-card h2{margin:0 0 8px}
+.cnc-v4-muted{color:#9db0be;font-size:13px;line-height:1.45}
+.cnc-v4-input,.cnc-v4-select{width:100%;padding:13px;border-radius:12px;border:1px solid #304657;background:#0a131d;color:#fff;margin-top:6px}
+.cnc-v4-btn{width:100%;padding:14px;border:0;border-radius:13px;background:#168cff;color:#fff;font-weight:800;margin-top:12px}
+.cnc-v4-drop{display:block;text-align:center;padding:24px;border:1px dashed #39708d;border-radius:16px;background:#0b1722;margin-top:8px}
+.cnc-v4-drop input{display:none}
+.cnc-v4-result{white-space:pre-line;line-height:1.55;margin-top:14px}
 </style>
 </head>
 <body>
@@ -136,15 +131,15 @@ button.nav{font-family:inherit;background:none;border:0;cursor:pointer;-webkit-t
 
   <main class="section">
     <div class="grid2">
-      <div class="card turn" onclick="showAnalysis('Sústruženie')">
+      <div class="card turn" onclick="alert('Sústruženie – pripravíme technologický postup')">
         <div class="arrow">→</div><div class="cardContent"><div class="cardTitle">SÚSTRUŽENIE</div><div class="cardSub">CNC sústruhy</div></div>
       </div>
-      <div class="card mill" onclick="showAnalysis('Frézovanie')">
+      <div class="card mill" onclick="alert('Frézovanie – pripravíme upnutie, nulový bod a postup')">
         <div class="arrow">→</div><div class="cardContent"><div class="cardTitle">FRÉZOVANIE</div><div class="cardSub">CNC frézky</div></div>
       </div>
     </div>
 
-    <div class="ai" onclick="showAnalysis('AI VÝKRES')">
+    <div class="ai" onclick="alert('AI VÝKRES – tu bude nahratie PDF / DXF / DWG / JPG / PNG a AI analýza')">
       <div class="arrow">→</div><div class="aiIcon">▧</div>
       <div class="aiTitle">AI VÝKRES</div>
       <div class="aiText">Nahraj výkres a nechaj AI analyzovať súčiastku, rozmery, tolerancie a navrhnúť technológiu.</div>
@@ -152,9 +147,9 @@ button.nav{font-family:inherit;background:none;border:0;cursor:pointer;-webkit-t
     </div>
 
     <div class="smallGrid">
-      <div class="small blue" onclick="showView('tools')"><div class="icon">⚒</div><h3>NÁSTROJE</h3><p>Moja databáza nástrojov, parametre a opotrebenie</p></div>
-      <div class="small yellow" onclick="showView('jobs')"><div class="icon">▣</div><h3>MOJE ZÁKAZKY</h3><p>Správa zákaziek, výkresov a technologických postupov</p></div>
-      <div class="small purple" onclick="showView('settings')"><div class="icon">⚙</div><h3>NASTAVENIA</h3><p>Materiály, stroje, jednotky, AI model a preferencie</p></div>
+      <div class="small blue" onclick="alert('Nástroje')"><div class="icon">⚒</div><h3>NÁSTROJE</h3><p>Moja databáza nástrojov, parametre a opotrebenie</p></div>
+      <div class="small yellow" onclick="alert('Moje zákazky')"><div class="icon">▣</div><h3>MOJE ZÁKAZKY</h3><p>Správa zákaziek, výkresov a technologických postupov</p></div>
+      <div class="small purple" onclick="alert('Nastavenia')"><div class="icon">⚙</div><h3>NASTAVENIA</h3><p>Materiály, stroje, jednotky, AI model a preferencie</p></div>
     </div>
 
     <div class="info">
@@ -167,160 +162,66 @@ button.nav{font-family:inherit;background:none;border:0;cursor:pointer;-webkit-t
 </div>
 
 <nav class="bottom">
-  <button class="nav active" data-view="home" onclick="showView('home')"><div class="navIcon">⌂</div>DOMOV</button>
-  <button class="nav" data-view="analysis" onclick="showAnalysis('AI VÝKRES')"><div class="navIcon">⌘</div>ANALÝZA</button>
-  <button class="nav add" data-view="job" onclick="showView('job')"><div class="navIcon">+</div>NOVÁ ZÁKAZKA</button>
-  <button class="nav" data-view="calculator" onclick="showView('calculator')"><div class="navIcon">▣</div>KALKULAČKA</button>
-  <button class="nav" data-view="profile" onclick="showView('profile')"><div class="navIcon">♙</div>PROFIL</button>
+  <div class="nav active"><div class="navIcon">⌂</div>DOMOV</div>
+  <div class="nav"><div class="navIcon">⌘</div>ANALÝZA</div>
+  <div class="nav add"><div class="navIcon">+</div>NOVÁ ZÁKAZKA</div>
+  <div class="nav"><div class="navIcon">▣</div>KALKULAČKA</div>
+  <div class="nav"><div class="navIcon">♙</div>PROFIL</div>
 </nav>
 
-<script>
-const app = document.querySelector('.app');
-const originalHome = document.querySelector('main.section').innerHTML;
+<div id="cnc-analysis" class="cnc-v4-panel">
+ <div class="cnc-v4-inner">
+  <div class="cnc-v4-top"><button class="cnc-v4-back" onclick="cncClose()">← Späť</button><b>🔍 AI ANALÝZA</b></div>
+  <div class="cnc-v4-card">
+   <h2>Analýza výkresu</h2>
+   <div class="cnc-v4-muted">Nahraj výkres. Polotovar zadáš manuálne. AI server pripojíme v ďalšom kroku.</div>
+   <label class="cnc-v4-drop"><input id="cncFile" type="file" accept=".pdf,.jpg,.jpeg,.png,.dxf,.dwg" onchange="cncFileName()"><b>📄 Vybrať výkres</b><div id="cncFileText" class="cnc-v4-muted">PDF / JPG / PNG / DXF / DWG</div></label>
+   <label>Typ obrábania<select id="cncType" class="cnc-v4-select"><option>Sústruženie</option><option>Frézovanie</option></select></label>
+   <label>Polotovar<input id="cncStock" class="cnc-v4-input" placeholder="napr. Ø60 × 120 mm, C45"></label>
+   <button class="cnc-v4-btn" onclick="cncAnalyze()">🤖 Spustiť AI analýzu</button>
+   <div id="cncResult" class="cnc-v4-card cnc-v4-result" style="display:none"></div>
+  </div>
+ </div>
+</div>
 
-function setActive(view){
-  document.querySelectorAll('.nav[data-view]').forEach(n=>n.classList.toggle('active', n.dataset.view===view));
-}
-function render(html, view){
-  document.querySelector('main.section').innerHTML = html;
-  setActive(view);
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function home(){
-  document.querySelector('main.section').innerHTML = originalHome;
-  setActive('home');
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-function backHome(){ home(); }
+<div id="cnc-job" class="cnc-v4-panel">
+ <div class="cnc-v4-inner">
+  <div class="cnc-v4-top"><button class="cnc-v4-back" onclick="cncClose()">← Späť</button><b>➕ NOVÁ ZÁKAZKA</b></div>
+  <div class="cnc-v4-card"><h2>Nová zákazka</h2>
+   <label>Názov<input id="cncJobName" class="cnc-v4-input" placeholder="Napr. Hriadeľ 001"></label>
+   <label>Materiál<input id="cncMaterial" class="cnc-v4-input" placeholder="C45 / 42CrMo4 / S355"></label>
+   <button class="cnc-v4-btn" onclick="alert('Zákazka je pripravená na ďalšie spracovanie.')">Uložiť zákazku</button>
+  </div>
+ </div>
+</div>
 
-function showAnalysis(mode='AI VÝKRES'){
-  render(`
-    <div class="viewPanel">
-      <div class="viewHeader"><button class="backBtn" onclick="home()">← Späť</button><div class="viewTitle">Analýza</div></div>
-      <div class="panelBox">
-        <h3>${mode}</h3>
-        <div class="field"><label>Typ obrábania</label>
-          <select id="analysisType"><option>${mode.includes('Sústruženie')?'Sústruženie':mode.includes('Frézovanie')?'Frézovanie':'Vyber typ'}</option><option>Sústruženie</option><option>Frézovanie</option></select>
-        </div>
-        <div class="dropzone">
-          <div style="font-size:30px;margin-bottom:8px">▧</div>
-          <b>NAHRAŤ VÝKRES</b><br>
-          <span class="muted">PDF / DXF / DWG / JPG / PNG</span>
-          <div style="margin-top:12px"><input id="drawingFile" type="file" accept=".pdf,.dxf,.dwg,.jpg,.jpeg,.png" onchange="fileSelected(this)"></div>
-        </div>
-        <div id="fileInfo" class="muted" style="margin-top:10px"></div>
-      </div>
-      <div class="panelBox">
-        <h3>Vstupné údaje</h3>
-        <div class="formRow">
-          <div class="field"><label>Materiál</label><input id="material" placeholder="napr. C45"></div>
-          <div class="field"><label>Stroj</label><input id="machine" placeholder="CNC sústruh / frézka"></div>
-        </div>
-        <div class="formRow">
-          <div class="field"><label>Priemer / rozmer (mm)</label><input id="size" type="number" placeholder="napr. 20"></div>
-          <div class="field"><label>Hĺbka (mm)</label><input id="depth" type="number" placeholder="napr. 30"></div>
-        </div>
-        <button class="primaryBtn" onclick="runAnalysis()">SPUSTIŤ ANALÝZU</button>
-        <div id="analysisResult"></div>
-      </div>
-    </div>`, 'analysis');
-}
-function fileSelected(input){
-  const f=input.files[0];
-  document.getElementById('fileInfo').textContent=f ? 'Vybraný súbor: '+f.name+' ('+Math.round(f.size/1024)+' KB)' : '';
-}
-function runAnalysis(){
-  const mat=document.getElementById('material').value || 'neuvedený materiál';
-  const typ=document.getElementById('analysisType').value;
-  const size=document.getElementById('size').value || 'neuvedený rozmer';
-  document.getElementById('analysisResult').innerHTML =
-    `<div class="result"><b>Analýza pripravená</b><br>Operácia: ${typ}<br>Materiál: ${mat}<br>Rozmer: ${size} mm<br><span class="muted">Toto je príprava pracovného formulára. Samotné AI vyhodnotenie výkresu vyžaduje napojenie na AI backend.</span></div>`;
-}
+<div id="cnc-calc" class="cnc-v4-panel">
+ <div class="cnc-v4-inner">
+  <div class="cnc-v4-top"><button class="cnc-v4-back" onclick="cncClose()">← Späť</button><b>🧮 KALKULAČKA</b></div>
+  <div class="cnc-v4-card"><h2>Rezná kalkulačka</h2>
+   <label>Priemer D [mm]<input id="cncD" class="cnc-v4-input" type="number" value="50"></label>
+   <label>Rezná rýchlosť Vc [m/min]<input id="cncVc" class="cnc-v4-input" type="number" value="150"></label>
+   <label>Posuv f [mm/ot]<input id="cncFeed" class="cnc-v4-input" type="number" value="0.2"></label>
+   <button class="cnc-v4-btn" onclick="cncCalc()">Vypočítať</button>
+   <div id="cncCalcResult" class="cnc-v4-card" style="display:none"></div>
+  </div>
+ </div>
+</div>
 
-function showView(view){
-  if(view==='home') return home();
-  if(view==='analysis') return showAnalysis();
-  if(view==='job'){
-    render(`
-      <div class="viewPanel">
-        <div class="viewHeader"><button class="backBtn" onclick="home()">← Späť</button><div class="viewTitle">Nová zákazka</div></div>
-        <div class="panelBox">
-          <h3>Vytvorenie zákazky</h3>
-          <div class="field"><label>Názov zákazky</label><input id="jobName" placeholder="napr. Hriadeľ 01"></div>
-          <div class="formRow">
-            <div class="field"><label>Zákazník</label><input id="customer" placeholder="Názov firmy"></div>
-            <div class="field"><label>Číslo zákazky</label><input id="jobNo" placeholder="Z-2026-001"></div>
-          </div>
-          <div class="field"><label>Poznámka</label><input id="jobNote" placeholder="Materiál, termín, požiadavky..."></div>
-          <button class="primaryBtn" onclick="createJob()">VYTVORIŤ ZÁKAZKU</button>
-          <div id="jobResult"></div>
-        </div>
-        <div class="panelBox"><h3>Posledné zákazky</h3><div class="listItem"><span>Žiadne uložené zákazky</span><span class="muted">—</span></div></div>
-      </div>`, 'job');
-  } else if(view==='calculator'){
-    render(`
-      <div class="viewPanel">
-        <div class="viewHeader"><button class="backBtn" onclick="home()">← Späť</button><div class="viewTitle">Kalkulačka</div></div>
-        <div class="panelBox">
-          <h3>Otáčky a rezná rýchlosť</h3>
-          <div class="field"><label>Rezná rýchlosť Vc (m/min)</label><input id="vc" type="number" value="120"></div>
-          <div class="field"><label>Priemer nástroja / obrobku D (mm)</label><input id="dia" type="number" value="20"></div>
-          <button class="primaryBtn" onclick="calcRpm()">VYPOČÍTAŤ OTÁČKY</button>
-          <div id="rpmResult"></div>
-        </div>
-        <div class="panelBox">
-          <h3>Posuv</h3>
-          <div class="formRow">
-            <div class="field"><label>Otáčky n (ot/min)</label><input id="rpm" type="number" placeholder="napr. 1900"></div>
-            <div class="field"><label>Posuv na otáčku fn (mm/ot)</label><input id="fn" type="number" step="0.001" value="0.10"></div>
-          </div>
-          <button class="secondaryBtn" onclick="calcFeed()">VYPOČÍTAŤ POSUV</button>
-          <div id="feedResult"></div>
-        </div>
-      </div>`, 'calculator');
-  } else if(view==='profile'){
-    render(`
-      <div class="viewPanel">
-        <div class="viewHeader"><button class="backBtn" onclick="home()">← Späť</button><div class="viewTitle">Profil</div></div>
-        <div class="panelBox">
-          <h3>CNC AI Technológ</h3>
-          <div class="listItem"><span>Stav asistenta</span><b style="color:#83df55">ONLINE</b></div>
-          <div class="listItem"><span>Verzia</span><span>V2</span></div>
-          <div class="listItem"><span>Jednotky</span><span>mm / m/min</span></div>
-        </div>
-        <div class="panelBox">
-          <h3>Nastavenia</h3>
-          <div class="field"><label>Predvolený materiál</label><input placeholder="C45"></div>
-          <div class="field"><label>Predvolený stroj</label><input placeholder="CNC"></div>
-          <button class="primaryBtn" onclick="alert('Nastavenia uložené')">ULOŽIŤ NASTAVENIA</button>
-        </div>
-      </div>`, 'profile');
-  } else if(view==='tools'){
-    render(`<div class="viewPanel"><div class="viewHeader"><button class="backBtn" onclick="home()">← Späť</button><div class="viewTitle">Nástroje</div></div>
-      <div class="panelBox"><h3>Databáza nástrojov</h3><div class="listItem"><span>Pridanie nástroja</span><button class="secondaryBtn" onclick="alert('Tu bude formulár nástroja')">+</button></div>
-      <div class="listItem"><span>Moje nástroje</span><span class="muted">0 položiek</span></div></div></div>`, 'home');
-  } else if(view==='jobs'){
-    showView('job');
-  } else if(view==='settings'){
-    showView('profile');
-  }
-}
-function createJob(){
-  const n=document.getElementById('jobName').value.trim() || 'Bez názvu';
-  document.getElementById('jobResult').innerHTML=`<div class="result">✓ Zákazka <b>${n}</b> bola vytvorená v tomto formulári.</div>`;
-}
-function calcRpm(){
-  const vc=parseFloat(document.getElementById('vc').value), d=parseFloat(document.getElementById('dia').value);
-  if(!vc||!d) return;
-  const n=(1000*vc)/(Math.PI*d);
-  document.getElementById('rpmResult').innerHTML=`<div class="calcResult">${Math.round(n)} ot/min</div>`;
-  document.getElementById('rpm').value=Math.round(n);
-}
-function calcFeed(){
-  const n=parseFloat(document.getElementById('rpm').value), fn=parseFloat(document.getElementById('fn').value);
-  if(!n||!fn) return;
-  document.getElementById('feedResult').innerHTML=`<div class="calcResult">${(n*fn).toFixed(1)} mm/min</div>`;
-}
+<div id="cnc-profile" class="cnc-v4-panel">
+ <div class="cnc-v4-inner">
+  <div class="cnc-v4-top"><button class="cnc-v4-back" onclick="cncClose()">← Späť</button><b>👤 PROFIL</b></div>
+  <div class="cnc-v4-card"><h2>CNC AI Technológ</h2><div class="cnc-v4-muted">Testovacia verzia. Dizajn úvodnej obrazovky zostáva zachovaný.</div></div>
+ </div>
+</div>
+
+<script id="cnc-v4-js">
+function cncOpen(id){document.querySelectorAll('.cnc-v4-panel').forEach(p=>p.classList.remove('show'));var x=document.getElementById(id);if(x)x.classList.add('show');}
+function cncClose(){document.querySelectorAll('.cnc-v4-panel').forEach(p=>p.classList.remove('show'));}
+function cncFileName(){var f=document.getElementById('cncFile').files[0];document.getElementById('cncFileText').textContent=f?f.name:'PDF / JPG / PNG / DXF / DWG';}
+function cncAnalyze(){var f=document.getElementById('cncFile').files[0],t=document.getElementById('cncType').value,s=document.getElementById('cncStock').value||'nezadaný',r=document.getElementById('cncResult');r.style.display='block';r.textContent='🤖 TESTOVACIA AI ANALÝZA\\n\\nVýkres: '+(f?f.name:'nebol nahraný')+'\\nTyp: '+t+'\\nPolotovar: '+s+'\\n\\nVýkres je pripravený na odoslanie AI serveru. Po napojení AI tu budú rozpoznané rozmery, prvky, operácie, nástroje a rezné parametre.';}
+function cncCalc(){var d=parseFloat(document.getElementById('cncD').value),vc=parseFloat(document.getElementById('cncVc').value),f=parseFloat(document.getElementById('cncFeed').value),n=(1000*vc)/(Math.PI*d),vf=n*f,r=document.getElementById('cncCalcResult');r.style.display='block';r.innerHTML='<b>Otáčky:</b> '+Math.round(n)+' ot/min<br><b>Posuv:</b> '+vf.toFixed(1)+' mm/min';}
+document.addEventListener('click',function(e){var el=e.target.closest('button,a');if(!el)return;var tx=(el.innerText||el.textContent||'').trim().toUpperCase();if(tx.includes('ANALÝZA')){e.preventDefault();cncOpen('cnc-analysis')}else if(tx.includes('NOVÁ ZÁKAZKA')||tx==='NOVÁ'){e.preventDefault();cncOpen('cnc-job')}else if(tx.includes('KALKULAČKA')){e.preventDefault();cncOpen('cnc-calc')}else if(tx.includes('PROFIL')){e.preventDefault();cncOpen('cnc-profile')}})
 </script>
 </body>
 </html>

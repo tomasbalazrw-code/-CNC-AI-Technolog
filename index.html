@@ -279,6 +279,21 @@ li{margin:6px 0;line-height:1.45}
 .tooling-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.tooling-tag{padding:6px 9px;border-radius:999px;background:#0d1b28;border:1px solid #24465d;color:#b9c8d5;font-size:11px}
 @media(max-width:500px){.tooling-grid{grid-template-columns:1fr}}
 </style>
+<style>
+.stdins{margin-top:14px;border:1px solid #29465d;border-radius:15px;background:#08131d;padding:13px}
+.stdins h3{margin:0 0 10px;font-size:16px}.stdins-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stdins select{width:100%;box-sizing:border-box;padding:11px;border-radius:11px;border:1px solid #31536e;background:#0b1824;color:#fff}
+.stdins-card{margin-top:10px;padding:11px;border-radius:11px;background:#0d1c29;border:1px solid #29465d}
+.stdins-card b{display:block;margin-bottom:5px}.stdins-note{font-size:12px;color:#91a6b9;line-height:1.4;margin-top:8px}
+@media(max-width:600px){.stdins-grid{grid-template-columns:1fr}}
+</style>
+<style>
+.compat-box{margin-top:10px;padding:11px;border-radius:11px;border:1px solid #29465d;background:#0d1c29}
+.compat-box label{display:block;font-weight:800;margin-bottom:6px}
+.compat-box select{width:100%;box-sizing:border-box;padding:11px;border-radius:10px;border:1px solid #31536e;background:#0b1824;color:#fff}
+.compat-ok{margin-top:8px;padding:8px 10px;border-radius:9px;background:#12351f;color:#8ff0a0;font-size:13px}
+.compat-warn{margin-top:8px;padding:8px 10px;border-radius:9px;background:#3a2a10;color:#ffd27d;font-size:13px}
+</style>
 </head>
 <body>
 <div class="app">
@@ -611,7 +626,12 @@ li{margin:6px 0;line-height:1.45}
     <div class="ai2-note">Schéma je ilustračná. Skutočné upnutie určí AI podľa výkresu, geometrie a požadovaných operácií.</div>
    </div>
 
-   <button class="ai2-btn" id="millAiAnalyzeBtn" type="button">🤖 SPUSTIŤ AI ANALÝZU</button>
+   <div class="stdins" id="millStandardInserts"><h3>🧩 Štandardné frézovacie plátky</h3>
+<div class="stdins-grid"><select id="millInsertFamily"><option value="">Vyber typ plátku…</option></select><select id="millInsertSize" disabled><option value="">Vyber rozmer…</option></select></div>
+<div class="compat-box"><label for="millInsertBody">Kompatibilné telo frézy</label><select id="millInsertBody" disabled><option value="">Najprv vyber plátok…</option></select><div id="millCompatMsg" class="compat-warn">Po výbere plátku sa zobrazia kompatibilné typy.</div></div>
+<div class="stdins-card" id="millInsertInfo">Vyber typ plátku. AI ho použije ako preferenciu.</div>
+<div class="stdins-note">Bežné frézovacie rodiny; konkrétna kompatibilita musí sedieť s telom frézy.</div></div>
+<button class="ai2-btn" id="millAiAnalyzeBtn" type="button">🤖 SPUSTIŤ AI ANALÝZU</button>
    <div class="ai2-status" id="millAiStatus"></div>
 
    <section class="ai2-result hidden" id="millAiResultCard">
@@ -951,6 +971,61 @@ document.addEventListener('click',function(e){
 });
 </script>
 
+
+<script id="insert-compatibility-v2">
+const INSERT_COMPATIBILITY = {"turning": {"CNMG": ["Vonkajší držiak pre CNMG", "Vyvŕtavacia tyč pre CNMG"], "DNMG": ["Vonkajší držiak pre DNMG", "Vyvŕtavacia tyč pre DNMG"], "WNMG": ["Vonkajší držiak pre WNMG"], "TNMG": ["Vonkajší držiak pre TNMG", "Vyvŕtavacia tyč pre TNMG"], "SNMG": ["Vonkajší držiak pre SNMG"], "VNMG": ["Vonkajší držiak pre VNMG", "Vyvŕtavacia tyč pre VNMG"], "CCMT": ["Vonkajší pozitívny držiak CCMT", "Vyvŕtavacia tyč CCMT"], "DCMT": ["Vonkajší pozitívny držiak DCMT", "Vyvŕtavacia tyč DCMT"], "TCMT": ["Vonkajší pozitívny držiak TCMT", "Vyvŕtavacia tyč TCMT"], "VBMT": ["Vonkajší pozitívny držiak VBMT", "Vyvŕtavacia tyč VBMT"], "VCMT": ["Vonkajší pozitívny držiak VCMT", "Vyvŕtavacia tyč VCMT"], "SCMT": ["Vonkajší pozitívny držiak SCMT", "Vyvŕtavacia tyč SCMT"], "RCMT": ["Vonkajší držiak pre RCMT"], "CCGT": ["Vonkajší pozitívny držiak CCGT", "Držiak CCGT pre hliník"], "DCGT": ["Vonkajší pozitívny držiak DCGT", "Držiak DCGT pre hliník"], "TCGT": ["Vonkajší pozitívny držiak TCGT", "Držiak TCGT pre hliník"], "MGMN": ["Zapichovací držiak MGMN", "Upichovací držiak MGMN"], "16ER": ["Vonkajší závitovací držiak 16ER"], "16IR": ["Vnútorný závitovací držiak 16IR"]}, "milling": {"APKT": ["Frézovacie teleso APKT", "90° čelná/rohová fréza APKT"], "APMT": ["Frézovacie teleso APMT", "90° čelná/rohová fréza APMT"], "SEKT": ["Čelná fréza SEKT", "Rohová fréza SEKT"], "SEHT": ["Čelná fréza SEHT", "Rohová fréza SEHT"], "SPMT": ["Čelná fréza SPMT", "Rohová fréza SPMT"], "RPMT": ["Kopírovacia fréza RPMT", "3D fréza RPMT"], "RDMT": ["Kopírovacia fréza RDMT", "3D fréza RDMT"], "RPKT": ["Vysokoposuvová fréza RPKT"], "SNMX": ["Ťažká čelná fréza SNMX"], "ONMU": ["Ťažká čelná fréza ONMU"], "LNMU": ["Vysokoposuvová fréza LNMU"], "XNMU": ["Ťažká čelná fréza XNMU"], "XDKT": ["Profilová/rohová fréza XDKT"], "WNMU": ["Hrubovacia fréza WNMU"], "SDMT": ["Vysokoposuvová fréza SDMT"]}};
+(function(){
+  function initCompat(prefix, kind){
+    const family=document.getElementById(prefix+'InsertFamily');
+    const size=document.getElementById(prefix+'InsertSize');
+    const body=document.getElementById(prefix+'InsertBody');
+    const msg=document.getElementById(prefix+'CompatMsg');
+    if(!family||!size||!body||!msg) return;
+
+    function refresh(){
+      const key=family.value;
+      const choices=INSERT_COMPATIBILITY[kind][key]||[];
+      body.innerHTML='<option value="">Vyber kompatibilné telo…</option>';
+      choices.forEach(x=>{
+        const o=document.createElement('option');
+        o.value=x;o.textContent=x;body.appendChild(o);
+      });
+      body.disabled=!choices.length;
+      if(choices.length){
+        msg.className='compat-ok';
+        msg.textContent='✓ Zobrazené sú iba štandardné typy telies určené pre túto rodinu plátku.';
+      }else{
+        msg.className='compat-warn';
+        msg.textContent='Vyber plátok, aby sa zobrazila kompatibilita.';
+      }
+    }
+
+    family.addEventListener('change', refresh);
+    body.addEventListener('change', function(){
+      if(!body.value) return;
+      msg.className='compat-ok';
+      msg.textContent='✓ Vybrané: '+body.value;
+    });
+  }
+  initCompat('turnAi','turning');
+  initCompat('millAi','milling');
+})();
+</script>
+
+<script id="standard-inserts-db">
+const STANDARD_INSERTS={"turning": [{"family": "CNMG", "shape": "80° negatívny kosoštvorec", "use": "všeobecné sústruženie, čelo, hrubovanie", "sizes": ["CNMG 120404", "CNMG 120408", "CNMG 120412", "CNMG 160604", "CNMG 160608"]}, {"family": "DNMG", "shape": "55° negatívny kosoštvorec", "use": "profilovanie, dokončovanie", "sizes": ["DNMG 110404", "DNMG 150604", "DNMG 150608"]}, {"family": "WNMG", "shape": "80° trigon", "use": "hrubovanie a stabilné obrábanie", "sizes": ["WNMG 080404", "WNMG 080408", "WNMG 080412"]}, {"family": "TNMG", "shape": "60° trojuholník", "use": "univerzálne a ťažšie sústruženie", "sizes": ["TNMG 160404", "TNMG 160408", "TNMG 160412"]}, {"family": "SNMG", "shape": "90° štvorec", "use": "ťažké hrubovanie", "sizes": ["SNMG 120404", "SNMG 120408", "SNMG 150608"]}, {"family": "VNMG", "shape": "35° kosoštvorec", "use": "profilovanie", "sizes": ["VNMG 160404", "VNMG 160408"]}, {"family": "CCMT", "shape": "80° pozitívny kosoštvorec", "use": "ľahké sústruženie, vyvrtávanie", "sizes": ["CCMT 060204", "CCMT 09T304", "CCMT 120404"]}, {"family": "DCMT", "shape": "55° pozitívny kosoštvorec", "use": "dokončovanie, vyvrtávanie", "sizes": ["DCMT 070204", "DCMT 11T304"]}, {"family": "TCMT", "shape": "60° pozitívny trojuholník", "use": "vnútorné sústruženie", "sizes": ["TCMT 110204", "TCMT 16T304"]}, {"family": "VBMT", "shape": "35° pozitívny kosoštvorec", "use": "profilovanie a dokončovanie", "sizes": ["VBMT 110302", "VBMT 160404", "VBMT 160408"]}, {"family": "VCMT", "shape": "35° pozitívny kosoštvorec", "use": "jemné profilovanie", "sizes": ["VCMT 110302", "VCMT 160404"]}, {"family": "SCMT", "shape": "90° pozitívny štvorec", "use": "ľahké sústruženie", "sizes": ["SCMT 060204", "SCMT 09T304"]}, {"family": "RCMT", "shape": "okrúhly", "use": "kopírovanie, profilovanie, prerušený rez", "sizes": ["RCMT 10T3", "RCMT 12T3"]}, {"family": "CCGT", "shape": "80° pozitívny leštený", "use": "hliník a neželezné kovy", "sizes": ["CCGT 060204", "CCGT 09T304", "CCGT 120404"]}, {"family": "DCGT", "shape": "55° pozitívny leštený", "use": "hliník a dokončovanie", "sizes": ["DCGT 070204", "DCGT 11T304"]}, {"family": "TCGT", "shape": "60° pozitívny leštený", "use": "hliník a neželezné kovy", "sizes": ["TCGT 110204", "TCGT 16T304"]}, {"family": "MGMN", "shape": "zapichovací / upichovací", "use": "zapichovanie a upichovanie", "sizes": ["MGMN 200", "MGMN 300", "MGMN 400"]}, {"family": "16ER", "shape": "vonkajší závit", "use": "závitovanie", "sizes": ["16ER 1.0 ISO", "16ER 1.5 ISO", "16ER 2.0 ISO"]}, {"family": "16IR", "shape": "vnútorný závit", "use": "vnútorné závitovanie", "sizes": ["16IR 1.0 ISO", "16IR 1.5 ISO", "16IR 2.0 ISO"]}], "milling": [{"family": "APKT", "shape": "pozitívny 90°", "use": "čelné a rohové frézovanie", "sizes": ["APKT 1604", "APKT 1003"]}, {"family": "APMT", "shape": "pozitívny 90°", "use": "čelné a rohové frézovanie", "sizes": ["APMT 1604", "APMT 1135"]}, {"family": "SEKT", "shape": "štvorcový", "use": "čelné frézovanie", "sizes": ["SEKT 1204", "SEKT 1505"]}, {"family": "SEHT", "shape": "štvorcový", "use": "čelné frézovanie", "sizes": ["SEHT 1204"]}, {"family": "SPMT", "shape": "štvorcový pozitívny", "use": "čelné frézovanie", "sizes": ["SPMT 07T308", "SPMT 1204"]}, {"family": "RPMT", "shape": "okrúhly", "use": "kopírovanie a 3D frézovanie", "sizes": ["RPMT 10T3", "RPMT 1604"]}, {"family": "RDMT", "shape": "okrúhly", "use": "kopírovanie a profilovanie", "sizes": ["RDMT 10T3", "RDMT 1604"]}, {"family": "RPKT", "shape": "okrúhly vysokoposuvový", "use": "vysokoposuvové frézovanie", "sizes": ["RPKT 10T3", "RPKT 16T3"]}, {"family": "SNMX", "shape": "štvorcový negatívny", "use": "ťažké frézovanie", "sizes": ["SNMX 1206", "SNMX 1507"]}, {"family": "ONMU", "shape": "osemhranný", "use": "ťažké hrubovanie", "sizes": ["ONMU 0505", "ONMU 0806"]}, {"family": "LNMU", "shape": "paralelogram", "use": "vysokoposuvové frézovanie", "sizes": ["LNMU 0303", "LNMU 0504"]}, {"family": "XNMU", "shape": "viacstranný negatívny", "use": "ťažké hrubovanie", "sizes": ["XNMU 0604", "XNMU 0906"]}, {"family": "XDKT", "shape": "pozitívny profilový", "use": "90° a profilové frézovanie", "sizes": ["XDKT 0904", "XDKT 1104"]}, {"family": "WNMU", "shape": "trigon negatívny", "use": "hrubovanie", "sizes": ["WNMU 06T3", "WNMU 0804"]}, {"family": "SDMT", "shape": "vysokoposuvový", "use": "vysokoposuvové frézovanie", "sizes": ["SDMT 07T308", "SDMT 1204"]}]};
+(function(){
+function init(prefix,kind){
+ const f=document.getElementById(prefix+'InsertFamily'),s=document.getElementById(prefix+'InsertSize'),i=document.getElementById(prefix+'InsertInfo');
+ if(!f||!s||!i)return;
+ STANDARD_INSERTS[kind].forEach(x=>{let o=document.createElement('option');o.value=x.family;o.textContent=x.family+' — '+x.use;f.appendChild(o)});
+ f.addEventListener('change',()=>{let x=STANDARD_INSERTS[kind].find(v=>v.family===f.value);s.innerHTML='<option value="">Vyber rozmer…</option>';s.disabled=!x;
+ if(x)x.sizes.forEach(z=>{let o=document.createElement('option');o.value=z;o.textContent=z;s.appendChild(o)});i.innerHTML=x?'<b>'+x.family+'</b>'+x.shape+'<br><span style="color:#b4c5d3">'+x.use+'</span>':'Vyber typ plátku. AI ho použije ako preferenciu.'});
+ s.addEventListener('change',()=>{let x=STANDARD_INSERTS[kind].find(v=>v.family===f.value);if(x&&s.value)i.innerHTML='<b>'+x.family+' '+s.value+'</b>'+x.shape+'<br><span style="color:#b4c5d3">'+x.use+'</span>'});
+}
+init('turnAi','turning');init('millAi','milling');
+})();
+</script>
 <script id="turn-ai-v3-js">
 (function(){
   function esc(v){
@@ -1112,6 +1187,9 @@ document.addEventListener('click',function(e){
           machine:document.getElementById(prefix+'Machine').value.trim(),
           tooling:(document.getElementById(prefix+'Tooling')?.value||'').trim(),
           requirements:document.getElementById(prefix+'Requirements').value.trim(),
+          selectedInsertFamily: prefix==='turnAi' ? (document.getElementById('turnInsertFamily')?.value||'') : (document.getElementById('millInsertFamily')?.value||''),
+          selectedInsertSize: prefix==='turnAi' ? (document.getElementById('turnInsertSize')?.value||'') : (document.getElementById('millInsertSize')?.value||''),
+          selectedInsertBody: prefix==='turnAi' ? (document.getElementById('turnInsertBody')?.value||'') : (document.getElementById('millInsertBody')?.value||''),
           fileName:selectedFile.name,
           fileData:fileData
         };

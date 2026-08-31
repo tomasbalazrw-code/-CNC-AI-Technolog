@@ -1,378 +1,141 @@
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+/* CNC AI Technológ – real technical drawing analysis */
 
 const OPENAI_URL = "https://api.openai.com/v1";
 const MODEL = "gpt-5.6-luna";
 
-const CNC_SCHEMA = {
+function getOpenAIKey() {
+  const raw = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || process.env.OPENAI_TOKEN || "";
+  return String(raw).trim().replace(/^["']|["']$/g, "").trim();
+}
+
+const SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
-    drawing_summary: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        part_name: { type: "string" },
-        operation: { type: "string" },
-        material: { type: "string" },
-        stock: { type: "string" },
-        overall_dimensions: { type: "string" },
-        key_dimensions: { type: "array", items: { type: "string" } },
-        tolerances: { type: "array", items: { type: "string" } },
-        surface_finish: { type: "array", items: { type: "string" } },
-        threads: { type: "array", items: { type: "string" } },
-        grooves: { type: "array", items: { type: "string" } },
-        radii_angles: { type: "array", items: { type: "string" } },
-        detected_features: { type: "array", items: { type: "string" } },
-      },
-      required: [
-        "part_name", "operation", "material", "stock", "overall_dimensions",
-        "key_dimensions", "tolerances", "surface_finish", "threads",
-        "grooves", "radii_angles", "detected_features",
-      ],
-    },
-    setup: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        recommendation: { type: "string" },
-        workholding: { type: "array", items: { type: "string" } },
-        datum: { type: "string" },
-        checks_before_machining: { type: "array", items: { type: "string" } },
-      },
-      required: ["recommendation", "workholding", "datum", "checks_before_machining"],
-    },
-    technology: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          operation_no: { type: "integer" },
-          name: { type: "string" },
-          side: { type: "string" },
-          description: { type: "string" },
-          tool_ref: { type: "string" },
-          control: { type: "string" },
-        },
-        required: ["operation_no", "name", "side", "description", "tool_ref", "control"],
-      },
-    },
-    tools: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          tool_no: { type: "string" },
-          operation: { type: "string" },
-          category: { type: "string" },
-          tool: { type: "string" },
-          insert: { type: "string" },
-          holder: { type: "string" },
-          geometry: { type: "string" },
-          grade: { type: "string" },
-          manufacturer: { type: "string" },
-          confidence: { type: "string" },
-          note: { type: "string" },
-          selection_basis: { type: "string" },
-          compatibility_check: { type: "string" },
-        },
-        required: [
-          "tool_no", "operation", "category", "tool", "insert", "holder",
-          "geometry", "grade", "manufacturer", "confidence", "note",
-          "selection_basis", "compatibility_check",
-        ],
-      },
-    },
-    parameters: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          tool_no: { type: "string" },
-          operation: { type: "string" },
-          cutting_mode: { type: "string" },
-          vc_m_min: { type: "number" },
-          rpm: { type: "number" },
-          feed_mm_rev: { type: "number" },
-          feed_mm_min: { type: "number" },
-          ap_mm: { type: "number" },
-          ae_mm: { type: "number" },
-          coolant: { type: "string" },
-          parameter_status: { type: "string" },
-          note: { type: "string" },
-        },
-        required: [
-          "tool_no", "operation", "cutting_mode", "vc_m_min", "rpm",
-          "feed_mm_rev", "feed_mm_min", "ap_mm", "ae_mm", "coolant",
-          "parameter_status", "note",
-        ],
-      },
-    },
-    program: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        status: { type: "string" },
-        controller_assumption: { type: "string" },
-        code: { type: "string" },
-        required_before_run: { type: "array", items: { type: "string" } },
-      },
-      required: ["status", "controller_assumption", "code", "required_before_run"],
-    },
-    missing_information: { type: "array", items: { type: "string" } },
+    drawing_read: { type: "string" },
+    setup: { type: "object", additionalProperties: false, properties: {
+      clamping: { type: "string" }, datum: { type: "string" }, supports: { type: "string" }, risks: { type: "string" }
+    }, required: ["clamping", "datum", "supports", "risks"] },
+    operations: { type: "array", items: { type: "object", additionalProperties: false, properties: {
+      order: { type: "integer" }, name: { type: "string" }, description: { type: "string" }
+    }, required: ["order", "name", "description"] } },
+    tools: { type: "array", items: { type: "object", additionalProperties: false, properties: {
+      operation: { type: "string" }, tool: { type: "string" }, holder: { type: "string" }, insert: { type: "string" }, vc: { type: "string" }, feed: { type: "string" }, rpm: { type: "string" }
+    }, required: ["operation", "tool", "holder", "insert", "vc", "feed", "rpm"] } },
+    material: { type: "string" }, stock: { type: "string" },
+    critical_dimensions: { type: "array", items: { type: "string" } },
     warnings: { type: "array", items: { type: "string" } },
+    notes: { type: "array", items: { type: "string" } }
   },
-  required: [
-    "drawing_summary", "setup", "technology", "tools",
-    "parameters", "program", "missing_information", "warnings",
-  ],
+  required: ["drawing_read", "setup", "operations", "tools", "material", "stock", "critical_dimensions", "warnings", "notes"]
 };
 
-function sendError(res, status, error, details = "") {
-  return res.status(status).json({ success: false, error, details });
+function fail(res, status, message, details = "") {
+  return res.status(status).json({ success: false, error: message, details });
 }
 
-async function getFormData(req) {
-  if (typeof req.formData === "function") {
-    return await req.formData();
+function parseFileData(value, fileName) {
+  const text = String(value || "");
+  const match = text.match(/^data:([^;,]+)(?:;[^,]*)?,([\s\S]*)$/);
+  if (match) return { mime: match[1].toLowerCase(), base64: decodeURIComponent(match[2]) };
+  const lower = String(fileName || "drawing.pdf").toLowerCase();
+  const mime = lower.endsWith(".pdf") ? "application/pdf" : lower.endsWith(".png") ? "image/png" : lower.endsWith(".webp") ? "image/webp" : "image/jpeg";
+  return { mime, base64: text };
+}
+
+async function uploadFile(base64, fileName, mime, apiKey) {
+  const bytes = Buffer.from(String(base64).replace(/\s/g, ""), "base64");
+  if (!bytes.length) throw new Error("Výkres je prázdny alebo poškodený.");
+  const form = new FormData();
+  form.append("file", new Blob([bytes], { type: mime }), fileName || "drawing.pdf");
+  form.append("purpose", "user_data");
+  const r = await fetch(`${OPENAI_URL}/files`, { method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: form });
+  const t = await r.text();
+  if (!r.ok) throw new Error(`OpenAI upload ${r.status}: ${t}`);
+  return JSON.parse(t);
+}
+
+function prompt(body, fileName) {
+  return `Si SENIOR CNC technológ. SKUTOČNE PREČÍTAJ A VYHODNOŤ PRILOŽENÝ TECHNICKÝ VÝKRES ${fileName}.
+
+Vstup:
+- Typ obrábania: ${body.type || body.operation || "Sústruženie"}
+- Materiál: ${body.material || "neuvedený"}
+- Polotovar: ${body.stock || "neuvedený"}
+- Stroj/riadenie: ${body.machine || "neuvedený"}
+
+POVINNÉ:
+1. Prečítaj konkrétne rozmery, priemery, dĺžky, tolerancie, závity, rádiusy, uhly, drsnosti, geometrické tolerancie a poznámky z výkresu.
+2. Žiadna všeobecná ukážka a žiadne prázdne polia. Výsledok musí vychádzať z výkresu.
+3. Ak údaj nie je čitateľný alebo nie je uvedený, napíš „NIE JE UVEDENÉ/ČITATEĽNÉ“. Nevymýšľaj si ho.
+4. Navrhni reálny technologický postup v správnom poradí.
+5. Navrhni konkrétne nástroje; preferuj MASAM/BÖHLERIT, potom Sandvik, Walter, Seco alebo Ceratizit. Katalógové číslo len ak je spoľahlivo určiteľné, inak „overiť v katalógu“.
+6. Uveď štartovacie rezné podmienky. Sústruženie: Vc, f, otáčky. Frézovanie: Vc, fz, posuv, otáčky. Ak chýba materiál, označ parametre ako orientačné.
+7. Uveď kritické rozmery na kontrolu po obrábaní.
+8. Uveď konkrétne riziká upnutia, vibrácií, výbehu, kolízie alebo tolerancií, ak sa týkajú dielu.
+9. Nevytváraj CNC kód.
+10. Odpoveď musí byť založená iba na skutočne dostupných údajoch z výkresu a vstupe používateľa.`;
+}
+
+function extractOutputText(data) {
+  if (typeof data.output_text === "string" && data.output_text.trim()) return data.output_text;
+  const parts = [];
+  for (const item of data.output || []) for (const content of item.content || []) {
+    if (typeof content.text === "string") parts.push(content.text);
   }
-  return await new Response(req).formData();
+  return parts.join("\n");
 }
-
-async function openaiUpload(file) {
-  const bytes = await file.arrayBuffer();
-  const blob = new Blob([bytes], {
-    type: file.type || "application/octet-stream",
-  });
-
-  const uploadForm = new FormData();
-  uploadForm.append("file", blob, file.name || "vykres.pdf");
-  uploadForm.append("purpose", "user_data");
-
-  const response = await fetch(`${OPENAI_URL}/files`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: uploadForm,
-  });
-
-  if (!response.ok) {
-    throw new Error(`OpenAI upload ${response.status}: ${await response.text()}`);
-  }
-
-  return await response.json();
-}
-
-function buildPrompt(operation, stock, filename, material, machine, requirements, selectedInsertFamily, selectedInsertSize, selectedInsertBody) {
-  const turning =
-    operation.toLowerCase().includes("sústru") ||
-    operation.toLowerCase().includes("soustru");
-  const process = turning ? "CNC SÚSTRUŽENIE" : "CNC FRÉZOVANIE";
-
-  const standardTurning = `
-SÚSTRUŽENIE – BEŽNÉ ŠTANDARDNÉ RODINY:
-CNMG, DNMG, WNMG, TNMG, SNMG, VNMG, CCMT, DCMT, TCMT, VBMT, VCMT,
-SCMT, RCMT, CCGT, DCGT, TCGT, MGMN, 16ER, 16IR.
-`;
-
-  const standardMilling = `
-FRÉZOVANIE – BEŽNÉ ŠTANDARDNÉ RODINY:
-APKT, APMT, SEKT, SEHT, SPMT, RPMT, RDMT, RPKT, SNMX, ONMU,
-LNMU, XNMU, XDKT, WNMU, SDMT.
-`;
-
-  return `
-Si senior CNC technológ pre ${process}. Analyzuj priložený technický výkres ako podklad pre praktický technologický návrh.
-
-SÚBOR: ${filename}
-OPERÁCIA: ${operation}
-MATERIÁL ZADANÝ POUŽÍVATEĽOM: ${material || "neuvedený"}
-POLOTOVAR: ${stock || "neuvedený"}
-STROJ / RIADENIE: ${machine || "neuvedené"}
-ĎALŠIE POŽIADAVKY: ${requirements || "neuvedené"}
-
-POŽADOVANÉ SPRÁVANIE – AUTOMATICKÝ VÝBER NÁSTROJOV:
-1. Technológ nemusí vyberať plátok ani držiak ručne. TY ich vyber automaticky podľa materiálu, geometrie súčiastky, konkrétnej operácie, tolerancií, drsnosti, hĺbky rezu, stability upnutia a stroja.
-2. Najprv urč operáciu a požadovanú geometriu nástroja. Až potom vyber konkrétnu štandardnú rodinu VBD/plátku a kompatibilný držiak alebo telo frézy.
-3. Nikdy nekombinuj nekompatibilný plátok s držiakom/telesom. Pole compatibility_check musí stručne potvrdiť kompatibilitu.
-4. Pri sústružení vyber vhodný ISO typ držiaka (napr. PCLNR, PDJNR, PCBNR, SVJBR, SDJCR, MCLNR a podobne) podľa konkrétnej VBD a smeru/typu obrábania. Neuvádzaj konkrétny katalógový kód, ak ho nemožno spoľahlivo určiť.
-5. Pri frézovaní vyber vhodné frézovacie teleso podľa typu plátku a operácie. Pri VHM nástrojoch plátok neuvádzaj, ak sa nepoužíva.
-6. Triedu/povlak voľ podľa materiálu len ako odporúčanie. Ak chýba presná katalógová trieda výrobcu, napíš „overiť v katalógu“.
-7. Preferuj štandardné ISO riešenia. Konkrétneho výrobcu (Sandvik, Walter, Seco, Kennametal, Ceratizit, ISCAR, Mitsubishi, Tungaloy, Dormer Pramet, BÖHLERIT atď.) uvádzaj iba vtedy, keď je výber odôvodnený; inak použi „štandard ISO / výrobca podľa dostupnosti“.
-8. Ak používateľ už vybral konkrétny plátok alebo telo, ber to ako preferenciu, ale ak je to nevhodné alebo nekompatibilné, upozorni na to a navrhni správnu alternatívu.
-9. Vráť každý potrebný nástroj samostatne podľa operácie. Pri každom uveď tool_no, operation, category, tool, insert, holder, geometry, grade, manufacturer, confidence, note, selection_basis a compatibility_check.
-10. Nevymýšľaj rozmery. Ak výkres nie je čitateľný, označ údaj ako neuvedený a daj ho do missing_information.
-11. Rezné parametre sú iba konzervatívne ŠTARTOVACIE hodnoty. Pri sústružení Vc, f a otáčky; pri frézovaní Vc, fz, posuv, ae/ap a otáčky.
-12. CNC program je iba VZOROVÝ. Bez úplne potvrdeného stroja, riadenia, nulového bodu, nástrojovej tabuľky a upnutia nesmieš tvrdiť, že je pripravený na okamžité spustenie.
-13. Ak je operácia sústruženie, nevymýšľaj frézovacie operácie a naopak.
-
-${turning ? standardTurning : standardMilling}
-
-VOLITEĽNÁ PREFERENCIA Z UI:
-Plátok – rodina: ${selectedInsertFamily || "AI vyberie automaticky"}
-Plátok – rozmer: ${selectedInsertSize || "AI vyberie automaticky"}
-Telo/držiak: ${selectedInsertBody || "AI vyberie automaticky"}
-
-DÔLEŽITÉ:
-- Automatický výber je nadradený ručnému výberu iba vtedy, keď je ručný výber nevhodný alebo nekompatibilný.
-- Pri nejasnosti vyber bezpečnejší štandardný nástroj a jasne uveď, čo musí technológ/operator pred výrobou overiť.
-- Odpoveď musí byť výhradne podľa zadanej JSON schémy.
-`;
-}
-
 
 export default async function handler(req, res) {
   try {
-    if (req.method !== "POST") {
-      res.setHeader("Allow", "POST");
-      return sendError(res, 405, "Použi POST požiadavku.");
-    }
+    if (req.method !== "POST") { res.setHeader("Allow", "POST"); return fail(res, 405, "Použi POST požiadavku."); }
+    const apiKey = getOpenAIKey();
+    if (!apiKey) return fail(res, 500, "OPENAI_API_KEY nie je nastavený vo Verceli.", "Vercel → Project → Settings → Environment Variables → OPENAI_API_KEY. Po pridaní kľúča vytvor nový Production deployment.");
 
-    if (!process.env.OPENAI_API_KEY) {
-      return sendError(res, 500, "OPENAI_API_KEY nie je nastavený vo Verceli.");
-    }
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
+    const fileName = body.fileName || "drawing.pdf";
+    const fileData = body.fileData || body.data;
+    if (!fileData) return fail(res, 400, "Výkres nebol odoslaný.");
 
-    const formData = await getFormData(req);
-    const file = formData.get("file");
-    const operation = String(formData.get("operation") || "Sústruženie");
-    const stock = String(formData.get("stock") || "");
-    const material = String(formData.get("material") || "");
-    const machine = String(formData.get("machine") || formData.get("controller") || "");
-    const requirements = String(formData.get("requirements") || formData.get("notes") || "");
-    const selectedInsertFamily = String(formData.get("selectedInsertFamily") || "");
-    const selectedInsertSize = String(formData.get("selectedInsertSize") || "");
-    const selectedInsertBody = String(formData.get("selectedInsertBody") || "");
-    const autoToolSelection = String(formData.get("autoToolSelection") || "true");
-    const manualToolOverride = String(formData.get("manualToolOverride") || "");
+    const { mime, base64 } = parseFileData(fileData, fileName);
+    let inputFile;
+    if (mime === "application/pdf" || /\.pdf$/i.test(fileName)) {
+      const uploaded = await uploadFile(base64, fileName, "application/pdf", apiKey);
+      inputFile = { type: "input_file", file_id: uploaded.id };
+    } else if (/^image\/(png|jpeg|jpg|webp)$/.test(mime)) {
+      const imageMime = mime === "image/jpg" ? "image/jpeg" : mime;
+      inputFile = { type: "input_image", image_url: `data:${imageMime};base64,${base64}`, detail: "high" };
+    } else return fail(res, 400, "Podporované sú PDF, PNG, JPG/JPEG a WEBP.");
 
-    if (!file || typeof file.arrayBuffer !== "function") {
-      return sendError(res, 400, "Nebolo odoslané platné PDF/JPG/PNG s výkresom.");
-    }
-
-    const filename = file.name || "vykres.pdf";
-    const mime = String(file.type || "application/pdf").toLowerCase();
-    const allowed = [
-      "application/pdf",
-      "image/png",
-      "image/jpeg",
-      "image/jpg",
-      "image/webp",
-    ];
-
-    if (!allowed.includes(mime) && !/\.(pdf|png|jpe?g|webp)$/i.test(filename)) {
-      return sendError(
-        res,
-        400,
-        "Podporované formáty sú PDF, PNG, JPG/JPEG a WEBP."
-      );
-    }
-
-    let content;
-
-    if (mime === "application/pdf" || /\.pdf$/i.test(filename)) {
-      const uploadedFile = await openaiUpload(file);
-      content = {
-        type: "input_file",
-        file_id: uploadedFile.id,
-      };
-    } else {
-      const bytes = Buffer.from(await file.arrayBuffer());
-      const base64 = bytes.toString("base64");
-      const imageMime = mime.startsWith("image/") ? mime : "image/jpeg";
-      content = {
-        type: "input_image",
-        image_url: `data:${imageMime};base64,${base64}`,
-        detail: "high",
-      };
-    }
-
-    const response = await fetch(`${OPENAI_URL}/responses`, {
+    const r = await fetch(`${OPENAI_URL}/responses`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: MODEL,
-        input: [
-          {
-            role: "user",
-            content: [
-              content,
-              {
-                type: "input_text",
-                text: buildPrompt(
-                  operation,
-                  stock,
-                  filename,
-                  material,
-                  machine,
-                  requirements,
-                  selectedInsertFamily,
-                  selectedInsertSize,
-                  selectedInsertBody
-                ),
-              },
-            ],
-          },
-        ],
-        text: {
-          format: {
-            type: "json_schema",
-            name: "cnc_analysis",
-            description: "Štruktúrovaná CNC analýza technického výkresu.",
-            strict: true,
-            schema: CNC_SCHEMA,
-          },
-        },
-      }),
+        input: [{ role: "user", content: [inputFile, { type: "input_text", text: prompt(body, fileName) }] }],
+        text: { format: { type: "json_schema", name: "cnc_plan", strict: true, schema: SCHEMA } }
+      })
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return sendError(res, 502, "AI analýza zlyhala.", errorText);
-    }
+    const responseText = await r.text();
+    if (!r.ok) return fail(res, 502, "OpenAI analýza zlyhala.", responseText);
+    const data = JSON.parse(responseText);
+    const outputText = extractOutputText(data);
+    if (!outputText) return fail(res, 502, "OpenAI nevrátilo výsledok analýzy.", responseText.slice(0, 4000));
 
-    const result = await response.json();
-    const outputText = result.output_text || "";
-    let analysis;
-
-    try {
-      analysis = JSON.parse(outputText);
-    } catch {
-      return res.status(502).json({
-        success: false,
-        error: "AI vrátila neplatný štruktúrovaný výsledok.",
-        raw: outputText,
-      });
-    }
+    let plan;
+    try { plan = JSON.parse(outputText); }
+    catch { return fail(res, 502, "OpenAI vrátilo neplatný formát analýzy.", outputText.slice(0, 4000)); }
 
     return res.status(200).json({
-      success: true,
-      file: filename,
-      operation,
-      material,
-      stock,
-      machine,
-      auto_tool_selection: autoToolSelection !== "false",
-      manual_tool_override: manualToolOverride,
-      model: MODEL,
-      analysis,
+      success: true, analyzed: true, file: fileName,
+      operation: body.type || body.operation || "Sústruženie",
+      material: body.material || plan.material || "",
+      stock: body.stock || plan.stock || "",
+      machine: body.machine || "", ...plan
     });
-  } catch (error) {
-    console.error("CNC AI analyze error:", error);
-    return sendError(
-      res,
-      500,
-      "Chyba servera pri AI analýze.",
-      error?.message || String(error)
-    );
+  } catch (err) {
+    console.error(err);
+    return fail(res, 500, "Chyba servera pri AI analýze.", err?.message || String(err));
   }
 }

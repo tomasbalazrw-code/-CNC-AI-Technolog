@@ -1,116 +1,61 @@
-/*
- * api/program.js
- * CNC program generator for the CNC AI Technológ test application.
- *
- * IMPORTANT:
- * This endpoint creates a REVIEW/TEST CNC program only.
- * It does not claim the program is ready for direct machine execution.
- * Machine, control, work offset, tool table, clamping and safety values
- * must be verified by the technologist/operator.
- */
+/* CNC AI Technológ – testovací CNC program endpoint */
 
-const MODEL = "gpt-5.6-luna";
 const OPENAI_URL = "https://api.openai.com/v1";
+const MODEL = "gpt-5.6-luna";
 
 const SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
-    program_name: { type: "string" },
-    controller: { type: "string" },
-    operation: { type: "string" },
-    safety_notes: {
-      type: "array",
-      items: { type: "string" }
-    },
-    assumptions: {
-      type: "array",
-      items: { type: "string" }
-    },
-    cnc_code: { type: "string" },
-    tool_list: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          tool_no: { type: "integer" },
-          description: { type: "string" },
-          insert: { type: "string" },
-          holder: { type: "string" }
-        },
-        required: ["tool_no", "description", "insert", "holder"]
-      }
-    },
-    verification: {
-      type: "array",
-      items: { type: "string" }
-    }
+    program: { type: "string" },
+    notes: { type: "string" }
   },
-  required: [
-    "program_name",
-    "controller",
-    "operation",
-    "safety_notes",
-    "assumptions",
-    "cnc_code",
-    "tool_list",
-    "verification"
-  ]
+  required: ["program", "notes"]
 };
 
-function fail(res, status, error, details = "") {
+function fail(res, status, message, details = "") {
   return res.status(status).json({
     success: false,
-    error,
+    error: message,
     details
   });
 }
 
 function buildPrompt(payload) {
-  const operation = payload.operation || "Sústruženie";
-  const stock = payload.stock || "neuvedený";
-  const analysis = payload.analysis || {};
-  const technology = payload.technology || {};
+  const control = payload.control || "FANUC / ISO – TEST";
+  const zero = payload.zero || "nutné doplniť";
+  const plan = payload.plan || {};
 
   return `
 Si senior CNC programátor a technológ.
 
-Vytvor TESTOVACÍ CNC PROGRAM podľa dodanej AI analýzy a technologického postupu.
+Vytvor TESTOVACÍ CNC PROGRAM podľa technologického plánu nižšie.
 
-OPERÁCIA:
-${operation}
+RIADENIE:
+${control}
 
-POLOTOVAR:
-${stock}
+NULOVÝ BOD:
+${zero}
 
-AI ANALÝZA:
-${JSON.stringify(analysis, null, 2)}
-
-TECHNOLOGICKÝ POSTUP:
-${JSON.stringify(technology, null, 2)}
+TECHNOLOGICKÝ PLÁN:
+${JSON.stringify(plan, null, 2)}
 
 PRAVIDLÁ:
-- Generuj iba program vhodný na kontrolu technológom.
-- Predpokladaj FANUC/ISO iba ako výslovný TESTOVACÍ predpoklad.
-- Ak nie je známy konkrétny stroj, riadenie, nulový bod, nástrojová tabuľka,
-  orientácia upnutia alebo bezpečná nájazdová rovina, NESMIEŠ ich vymyslieť.
-- Chýbajúce údaje uveď v assumptions a verification.
-- Nepoužívaj neoverené katalógové čísla nástrojov ako keby boli isté.
-- Zachovaj rozmery a tolerancie iba podľa dodanej analýzy.
-- Pre sústruženie vytvor ISO/FANUC štýl s bezpečným komentárom a nástrojmi,
-  ale nepoužívaj neznáme hodnoty ako hotové bezpečnostné hodnoty.
-- Pre frézovanie vytvor ISO/FANUC štýl s G0/G1/G2/G3 iba tam,
-  kde to vyplýva z geometrie v analýze.
-- Ak geometria nestačí na bezpečný výpočet dráhy, nevymýšľaj súradnice;
-  vlož komentár typu (DOPLNIT X/Y/Z ...).
-- Nepredstieraj, že program je pripravený na okamžité spustenie.
-- Nepoužívaj M30 ako dôkaz pripravenosti; môže byť použitý iba ako koniec
-  testovacieho programu.
-- Rezné parametre používaj ako štartovacie a rešpektuj údaje z technológie.
-- Výstup musí byť praktický a čitateľný.
+- Program je iba na kontrolu technológom/operatorom.
+- Nikdy netvrď, že je pripravený na okamžité spustenie.
+- Ak chýbajú súradnice, priemery, nástrojová tabuľka alebo bezpečná rovina,
+  nevymýšľaj ich.
+- Chýbajúce hodnoty označ priamo v programe komentárom:
+  (DOPLNIT ...)
+- Použi FANUC/ISO štýl iba ako testovací formát.
+- Zachovaj operácie a nástroje z technologického plánu.
+- Rezné parametre ber ako štartovacie.
+- Na začiatok programu vlož jasný bezpečnostný komentár.
+- Na koniec môže byť M30.
+- V poli notes uveď všetky dôležité údaje, ktoré musí technológ/operator
+  pred použitím overiť.
 
-Vráť výsledok presne podľa JSON schémy.
+Vráť presne JSON podľa zadanej schémy.
 `;
 }
 
@@ -134,39 +79,43 @@ export default async function handler(req, res) {
         ? JSON.parse(req.body)
         : (req.body || {});
 
-    if (!payload.analysis && !payload.technology) {
+    if (!payload.plan) {
       return fail(
         res,
         400,
-        "Chýba AI analýza alebo technologický postup."
+        "Chýba technologický plán."
       );
     }
 
-    const response = await fetch(`${OPENAI_URL}/responses`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        input: [{
-          role: "user",
-          content: [{
-            type: "input_text",
-            text: buildPrompt(payload)
-          }]
-        }],
-        text: {
-          format: {
-            type: "json_schema",
-            name: "cnc_test_program",
-            strict: true,
-            schema: SCHEMA
+    const response = await fetch(
+      `${OPENAI_URL}/responses`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization:
+            `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: MODEL,
+          input: [{
+            role: "user",
+            content: [{
+              type: "input_text",
+              text: buildPrompt(payload)
+            }]
+          }],
+          text: {
+            format: {
+              type: "json_schema",
+              name: "cnc_test_program",
+              strict: true,
+              schema: SCHEMA
+            }
           }
-        }
-      })
-    });
+        })
+      }
+    );
 
     if (!response.ok) {
       return fail(
@@ -180,9 +129,10 @@ export default async function handler(req, res) {
     const data = await response.json();
     const text = data.output_text || "";
 
-    let program;
+    let result;
+
     try {
-      program = JSON.parse(text);
+      result = JSON.parse(text);
     } catch {
       return fail(
         res,
@@ -194,11 +144,13 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      program
+      program: result.program,
+      notes: result.notes
     });
 
   } catch (err) {
     console.error(err);
+
     return fail(
       res,
       500,

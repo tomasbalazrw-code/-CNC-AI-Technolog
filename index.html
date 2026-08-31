@@ -294,6 +294,19 @@ li{margin:6px 0;line-height:1.45}
 .compat-ok{margin-top:8px;padding:8px 10px;border-radius:9px;background:#12351f;color:#8ff0a0;font-size:13px}
 .compat-warn{margin-top:8px;padding:8px 10px;border-radius:9px;background:#3a2a10;color:#ffd27d;font-size:13px}
 </style>
+<style>
+.auto-tool{margin-top:14px;border:1px solid #315d77;border-radius:15px;background:#081722;padding:14px}
+.auto-tool h3{margin:0 0 8px;font-size:17px}
+.auto-tool .muted{color:#9eb3c3;font-size:12px;line-height:1.45}
+.auto-reco{margin-top:11px;padding:12px;border-radius:12px;background:#0d1f2c;border:1px solid #2b4c62}
+.auto-reco-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.auto-reco-item{padding:8px;border-radius:9px;background:#0a1721}
+.auto-reco-item span{display:block;color:#8fa7b9;font-size:11px;margin-bottom:3px}
+.auto-choice{margin-top:10px}
+.auto-choice select{width:100%;box-sizing:border-box;padding:11px;border-radius:10px;border:1px solid #31536e;background:#0b1824;color:#fff}
+.auto-badge{display:inline-block;padding:5px 8px;border-radius:8px;background:#173c25;color:#91efa2;font-size:12px;font-weight:800}
+@media(max-width:600px){.auto-reco-grid{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -626,7 +639,18 @@ li{margin:6px 0;line-height:1.45}
     <div class="ai2-note">Schéma je ilustračná. Skutočné upnutie určí AI podľa výkresu, geometrie a požadovaných operácií.</div>
    </div>
 
-   <div class="stdins" id="millStandardInserts"><h3>🧩 Štandardné frézovacie plátky</h3>
+   
+<div class="auto-tool" id="millAutoTool">
+  <h3>🤖 Automatický výber frézovacieho nástroja</h3>
+  <div class="muted">AI vyberie typ frézy, telo a plátok podľa materiálu, geometrie súčiastky, operácie a stroja. Ručná voľba je iba voliteľný override.</div>
+  <div class="auto-reco" id="millAutoReco"><span class="auto-badge">AI VÝBER: čaká na analýzu výkresu</span></div>
+  <div class="auto-choice">
+    <label><b>Ručná zmena (voliteľné)</b></label>
+    <select id="millManualOverride"><option value="">Použiť automatický výber AI</option></select>
+  </div>
+</div>
+
+<div class="stdins" id="millStandardInserts"><h3>🧩 Štandardné frézovacie plátky</h3>
 <div class="stdins-grid"><select id="millInsertFamily"><option value="">Vyber typ plátku…</option></select><select id="millInsertSize" disabled><option value="">Vyber rozmer…</option></select></div>
 <div class="compat-box"><label for="millInsertBody">Kompatibilné telo frézy</label><select id="millInsertBody" disabled><option value="">Najprv vyber plátok…</option></select><div id="millCompatMsg" class="compat-warn">Po výbere plátku sa zobrazia kompatibilné typy.</div></div>
 <div class="stdins-card" id="millInsertInfo">Vyber typ plátku. AI ho použije ako preferenciu.</div>
@@ -972,6 +996,76 @@ document.addEventListener('click',function(e){
 </script>
 
 
+
+<script id="auto-tool-selection-v7">
+(function(){
+  const TURN = {
+    steel:{family:"CNMG",size:"CNMG 120408",holder:"Vonkajší držiak pre CNMG",reason:"stabilná negatívna geometria pre bežné ocele"},
+    stainless:{family:"CNMG",size:"CNMG 120408",holder:"Vonkajší držiak pre CNMG",reason:"robustná geometria; triedu/povlak treba zvoliť podľa nerezovej ocele"},
+    cast:{family:"CNMG",size:"CNMG 120408",holder:"Vonkajší držiak pre CNMG",reason:"stabilná geometria pre liatiny"},
+    aluminum:{family:"CCGT",size:"CCGT 09T304",holder:"Vonkajší pozitívny držiak CCGT",reason:"pozitívna leštená geometria vhodná pre neželezné materiály"},
+    default:{family:"CCMT",size:"CCMT 09T304",holder:"Vonkajší pozitívny držiak CCMT",reason:"univerzálny štartovací návrh; AI ho má potvrdiť podľa výkresu"}
+  };
+  const MILL = {
+    steel:{family:"APKT",size:"APKT 1604",body:"Frézovacie teleso APKT",reason:"bežné 90° frézovanie ocele"},
+    stainless:{family:"APKT",size:"APKT 1604",body:"Frézovacie teleso APKT",reason:"robustné 90° frézovanie; trieda sa volí podľa nereze"},
+    cast:{family:"APKT",size:"APKT 1604",body:"Frézovacie teleso APKT",reason:"univerzálne frézovanie liatin"},
+    aluminum:{family:"APMT",size:"APMT 1604",body:"Frézovacie teleso APMT",reason:"pozitívna geometria pre neželezné materiály"},
+    default:{family:"APKT",size:"APKT 1604",body:"Frézovacie teleso APKT",reason:"univerzálny štartovací návrh; AI ho má potvrdiť podľa výkresu"}
+  };
+
+  function materialClass(m){
+    m=(m||"").toLowerCase();
+    if(/hliník|aluminium|alu\b|6061|6082|7075/.test(m)) return "aluminum";
+    if(/nerez|stainless|inox|1\.4|1\.43|1\.44/.test(m)) return "stainless";
+    if(/liatina|cast iron|gg\d|gjs|ggi/.test(m)) return "cast";
+    if(/oceľ|steel|c45|s355|s690|42crmo4|16mn|34crmo/.test(m)) return "steel";
+    return "default";
+  }
+
+  function explicit(data){
+    return data && (data.recommended_tool || data.tool_selection || data.selected_tool);
+  }
+
+  function render(prefix, data){
+    const reco=document.getElementById(prefix+"AutoReco");
+    const override=document.getElementById(prefix+"ManualOverride");
+    if(!reco || !override) return;
+
+    const material=document.getElementById(prefix+"Material")?.value||"";
+    const k=materialClass(material);
+    const isMill=prefix==="millAi";
+    const base=isMill?MILL[k]:TURN[k];
+    const ex=explicit(data);
+
+    let r=base;
+    if(ex){
+      r={
+        family:ex.insert_family || ex.family || base.family,
+        size:ex.insert_size || ex.size || base.size,
+        holder:ex.holder || base.holder,
+        body:ex.body || ex.tool_body || base.body,
+        reason:ex.reason || ex.justification || "Výber dodaný AI analýzou."
+      };
+    }
+
+    const third=isMill?r.body:r.holder;
+    reco.innerHTML='<span class="auto-badge">✓ AI VÝBER NÁSTROJA</span>'+
+      '<div class="auto-reco-grid">'+
+      '<div class="auto-reco-item"><span>PLÁTOK</span><b>'+esc(r.family)+" "+esc(r.size)+'</b></div>'+
+      '<div class="auto-reco-item"><span>'+ (isMill?"TELO FRÉZY":"DRŽIAK") +'</span><b>'+esc(third)+'</b></div>'+
+      '<div class="auto-reco-item"><span>MATERIÁL</span><b>'+esc(material||"podľa výkresu")+'</b></div>'+
+      '<div class="auto-reco-item"><span>DÔVOD</span><b>'+esc(r.reason)+'</b></div></div>';
+
+    override.innerHTML='<option value="">Použiť automatický výber AI</option>'+
+      '<option value="'+esc(r.family+"|"+r.size+"|"+third)+'">Použiť odporúčanie: '+esc(r.family+" "+r.size+" — "+third)+'</option>';
+  }
+
+  function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
+  window.CNCV7AutoTool={render};
+})();
+</script>
+
 <script id="insert-compatibility-v2">
 const INSERT_COMPATIBILITY = {"turning": {"CNMG": ["Vonkajší držiak pre CNMG", "Vyvŕtavacia tyč pre CNMG"], "DNMG": ["Vonkajší držiak pre DNMG", "Vyvŕtavacia tyč pre DNMG"], "WNMG": ["Vonkajší držiak pre WNMG"], "TNMG": ["Vonkajší držiak pre TNMG", "Vyvŕtavacia tyč pre TNMG"], "SNMG": ["Vonkajší držiak pre SNMG"], "VNMG": ["Vonkajší držiak pre VNMG", "Vyvŕtavacia tyč pre VNMG"], "CCMT": ["Vonkajší pozitívny držiak CCMT", "Vyvŕtavacia tyč CCMT"], "DCMT": ["Vonkajší pozitívny držiak DCMT", "Vyvŕtavacia tyč DCMT"], "TCMT": ["Vonkajší pozitívny držiak TCMT", "Vyvŕtavacia tyč TCMT"], "VBMT": ["Vonkajší pozitívny držiak VBMT", "Vyvŕtavacia tyč VBMT"], "VCMT": ["Vonkajší pozitívny držiak VCMT", "Vyvŕtavacia tyč VCMT"], "SCMT": ["Vonkajší pozitívny držiak SCMT", "Vyvŕtavacia tyč SCMT"], "RCMT": ["Vonkajší držiak pre RCMT"], "CCGT": ["Vonkajší pozitívny držiak CCGT", "Držiak CCGT pre hliník"], "DCGT": ["Vonkajší pozitívny držiak DCGT", "Držiak DCGT pre hliník"], "TCGT": ["Vonkajší pozitívny držiak TCGT", "Držiak TCGT pre hliník"], "MGMN": ["Zapichovací držiak MGMN", "Upichovací držiak MGMN"], "16ER": ["Vonkajší závitovací držiak 16ER"], "16IR": ["Vnútorný závitovací držiak 16IR"]}, "milling": {"APKT": ["Frézovacie teleso APKT", "90° čelná/rohová fréza APKT"], "APMT": ["Frézovacie teleso APMT", "90° čelná/rohová fréza APMT"], "SEKT": ["Čelná fréza SEKT", "Rohová fréza SEKT"], "SEHT": ["Čelná fréza SEHT", "Rohová fréza SEHT"], "SPMT": ["Čelná fréza SPMT", "Rohová fréza SPMT"], "RPMT": ["Kopírovacia fréza RPMT", "3D fréza RPMT"], "RDMT": ["Kopírovacia fréza RDMT", "3D fréza RDMT"], "RPKT": ["Vysokoposuvová fréza RPKT"], "SNMX": ["Ťažká čelná fréza SNMX"], "ONMU": ["Ťažká čelná fréza ONMU"], "LNMU": ["Vysokoposuvová fréza LNMU"], "XNMU": ["Ťažká čelná fréza XNMU"], "XDKT": ["Profilová/rohová fréza XDKT"], "WNMU": ["Hrubovacia fréza WNMU"], "SDMT": ["Vysokoposuvová fréza SDMT"]}};
 (function(){
@@ -1105,6 +1199,7 @@ init('turnAi','turning');init('millAi','milling');
     html += block('Poznámky', listHtml(notes));
 
     document.getElementById(prefix+'Result').innerHTML=html;
+    if(window.CNCV7AutoTool) CNCV7AutoTool.render(prefix,data);
     document.getElementById(prefix+'ResultCard').classList.remove('hidden');
   }
 
@@ -1190,6 +1285,8 @@ init('turnAi','turning');init('millAi','milling');
           selectedInsertFamily: prefix==='turnAi' ? (document.getElementById('turnInsertFamily')?.value||'') : (document.getElementById('millInsertFamily')?.value||''),
           selectedInsertSize: prefix==='turnAi' ? (document.getElementById('turnInsertSize')?.value||'') : (document.getElementById('millInsertSize')?.value||''),
           selectedInsertBody: prefix==='turnAi' ? (document.getElementById('turnInsertBody')?.value||'') : (document.getElementById('millInsertBody')?.value||''),
+          autoToolSelection: true,
+          manualToolOverride: prefix==='turnAi' ? (document.getElementById('turnManualOverride')?.value||'') : (document.getElementById('millManualOverride')?.value||''),
           fileName:selectedFile.name,
           fileData:fileData
         };

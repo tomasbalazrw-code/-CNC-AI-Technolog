@@ -181,6 +181,19 @@ li{margin:6px 0;line-height:1.45}
 .toolGrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;color:#b9c8d5;font-size:13px}
 .toolGrid div{padding:7px 8px;background:#0d1b28;border-radius:8px}
 .notice{font-size:12px;color:#91a4b5;line-height:1.45;margin-top:10px}
+
+/* ===== CNC STROJOVÁ DATABÁZA V3 ===== */
+.machine-db{display:grid;gap:12px;margin-top:8px}
+.machine-db .db-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.machine-db .db-title{font-weight:800;font-size:16px}
+.machine-db .db-badge{font-size:11px;padding:5px 8px;border:1px solid #24506d;border-radius:999px;color:#8ed8ff;background:#081723}
+.machine-db select{width:100%;appearance:auto;background:#08131e;color:#f5f8fc;border:1px solid #285572;border-radius:15px;padding:15px 14px;font-size:16px;outline:none}
+.machine-db select:focus{border-color:#16a8ff;box-shadow:0 0 0 3px rgba(22,168,255,.12)}
+.machine-db .db-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.machine-db .db-note{font-size:12px;line-height:1.45;color:#8fa3b5}
+.machine-db .db-selected{font-size:13px;color:#b9d8ea;background:#07111a;border:1px solid #1e3c50;border-radius:12px;padding:10px 12px;line-height:1.4}
+@media(max-width:360px){.machine-db .db-row{grid-template-columns:1fr}}
+
 </style>
 
 <style id="cnc-v4-css">
@@ -432,9 +445,16 @@ li{margin:6px 0;line-height:1.45}
       </div>
     </div>
 
-    <div class="field">
-      <label for="turnAiMachine">Stroj / riadenie</label>
-      <input id="turnAiMachine" type="text" value="Fanuc" placeholder="napr. Fanuc">
+    <div class="machine-db" data-db-prefix="turnAi" data-process="turning">
+      <div class="db-head"><div class="db-title">🖥️ Obrábací stroj a CNC riadenie</div><span class="db-badge">SVETOVÁ DATABÁZA</span></div>
+      <div class="db-row">
+        <div><label for="turnAiManufacturer">Výrobca stroja</label><select id="turnAiManufacturer"><option value="">Vyber výrobcu…</option></select></div>
+        <div><label for="turnAiModel">Model stroja</label><select id="turnAiModel" disabled><option value="">Najprv výrobca…</option></select></div>
+      </div>
+      <div><label for="turnAiControl">CNC riadiaci systém</label><select id="turnAiControl"><option value="">Vyber riadenie…</option></select></div>
+      <div class="db-selected" id="turnAiMachineSummary">Stroj zatiaľ nie je vybraný.</div>
+      <div class="db-note">Technológ vyberie konkrétny stroj a riadenie. Výber sa odošle AI spolu s výkresom.</div>
+      <input id="turnAiMachine" type="hidden" value="Fanuc">
     </div>
 
     <div class="field">
@@ -497,9 +517,16 @@ li{margin:6px 0;line-height:1.45}
     </div>
    </div>
 
-   <div class="ai2-field">
-    <label for="millAiMachine">Stroj / riadenie</label>
-    <input id="millAiMachine" type="text" value="Fanuc" placeholder="napr. Fanuc, Siemens, Heidenhain">
+   <div class="machine-db" data-db-prefix="millAi" data-process="milling">
+    <div class="db-head"><div class="db-title">🖥️ Obrábací stroj a CNC riadenie</div><span class="db-badge">SVETOVÁ DATABÁZA</span></div>
+    <div class="db-row">
+     <div><label for="millAiManufacturer">Výrobca stroja</label><select id="millAiManufacturer"><option value="">Vyber výrobcu…</option></select></div>
+     <div><label for="millAiModel">Model stroja</label><select id="millAiModel" disabled><option value="">Najprv výrobca…</option></select></div>
+    </div>
+    <div><label for="millAiControl">CNC riadiaci systém</label><select id="millAiControl"><option value="">Vyber riadenie…</option></select></div>
+    <div class="db-selected" id="millAiMachineSummary">Stroj zatiaľ nie je vybraný.</div>
+    <div class="db-note">Technológ vyberie konkrétny stroj a riadenie. Výber sa odošle AI spolu s výkresom.</div>
+    <input id="millAiMachine" type="hidden" value="Fanuc">
    </div>
 
    <div class="ai2-field">
@@ -1076,6 +1103,132 @@ document.addEventListener('click',function(e){
   setup('turnAi','Sústruženie');
   setup('millAi','Frézovanie');
 })();
+
+/* ===== SVETOVÁ DATABÁZA OBRÁBACÍCH STROJOV A CNC RIADENÍ ===== */
+const CNC_MACHINE_DB = {
+  turning: {
+    "Mazak": ["QUICK TURN 100/200/250/350","QUICK TURN 450/500","INTEGREX i-100/i-200/i-250","INTEGREX i-300/i-400","QT-PRIMOS 100/150","HQR-150/200/250","MEGA TURN 900"],
+    "DMG MORI": ["CLX 350/450/550","CLX 750","NLX 1500/2000","NLX 2500/3000","NLX 4000","CTX beta 800","CTX gamma 2000","NTX 1000/2000","NTX 2500/3000"],
+    "Okuma": ["GENOS L200/L300/L400","LB2000 EX III","LB3000 EX III","LB4000 EX III","LU3000 EX","MULTUS B200/B300","MULTUS U3000/U4000"],
+    "Haas": ["ST-10/ST-15","ST-20/ST-25","ST-30/ST-35","ST-40/ST-45","DS-30Y","DS-30SSY","TL-1/TL-2"],
+    "DN Solutions (Doosan)": ["LYNX 2100/2600","PUMA 2100/2600","PUMA 3100/4100","PUMA 5100","PUMA TT2500/TT3500","MX Series"],
+    "Hyundai WIA": ["L2100/L2300","L2800/L3000","L400/L500","HD 2200/2600","HD 3500/4000","SE2200/2600"],
+    "Nakamura-Tome": ["SC-100/150/200","SC-300/400","WY-100/150","WY-250/350","NTY3-100/150","NTJ-100/150"],
+    "Mori Seiki": ["NL1500/NL2000","NL2500/NL3000","NL4000","NZ2000/NZ2500","NZX2000/2500","NTX1000/2000"],
+    "Hardinge": ["T42/T51","GT-27/GT-42","SUPER-PRECISION T-Series","Talent 6/8/10/12","Conquest 42"],
+    "INDEX / TRAUB": ["INDEX C100/C200/C200D","INDEX G200/G220","INDEX G300/G420","INDEX B400/B500","TRAUB TNL12/TNL18","TRAUB TNA300/TNA400"],
+    "Citizen": ["CINCOM L12/L16/L20","CINCOM L32/L32-X","Miyano BNA-42/BNJ-51","Miyano ABX-51/67"],
+    "Star Micronics": ["SR-10J/SR-20J","SR-20R/SR-32J","SR-38/38E","SB-16/20/26"],
+    "Tsugami": ["BO12/BO18/BO20","M08/M12/M18","SXM-26/38","TMA8/TMAZ8"],
+    "Tornos": ["SwissNano 4/7","Swiss GT 13/26","GT 32","DECO 10/13/20","EvoDECO 10/16"],
+    "Gildemeister": ["CTX 310/420/620","CTX 420 linear","CTX beta 500","NEF 400/600","Sprint 20/32"],
+    "EMCO": ["Hyperturn 45/65","Hyperturn 95","Maxxturn 45/65","E-series","EMCOTURN E45/E65"],
+    "Spinner": ["TC 400/600","TC 800/1100","TC 65","TC 110/135","TTC 300"],
+    "Hwacheon": ["Hi-TECH 200/230","Hi-TECH 230/300","Cutex 160/240","VT-450","Hi-ECO 35"],
+    "Victor Taichung": ["Vturn-20/26","Vturn-30/36","Vturn-A20/A26","Vturn-X200/X260"],
+    "Goodway": ["GS-200/260","GA-200/260","GLS-200/260","GT-350/400"],
+    "Leadwell": ["LTC-20/30","LTC-35/40","T-6/8/10","LTC-50"],
+    "YCM": ["TC Series","GT Series","Supermax TC","NT Series"],
+    "Romi": ["GL 170/240/300","GL 350/400","G Series","Centur 30/40"],
+    "Doosan Škoda Power": ["SP Series Heavy Turn","SR Series","Heavy Duty CNC Lathes"],
+    "Weiler": ["E50/E70","E110","DZ 65","DZ 100","Praktikant VC"],
+    "Ravensburg / Niles": ["NILES-SIMMONS N Series","NILES N20/N30","Heavy Duty Turning Series"],
+    "Schaudt": ["PF Series","Körber HG Series","Crankshaft Grinding Series"],
+    "Danobat": ["LG Series","DANOBAT WT","Overbeck ID/OD Grinding"],
+    "Studer": ["S11/S22","S31/S33","S41/S131","S100/S120"],
+    "Kellenberger": ["KELLENBERGER 100/1000","KELLENBERGER 10/100","VOUMARD 1000/2000"],
+    "Okamoto": ["OGM/UGM Series","ACC Surface Grinder Series","IGM Internal Grinder Series"]
+  },
+  milling: {
+    "Mazak": ["VARIAXIS i-500/i-600","VARIAXIS j-500","VCN-430A/530C","VCN-570C","VCN-700D","HCR-5000","HCN-5000/6000","INTEGREX i-200/i-300"],
+    "DMG MORI": ["CMX 600 V/800 V/1100 V","DMU 40/50/75/90/125","DMC 635/850/1150","DMC 1450/2100","DMU monoBLOCK 60/80/100/125","DMU duoBLOCK 80/100/125/160","DMF 180/260"],
+    "Haas": ["VF-1/VF-2/VF-3/VF-4","VF-5/VF-6/VF-7","VF-8/VF-9/VF-10","UMC-500/750/1000","EC-400/500/630","DT-1/DM-1","GR-510"],
+    "Okuma": ["GENOS M460/M560","GENOS M660","MB-46VA/56VA/66VA","MB-80V","MU-400V/500V/630V","MU-8000V"],
+    "Makino": ["PS95/105/125","a51nx/a61nx","a71nx","F5/F7/F8","DA300/DA500","T2/ T3"],
+    "Matsuura": ["MX-420 PC10/PC12","MX-520 PC10/PC12","MX-850","H.Plus-300/400/500","MAM72-25V/35V/50V"],
+    "Hermle": ["C 12/C 22/C 32","C 42/C 52","C 62/C 650","C 250/C 400","GENERIC C-Series"],
+    "Chiron": ["MILL 2000/3000","FZ 08/12/15","FZ 16/18/22","DZ 08/16","DZ 18/25"],
+    "GROB": ["G150/G250","G350/G550","G700","G720/G920"],
+    "Heller": ["HF 3500/HF 5500","MC 16/20/25","FT 2000/3000","CP 2000"],
+    "Starrag": ["STC 1250/1600","LX Series","Heckert HEC 500/630/800","BTP Series"],
+    "Fidia": ["G Series","D Series","K Series","Digit 428/806"],
+    "Jobs": ["Jomach 35/40","LinX","Duo Series","Forest-Line"],
+    "Zayer": ["KAIROS","KPCU","XIOS","BF Series","MEMPHIS"],
+    "Soraluce": ["TA Series","TR Series","SP Series","FP Series","FX Series"],
+    "Nicolas Correa": ["FOX","NORMA","DIANA","AXIA","VERSA"],
+    "Hartford": ["VMC-850/1020/1270","HCMC Series","LG Series","5AX Series"],
+    "Tongtai": ["TMV Series","TMV-710/850","VP Series","Q5/Q7"],
+    "YCM": ["NSV Series","NXV Series","MV Series","DCV Series","UV Series"],
+    "Victor Taichung": ["Vcenter-55/65","Vcenter-85/102","Vcenter-A110","Vcenter-AX350"],
+    "Leadwell": ["V-20/V-30/V-40","V-50/V-60","LVC-1000","DMV Series"],
+    "Hurco": ["VM Series","VMX Series","VMX42/60/64","DCX Series","BX Series"],
+    "Brother": ["Speedio S300/S500/S700","Speedio R450/R650","Speedio W1000","Speedio U500Xd1"],
+    "Fanuc": ["ROBODRILL α-D21MiB/DiB","ROBODRILL α-D21LiB","ROBODRILL α-D28MiB","ROBODRILL α-D31LiB"],
+    "Hyundai WIA": ["KF 4600/5600/7600","KF 8150","F400/F500/F650","HS5000/HS6300"],
+    "DN Solutions (Doosan)": ["DNM 4500/5700/6700","DNM 750L","DVF 5000/6500","DMP 500/750","VCF 850/1050"],
+    "Hwacheon": ["VESTA-660/1000","VESTA-1300","Sirius-650/850","MACHINE CENTER VESTA"],
+    "Emco": ["VMC-300/600/1000","Maxxmill 500/750","MILL 600/1200","Hyperturn mill-turn"],
+    "Spinner": ["VC 650/850/1150","VC 1300","VCN Series","U5-1520"],
+    "Mikron": ["VCE 600/800/1000","MILL P 500/800","HPM 600U/800U","VCP 600/800"],
+    "GF Machining Solutions": ["MILL S 400/500/600","MILL P 500/800","MILL X 400/500","MILL E 500"],
+    "Mitsubishi": ["M-V Series","M-H Series","MV Series","MELDAS Machining Centers"],
+    "Nikken / OKK": ["HM Series","VM Series","MCH Series","VP Series"],
+    "Kitamura": ["Mycenter-2Xi/3Xi","Mycenter-4Xi","Mycenter-HX","Mycenter-Xd"],
+    "Yamazaki Mazak / Matrix": ["VARIAXIS","VCN","HCN","VTC Series"]
+  }
+};
+
+const CNC_CONTROL_DB = [
+  "FANUC 0i-TF / 0i-TF Plus","FANUC 0i-MF / 0i-MF Plus","FANUC 30i/31i/32i","FANUC 35i","FANUC 31i-B5","FANUC Series 16i/18i/21i",
+  "Siemens SINUMERIK 810D","Siemens SINUMERIK 840D / 840D sl","Siemens SINUMERIK 828D","Siemens SINUMERIK ONE","Siemens SINUMERIK 802D",
+  "HEIDENHAIN TNC 426/430","HEIDENHAIN iTNC 530","HEIDENHAIN TNC 620","HEIDENHAIN TNC 640","HEIDENHAIN TNC7","HEIDENHAIN TNC 7 basic",
+  "Mitsubishi M70","Mitsubishi M80","Mitsubishi M800/M80V","Mitsubishi M700/M700V","Mitsubishi Meldas 500/600",
+  "Mazatrol Fusion 640","Mazatrol Matrix","Mazatrol SmoothG","Mazatrol SmoothX","Mazatrol SmoothAi","Mazatrol SmoothC","Mazatrol SmoothEz",
+  "Okuma OSP-P100/P200","Okuma OSP-P300","Okuma OSP-P500","Okuma OSP-U100/U300","Okuma OSP-E100/E10",
+  "Haas NGC","Haas Classic Control","Hurco WinMax","Brother CNC-C00/C00D","Brother CNC-D00/D00D",
+  "Fagor 8055","Fagor 8060","Fagor 8065","Fagor 8070","NUM 1020/1040","NUM 1060","NUM Flexium",
+  "Syntec 900/1000","Syntec 610/620","GSK 980T/980M","GSK 218MC","Estun E21/E80","Delta NC300/NC500",
+  "Fidia C20/C40/C60","Heidenhain MillPlus","Mori MAPPS / MAPPS IV","Fanuc Custom PMC","Trumpf TruTops Control","B&R CNC","Beckhoff TwinCAT CNC",
+  "Andron","CNC Dialog / ISO kompatibilné","Iné / neuvedené"
+];
+
+function initMachineDatabase(prefix, process){
+  const root=document.querySelector('.machine-db[data-db-prefix="'+prefix+'"]');
+  if(!root) return;
+  const man=document.getElementById(prefix+'Manufacturer');
+  const model=document.getElementById(prefix+'Model');
+  const control=document.getElementById(prefix+'Control');
+  const hidden=document.getElementById(prefix+'Machine');
+  const summary=document.getElementById(prefix+'MachineSummary');
+  const db=CNC_MACHINE_DB[process]||{};
+  Object.keys(db).sort((a,b)=>a.localeCompare(b,'sk')).forEach(name=>{
+    const o=document.createElement('option'); o.value=name; o.textContent=name; man.appendChild(o);
+  });
+  CNC_CONTROL_DB.forEach(name=>{ const o=document.createElement('option'); o.value=name; o.textContent=name; control.appendChild(o); });
+  man.addEventListener('change',()=>{
+    model.innerHTML='<option value="">Vyber model…</option>';
+    model.disabled=!man.value;
+    (db[man.value]||[]).forEach(name=>{const o=document.createElement('option');o.value=name;o.textContent=name;model.appendChild(o);});
+    update();
+  });
+  model.addEventListener('change',update); control.addEventListener('change',update);
+  function update(){
+    const m=man.value, md=model.value, c=control.value;
+    let text='Stroj zatiaľ nie je vybraný.';
+    if(m||md||c){
+      text='<b>'+[m,md].filter(Boolean).join(' • ')+'</b>'+(c?'<br>Riadenie: '+c:'<br>Riadenie zatiaľ nevybrané.');
+    }
+    summary.innerHTML=text;
+    hidden.value=[m,md,c].filter(Boolean).join(' | ') || 'Fanuc';
+  }
+  // Default: FANUC riadenie, bez vynútenia konkrétneho stroja.
+  const fanuc=CNC_CONTROL_DB.find(x=>x==='FANUC 0i-TF / 0i-TF Plus'); if(fanuc) control.value=fanuc;
+  update();
+}
+
+initMachineDatabase('turnAi','turning');
+initMachineDatabase('millAi','milling');
+
 </script>
 </body>
 </html>

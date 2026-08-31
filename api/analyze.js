@@ -13,9 +13,21 @@ const SCHEMA = {
   additionalProperties: false,
   properties: {
     drawing_read: { type: "string" },
+    geometry: { type: "object", additionalProperties: false, properties: {
+      coordinate_system: { type: "string" },
+      dimensions: { type: "array", items: { type: "object", additionalProperties: false, properties: {
+        name: { type: "string" }, value: { type: "string" }, tolerance: { type: "string" }, reference: { type: "string" }
+      }, required: ["name", "value", "tolerance", "reference"] } },
+      features: { type: "array", items: { type: "string" } },
+      profile_sequence: { type: "array", items: { type: "string" } }
+    }, required: ["coordinate_system", "dimensions", "features", "profile_sequence"] },
     setup: { type: "object", additionalProperties: false, properties: {
       clamping: { type: "string" }, datum: { type: "string" }, supports: { type: "string" }, risks: { type: "string" }
     }, required: ["clamping", "datum", "supports", "risks"] },
+    recommended_tool: { type: "object", additionalProperties: false, properties: {
+      family: { type: "string" }, size: { type: "string" }, holder: { type: "string" },
+      body: { type: "string" }, reason: { type: "string" }
+    }, required: ["family", "size", "holder", "body", "reason"] },
     operations: { type: "array", items: { type: "object", additionalProperties: false, properties: {
       order: { type: "integer" }, name: { type: "string" }, description: { type: "string" }
     }, required: ["order", "name", "description"] } },
@@ -27,7 +39,7 @@ const SCHEMA = {
     warnings: { type: "array", items: { type: "string" } },
     notes: { type: "array", items: { type: "string" } }
   },
-  required: ["drawing_read", "setup", "operations", "tools", "material", "stock", "critical_dimensions", "warnings", "notes"]
+  required: ["drawing_read", "geometry", "setup", "recommended_tool", "operations", "tools", "material", "stock", "critical_dimensions", "warnings", "notes"]
 };
 
 function fail(res, status, message, details = "") {
@@ -66,7 +78,8 @@ Vstup:
 
 POVINNÉ:
 1. Prečítaj konkrétne rozmery, priemery, dĺžky, tolerancie, závity, rádiusy, uhly, drsnosti, geometrické tolerancie a poznámky z výkresu.
-2. Žiadna všeobecná ukážka a žiadne prázdne polia. Výsledok musí vychádzať z výkresu.
+2. Vytvor explicitnú geometriu: každý dôležitý rozmer zapíš do geometry.dimensions s hodnotou a toleranciou; do geometry.features zapíš všetky rozpoznané prvky (priemer, čelo, zápich, závit, rádius, kužeľ, otvor, drážka atď.); pri rotačnom diele zapíš profile_sequence v poradí od referenčného bodu.
+3. Žiadna všeobecná ukážka a žiadne prázdne polia. Výsledok musí vychádzať z výkresu.
 3. Ak údaj nie je čitateľný alebo nie je uvedený, napíš „NIE JE UVEDENÉ/ČITATEĽNÉ“. Nevymýšľaj si ho.
 4. Navrhni reálny technologický postup v správnom poradí.
 5. Navrhni konkrétne nástroje; preferuj MASAM/BÖHLERIT, potom Sandvik, Walter, Seco alebo Ceratizit. Katalógové číslo len ak je spoľahlivo určiteľné, inak „overiť v katalógu“.
@@ -132,7 +145,9 @@ export default async function handler(req, res) {
       operation: body.type || body.operation || "Sústruženie",
       material: body.material || plan.material || "",
       stock: body.stock || plan.stock || "",
-      machine: body.machine || "", ...plan
+      machine: body.machine || "",
+      control: body.control || "",
+      ...plan
     });
   } catch (err) {
     console.error(err);

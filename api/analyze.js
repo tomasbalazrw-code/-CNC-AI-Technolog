@@ -4,6 +4,7 @@ export const config = { api: { bodyParser: false } };
 
 const OPENAI_URL = "https://api.openai.com/v1";
 const MODEL = "gpt-5.6-luna";
+const OPENAI_API_KEY = String(OPENAI_API_KEY || "").trim();
 
 const SCHEMA = {
   type: "object",
@@ -101,7 +102,7 @@ async function createOpenAIFile(fileData, fileName, mime) {
   const response = await fetch(`${OPENAI_URL}/files`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+      Authorization: `Bearer ${OPENAI_API_KEY}`
     },
     body: form
   });
@@ -150,7 +151,7 @@ export default async function handler(req, res) {
       return fail(res, 405, "Použi POST požiadavku.");
     }
 
-    if (!process.env.OPENAI_API_KEY) {
+    if (!OPENAI_API_KEY) {
       return fail(
         res,
         500,
@@ -220,7 +221,7 @@ export default async function handler(req, res) {
         headers: {
           "Content-Type": "application/json",
           Authorization:
-            `Bearer ${process.env.OPENAI_API_KEY}`
+            `Bearer ${OPENAI_API_KEY}`
         },
         body: JSON.stringify({
           model: MODEL,

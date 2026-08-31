@@ -976,7 +976,7 @@ async function cncGenerateProgram(){
       (checks.length?'<div style="margin-top:12px"><b>Kontroly pred spustením:</b><ul>'+checks.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'');
   }catch(err){
     r.style.display='block';
-    r.innerHTML='<b>❌ Generovanie CNC programu zlyhalo</b><br><br><span class="cnc-v4-muted">'+String(err.message||err)+'</span><br><br><small class="cnc-v4-muted">Skontroluj, či je /api/program v rovnakom Vercel projekte ako index.html a či je nasadená aktuálna verzia.</small>';
+    r.innerHTML='<b>❌ Generovanie CNC programu zlyhalo</b><br><br><span class="cnc-v4-muted">'+String(err.message||err)+'</span><br><br><small class="cnc-v4-muted">Ak chyba pokračuje, zobrazí sa aj technický detail z /api/program. Skontroluj nasadenie aktuálneho index.html + api/program.js v tom istom Vercel projekte.</small>';
   }
 }
 function cncCopyProgram(){

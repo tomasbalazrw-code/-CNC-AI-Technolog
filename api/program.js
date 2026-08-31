@@ -72,9 +72,50 @@ export default async function handler(req, res) {
 
     if (!response.ok) return fail(res, 502, "Generovanie CNC programu zlyhalo.", await response.text());
     const data = await response.json();
+
+    // Responses API môže mať text priamo v output_text alebo v output[].content[].text.
+    function extractOutputText(resp) {
+      if (typeof resp.output_text === "string" && resp.output_text.trim()) return resp.output_text.trim();
+      const parts = [];
+      for (const item of (resp.output || [])) {
+        for (const content of (item.content || [])) {
+          if (typeof content.text === "string" && content.text.trim()) parts.push(content.text);
+        }
+      }
+      return parts.join("\n").trim();
+    }
+
+    const raw = extractOutputText(data);
+    if (!raw) {
+      return fail(res, 502, "AI nevrátila text CNC programu.", JSON.stringify({
+        response_id: data.id || null,
+        status: data.status || null,
+        incomplete_details: data.incomplete_details || null,
+        output_items: Array.isArray(data.output) ? data.output.length : 0
+      }));
+    }
+
     let out;
-    try { out = JSON.parse(data.output_text || ""); }
-    catch { return fail(res, 502, "AI nevrátila platný program.", data.output_text || ""); }
+    try {
+      out = JSON.parse(raw);
+    } catch (_) {
+      // Fallback: model môže vrátiť JSON v markdown code fence alebo s krátkym textom okolo.
+      const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+      const candidate = fenced ? fenced[1].trim() : raw;
+      try {
+        out = JSON.parse(candidate);
+      } catch (_) {
+        const start = candidate.indexOf("{");
+        const end = candidate.lastIndexOf("}");
+        if (start >= 0 && end > start) {
+          try { out = JSON.parse(candidate.slice(start, end + 1)); } catch (_) {}
+        }
+      }
+    }
+
+    if (!out || typeof out !== "object" || typeof out.program !== "string" || !out.program.trim()) {
+      return fail(res, 502, "AI nevrátila platný CNC program.", raw.slice(0, 8000));
+    }
 
     return res.status(200).json({ success: true, ...out });
   } catch (err) {

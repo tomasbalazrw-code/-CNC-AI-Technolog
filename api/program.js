@@ -33,15 +33,16 @@ ${JSON.stringify(plan, null, 2)}
 
 PRAVIDLÁ:
 1. Program musí vychádzať z geometry, operations, setup a tools. Nevymýšľaj rozmery, ktoré v pláne nie sú.
-2. Použi konkrétne rozmery z geometry.dimensions a prvky z geometry.features tam, kde sú jednoznačné.
+2. geometry.dimensions, geometry.features a geometry.profile_sequence sú povinný zdroj dráhy. Použi konkrétne rozmery z nich v programe a zachovaj ich poradie.
 3. Ak chýba kritický údaj potrebný na bezpečný pohyb (napr. presná poloha prvku, nástroj, korekcia, bezpečná rovina, smer osi alebo spôsob upnutia), nevymýšľaj ho. Uveď ho v assumptions/checks a program ponechaj ako bezpečný návrh s komentárom alebo placeholderom.
 4. Zohľadni poradie operácií a navrhnuté nástroje. Pre sústruženie používaj X/Z a vhodné G-kódy pre Fanuc/ISO. Pre frézovanie používaj X/Y/Z a G17 podľa potreby.
 5. Pri otáčkach a posuvoch použi hodnoty z tools, ak sú uvedené. Ak sú označené ako nutné doplniť, nepodsúvaj ich ako presné.
 6. Zahrň bezpečný štart, vyvolanie nástroja/korekcie, otáčky, posuvy, pracovný nulový bod a ukončenie programu iba v rozsahu, ktorý je podložený plánom.
-7. Nevytváraj falošné merania ani predstieraj, že program je overený simuláciou.
-8. Výstup program má byť čistý G-kód s krátkymi komentármi, bez Markdown code fence.
-9. Program je technologický návrh na kontrolu, nie automaticky bezpečný výrobný program.
-10. Ak je výkres nedostatočne jednoznačný na vytvorenie konkrétnej dráhy, vráť čo najviac použiteľného programu a presne vypíš, čo musí technológ doplniť.
+7. Pri sústružení vytvor skutočnú dráhu podľa profile_sequence a dimensions (X/Z); pri frézovaní vytvor dráhu podľa features/dimensions (X/Y/Z). Nevytváraj generickú šablónu typu "X0 Z0" len preto, aby program vyzeral hotový.
+8. Nevytváraj falošné merania ani predstieraj, že program je overený simuláciou.
+9. Výstup program má byť čistý G-kód s krátkymi komentármi, bez Markdown code fence.
+10. Program je technologický návrh na kontrolu, nie automaticky bezpečný výrobný program.
+11. Ak je výkres nedostatočne jednoznačný na vytvorenie konkrétnej dráhy, nevymýšľaj chýbajúce súradnice; vráť najbezpečnejší možný návrh a presne vypíš, čo musí technológ doplniť.
 `;
 }
 

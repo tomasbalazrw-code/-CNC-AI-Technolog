@@ -198,6 +198,62 @@ li{margin:6px 0;line-height:1.45}
 .cnc-v4-drop input{display:none}
 .cnc-v4-result{white-space:pre-line;line-height:1.55;margin-top:14px}
 </style>
+<style>
+/* AI V2 – sústruženie + frézovanie */
+.ai2-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ai2-field{margin-bottom:14px}
+.ai2-field label{display:block;font-weight:800;margin-bottom:7px}
+.ai2-field input,.ai2-field select,.ai2-field textarea{
+  width:100%;box-sizing:border-box;padding:14px;border-radius:13px;
+  border:1px solid #304657;background:#0a131d;color:#fff;font-size:16px;
+}
+.ai2-field textarea{min-height:100px;resize:vertical}
+.ai2-drop{
+  display:block;text-align:center;padding:20px;border:1px dashed #39708d;
+  border-radius:16px;background:#0b1722;margin-top:8px
+}
+.ai2-drop.drag{border-color:#168cff;background:#102337}
+.ai2-drop input{display:none}
+.ai2-drop-btn{display:inline-block;padding:12px 16px;border-radius:12px;background:#168cff;color:#fff;font-weight:800}
+.ai2-file{margin-top:9px;color:#9fb2c4;font-size:14px}
+.ai2-preview{display:none;margin-top:12px}
+.ai2-preview img{max-width:100%;max-height:260px;border-radius:12px;border:1px solid #304657}
+.ai2-pdf{padding:14px;border-radius:12px;background:#111f2d}
+.ai2-btn{
+  width:100%;padding:15px;border:0;border-radius:13px;background:#168cff;
+  color:#fff;font-weight:900;font-size:16px;margin-top:5px
+}
+.ai2-btn:disabled{opacity:.6}
+.ai2-status{margin-top:13px;line-height:1.45}
+.ai2-status.error{color:#ff7777}
+.ai2-status.ok{color:#79df7a}
+.ai2-status.loading{color:#a9c5dc}
+.ai2-result{margin-top:16px}
+.ai2-result.hidden{display:none}
+.ai2-block{padding:14px 0;border-top:1px solid #26384d}
+.ai2-block:first-child{border-top:0}
+.ai2-block h3{margin:0 0 9px;font-size:18px}
+.ai2-block p{margin:5px 0;line-height:1.5}
+.ai2-block ul{margin:7px 0 0 20px;padding:0}
+.ai2-op,.ai2-tool{padding:10px 0;border-bottom:1px solid #26384d}
+.ai2-op small{display:block;color:#a9bac9;margin-top:5px;line-height:1.45}
+.ai2-tooltop{font-weight:900;margin-bottom:8px}
+.ai2-toolgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:14px}
+.ai2-setup{
+  border:1px solid #304657;border-radius:14px;background:#0a131d;padding:10px;margin-top:10px
+}
+.ai2-setup-title{font-weight:900;margin-bottom:8px}
+.ai2-diagram{
+  margin-top:12px;border-radius:14px;border:1px solid #304657;background:#08111a;
+  overflow:hidden
+}
+.ai2-diagram svg{display:block;width:100%;height:auto}
+.ai2-note{font-size:12px;color:#8fa5b8;margin-top:7px}
+@media(max-width:600px){
+  .ai2-grid{grid-template-columns:1fr}
+  .ai2-toolgrid{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -361,7 +417,7 @@ li{margin:6px 0;line-height:1.45}
       <label for="turnAiOperation">Typ obrábania</label>
       <select id="turnAiOperation">
         <option value="Sústruženie">Sústruženie</option>
-        <option value="Frézovanie">Frézovanie</option>
+        
       </select>
     </div>
 
@@ -401,7 +457,7 @@ li{margin:6px 0;line-height:1.45}
     <div class="status" id="turnAiStatus"></div>
   
 
-      <section class="card hidden" id="turnAiResultCard" style="margin:15px 0 0;padding:14px;background:#0b1520">
+      <section class="ai2-result hidden" id="turnAiResultCard" style="margin:15px 0 0;padding:14px;background:#0b1520">
         
     <div class="resultTitle">
       <h2 style="margin:0">Výsledok analýzy</h2>
@@ -418,14 +474,83 @@ li{margin:6px 0;line-height:1.45}
  <div class="cnc-v4-inner">
   <div class="cnc-v4-top"><button class="cnc-v4-back" onclick="cncClose()">← Späť</button><b>⚙ FRÉZOVANIE</b></div>
   <div class="cnc-v4-card">
-   <h2>Technológia frézovania</h2>
-   <label>Materiál<input id="millMaterial" class="cnc-v4-input" placeholder="napr. C45"></label>
-   <label>Priemer frézy [mm]<input id="millD" class="cnc-v4-input" type="number" placeholder="napr. 12"></label>
-   <label>Rezná rýchlosť Vc [m/min]<input id="millVc" class="cnc-v4-input" type="number" placeholder="napr. 120"></label>
-   <label>Počet zubov z<input id="millZ" class="cnc-v4-input" type="number" placeholder="napr. 4"></label>
-   <label>Posuv na zub fz [mm/zub]<input id="millFz" class="cnc-v4-input" type="number" step="0.01" placeholder="napr. 0.05"></label>
-   <button class="cnc-v4-btn" onclick="cncMillCalc()">Vypočítať štartovacie parametre</button>
-   <div id="millResult" class="cnc-v4-result" style="display:none"></div>
+   <h2>AI technologická analýza – frézovanie</h2>
+   <div class="cnc-v4-muted" style="margin-bottom:14px">
+    Výkres → upnutie → technologický postup → nástroje → štartovacie rezné parametre.
+   </div>
+
+   <div class="ai2-field">
+    <label for="millAiOperation">Typ obrábania</label>
+    <select id="millAiOperation">
+      <option value="Frézovanie" selected>Frézovanie</option>
+    </select>
+   </div>
+
+   <div class="ai2-grid">
+    <div class="ai2-field">
+     <label for="millAiMaterial">Materiál</label>
+     <input id="millAiMaterial" type="text" value="C45" placeholder="napr. C45, 42CrMo4, S355">
+    </div>
+    <div class="ai2-field">
+     <label for="millAiStock">Polotovar</label>
+     <input id="millAiStock" type="text" placeholder="napr. 120 × 80 × 40 mm">
+    </div>
+   </div>
+
+   <div class="ai2-field">
+    <label for="millAiMachine">Stroj / riadenie</label>
+    <input id="millAiMachine" type="text" value="Fanuc" placeholder="napr. Fanuc, Siemens, Heidenhain">
+   </div>
+
+   <div class="ai2-field">
+    <label>Technický výkres</label>
+    <div class="ai2-drop" id="millAiDrop">
+      <label for="millAiFile" class="ai2-drop-btn">📎 Vybrať výkres</label>
+      <input id="millAiFile" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp">
+      <div class="ai2-file" id="millAiFileName">PDF, PNG, JPG/JPEG alebo WEBP</div>
+      <div class="ai2-preview" id="millAiPreview"></div>
+    </div>
+    <div class="ai2-note">Výkres sa odošle na existujúci backend <b>/api/analyze</b>. API kľúč zostáva na serveri.</div>
+   </div>
+
+   <div class="ai2-field">
+    <label for="millAiRequirements">Ďalšie požiadavky</label>
+    <textarea id="millAiRequirements" placeholder="Tolerancie, drsnosť, dostupné nástroje, spôsob upnutia, špeciálne požiadavky..."></textarea>
+   </div>
+
+   <div class="ai2-setup">
+    <div class="ai2-setup-title">🔩 Ilustračná schéma upnutia pri frézovaní</div>
+    <div class="ai2-diagram">
+      <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Schéma upnutia obrobku vo frézovacom zveráku">
+        <rect x="0" y="0" width="700" height="300" fill="#08111a"/>
+        <rect x="55" y="225" width="590" height="32" rx="8" fill="#344a5d"/>
+        <rect x="125" y="170" width="150" height="55" rx="7" fill="#50677a"/>
+        <rect x="425" y="170" width="150" height="55" rx="7" fill="#50677a"/>
+        <rect x="260" y="145" width="165" height="55" rx="5" fill="#9aa9b5"/>
+        <rect x="275" y="132" width="135" height="14" rx="4" fill="#c1cbd2"/>
+        <rect x="150" y="200" width="115" height="18" rx="3" fill="#667e90"/>
+        <rect x="435" y="200" width="115" height="18" rx="3" fill="#667e90"/>
+        <line x1="342" y1="65" x2="342" y2="132" stroke="#168cff" stroke-width="6"/>
+        <path d="M325 88 L342 60 L359 88" fill="none" stroke="#168cff" stroke-width="6"/>
+        <circle cx="342" cy="48" r="18" fill="#168cff"/>
+        <text x="365" y="54" fill="#d8e7f2" font-size="20" font-family="Arial">Nástroj</text>
+        <text x="302" y="178" fill="#111820" font-size="18" font-family="Arial" font-weight="700">OBROBOK</text>
+        <text x="115" y="278" fill="#a9bac9" font-size="17" font-family="Arial">Zverák / upínacie čeľuste</text>
+        <text x="430" y="278" fill="#a9bac9" font-size="17" font-family="Arial">CNC stôl</text>
+      </svg>
+    </div>
+    <div class="ai2-note">Schéma je ilustračná. Skutočné upnutie určí AI podľa výkresu, geometrie a požadovaných operácií.</div>
+   </div>
+
+   <button class="ai2-btn" id="millAiAnalyzeBtn" type="button">🤖 SPUSTIŤ AI ANALÝZU</button>
+   <div class="ai2-status" id="millAiStatus"></div>
+
+   <section class="ai2-result hidden" id="millAiResultCard">
+    <div class="ai2-block">
+      <h3>Výsledok analýzy</h3>
+      <div id="millAiResult"></div>
+    </div>
+   </section>
   </div>
  </div>
 </div>
@@ -758,168 +883,199 @@ document.addEventListener('click',function(e){
 </script>
 
 <script id="turn-ai-v3-js">
-
-const $ = id => document.getElementById(id);
-let turnAiSelectedFile = null;
-
-function turnAiSetStatus(message, type='') {
-  const el=$('status');
-  el.className='status '+type;
-  el.innerHTML=message;
-}
-
-function escapeHtml(v) {
-  return String(v ?? '').replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
-  }[c]));
-}
-
-function listHtml(arr) {
-  if (!Array.isArray(arr) || !arr.length) return '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>';
-  return '<ul>'+arr.map(x=>'<li>'+escapeHtml(x)+'</li>').join('')+'</ul>';
-}
-
-function turnAiRenderResult(data) {
-  const setup=data.setup || {};
-  const ops=Array.isArray(data.operations)?data.operations:[];
-  const tools=Array.isArray(data.tools)?data.tools:[];
-  const critical=data.critical_dimensions||[];
-  const warnings=data.warnings||[];
-  const notes=data.notes||[];
-
-  let html='';
-  html += turnAiBlock('Čítanie výkresu', `<p>${escapeHtml(data.drawing_read || 'NIE JE UVEDENÉ/ČITATEĽNÉ')}</p>`);
-  html += turnAiBlock('Upnutie a dátumy',
-    `<p><b>Upnutie:</b> ${escapeHtml(setup.clamping||'NIE JE UVEDENÉ/ČITATEĽNÉ')}</p>
-     <p style="margin-top:7px"><b>Dátum:</b> ${escapeHtml(setup.datum||'NIE JE UVEDENÉ/ČITATEĽNÉ')}</p>
-     <p style="margin-top:7px"><b>Opory:</b> ${escapeHtml(setup.supports||'NIE JE UVEDENÉ/ČITATEĽNÉ')}</p>
-     <p style="margin-top:7px"><b>Riziká:</b> ${escapeHtml(setup.risks||'NIE JE UVEDENÉ/ČITATEĽNÉ')}</p>`
-  );
-  html += turnAiBlock('Technologický postup',
-    ops.length ? ops.map(o=>`<div class="op"><b>${escapeHtml(o.order)}. ${escapeHtml(o.name)}</b><small>${escapeHtml(o.description)}</small></div>`).join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
-  );
-  html += turnAiBlock('Nástroje a štartovacie parametre',
-    tools.length ? tools.map(t=>`<div class="tool">
-      <div class="toolTop">${escapeHtml(t.operation)}</div>
-      <div class="toolGrid">
-        <div><b>Nástroj:</b> ${escapeHtml(t.tool)}</div>
-        <div><b>Držiak:</b> ${escapeHtml(t.holder)}</div>
-        <div><b>Plátok:</b> ${escapeHtml(t.insert)}</div>
-        <div><b>Vc:</b> ${escapeHtml(t.vc)}</div>
-        <div><b>Posuv:</b> ${escapeHtml(t.feed)}</div>
-        <div><b>Otáčky:</b> ${escapeHtml(t.rpm)}</div>
-      </div>
-    </div>`).join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
-  );
-  html += turnAiBlock('Kritické rozmery na kontrolu', listHtml(critical));
-  html += turnAiBlock('Upozornenia a riziká', listHtml(warnings));
-  html += turnAiBlock('Poznámky', listHtml(notes));
-
-  $('result').innerHTML=html;
-  $('resultCard').classList.remove('hidden');
-}
-
-function turnAiBlock(title, body) {
-  return `<div class="resultBlock"><h3>${escapeHtml(title)}</h3>${body}</div>`;
-}
-
-function turnAiFileToDataURL(file) {
-  return new Promise((resolve,reject)=>{
-    const r=new FileReader();
-    r.onload=()=>resolve(r.result);
-    r.onerror=()=>reject(new Error('Nepodarilo sa načítať výkres.'));
-    r.readAsDataURL(file);
-  });
-}
-
-$('file').addEventListener('change', async e => {
-  turnAiSelectedFile=e.target.files?.[0]||null;
-  $('preview').style.display='none';
-  $('preview').innerHTML='';
-  if(!turnAiSelectedFile){$('fileName').textContent='PDF, PNG, JPG/JPEG alebo WEBP';return}
-  $('fileName').textContent=turnAiSelectedFile.name;
-
-  if(turnAiSelectedFile.type.startsWith('image/')){
-    const url=URL.createObjectURL(turnAiSelectedFile);
-    $('preview').innerHTML=`<img src="${url}" alt="Náhľad výkresu">`;
-    $('preview').style.display='turnAiBlock';
-  } else {
-    $('preview').innerHTML='<div class="pdfBox">📄 PDF výkres pripravený na odoslanie</div>';
-    $('preview').style.display='turnAiBlock';
-  }
-});
-
-const drop=$('drop');
-['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));
-['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag')}));
-drop.addEventListener('drop',e=>{
-  const f=e.dataTransfer.files?.[0];
-  if(f){
-    $('file').files=e.dataTransfer.files;
-    $('file').dispatchEvent(new Event('change'));
-  }
-});
-
-$('analyzeBtn').addEventListener('click', async ()=>{
-  if(!turnAiSelectedFile){
-    turnAiSetStatus('❌ Najprv vyber technický výkres (PDF, PNG, JPG/JPEG alebo WEBP).','error');
-    return;
-  }
-  if(turnAiSelectedFile.size > 4.2*1024*1024){
-    turnAiSetStatus('❌ Súbor je príliš veľký pre odoslanie cez Vercel. Skús PDF/obrázok do približne 4 MB.','error');
-    return;
+(function(){
+  function esc(v){
+    return String(v ?? '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+    }[c]));
   }
 
-  $('analyzeBtn').disabled=true;
-  turnAiSetStatus('<span class="spinner"></span>AI číta výkres a pripravuje technológiu…','loading');
-  $('resultCard').classList.add('hidden');
+  function listHtml(arr){
+    if(!Array.isArray(arr) || !arr.length) return '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>';
+    return '<ul>'+arr.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
+  }
 
-  try{
-    const fileData=await turnAiFileToDataURL(turnAiSelectedFile);
-    const payload={
-      type:$('operation').value,
-      operation:$('operation').value,
-      material:$('material').value.trim(),
-      stock:$('stock').value.trim(),
-      machine:$('machine').value.trim(),
-      requirements:$('requirements').value.trim(),
-      fileName:turnAiSelectedFile.name,
-      fileData:fileData
-    };
+  function block(title, body){
+    return '<div class="ai2-block"><h3>'+esc(title)+'</h3>'+body+'</div>';
+  }
 
-    const response=await fetch('/api/analyze',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    });
+  function render(prefix, data){
+    const setup=data.setup || {};
+    const ops=Array.isArray(data.operations)?data.operations:[];
+    const tools=Array.isArray(data.tools)?data.tools:[];
+    const critical=Array.isArray(data.critical_dimensions)?data.critical_dimensions:[];
+    const warnings=Array.isArray(data.warnings)?data.warnings:[];
+    const notes=Array.isArray(data.notes)?data.notes:[];
 
-    let data=null;
-    try{data=await response.json()}catch(_){}
+    let html='';
+    html += block('Čítanie výkresu','<p>'+esc(data.drawing_read || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>');
+    html += block('Upnutie a dátumy',
+      '<p><b>Upnutie:</b> '+esc(setup.clamping || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'+
+      '<p><b>Dátum:</b> '+esc(setup.datum || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'+
+      '<p><b>Opory:</b> '+esc(setup.supports || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'+
+      '<p><b>Riziká:</b> '+esc(setup.risks || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'
+    );
 
-    if(!response.ok || !data || data.success!==true){
-      const msg=data?.error || `Server odpovedal HTTP ${response.status}.`;
-      const details=data?.details ? `<br><small>${escapeHtml(data.details)}</small>` : '';
-      throw new Error(msg+details);
+    if(prefix==='millAi'){
+      html += '<div class="ai2-setup">'+
+        '<div class="ai2-setup-title">🔩 Schéma odporúčaného upnutia</div>'+
+        '<div class="ai2-diagram">'+
+        '<svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">'+
+          '<rect width="700" height="300" fill="#08111a"/>'+
+          '<rect x="55" y="225" width="590" height="32" rx="8" fill="#344a5d"/>'+
+          '<rect x="125" y="170" width="150" height="55" rx="7" fill="#50677a"/>'+
+          '<rect x="425" y="170" width="150" height="55" rx="7" fill="#50677a"/>'+
+          '<rect x="260" y="145" width="165" height="55" rx="5" fill="#9aa9b5"/>'+
+          '<rect x="275" y="132" width="135" height="14" rx="4" fill="#c1cbd2"/>'+
+          '<line x1="342" y1="65" x2="342" y2="132" stroke="#168cff" stroke-width="6"/>'+
+          '<path d="M325 88 L342 60 L359 88" fill="none" stroke="#168cff" stroke-width="6"/>'+
+          '<circle cx="342" cy="48" r="18" fill="#168cff"/>'+
+          '<text x="365" y="54" fill="#d8e7f2" font-size="20" font-family="Arial">Nástroj</text>'+
+          '<text x="302" y="178" fill="#111820" font-size="18" font-family="Arial" font-weight="700">OBROBOK</text>'+
+          '<text x="115" y="278" fill="#a9bac9" font-size="17" font-family="Arial">Zverák / čeľuste</text>'+
+          '<text x="430" y="278" fill="#a9bac9" font-size="17" font-family="Arial">CNC stôl</text>'+
+        '</svg></div>'+
+        '<div class="ai2-note">Ilustračná schéma – pred obrábaním potvrď skutočné upnutie podľa stroja a výkresu.</div>'+
+      '</div>';
     }
 
-    turnAiRenderResult(data);
-    turnAiSetStatus('✅ Analýza bola úspešne dokončená.','ok');
-    setTimeout(()=>$('resultCard').scrollIntoView({behavior:'smooth',turnAiBlock:'start'}),120);
-  }catch(err){
-    turnAiSetStatus('❌ '+(err.message||'Analýza zlyhala.')+
-      '<br><small>Ak starý index.html fungoval, backend /api/analyze zostáva zachovaný. Skontroluj, či je tento súbor nasadený v tom istom Vercel projekte ako priečinok /api.</small>','error');
-  }finally{
-    $('analyzeBtn').disabled=false;
+    html += block('Technologický postup',
+      ops.length ? ops.map(o=>'<div class="ai2-op"><b>'+esc(o.order)+'. '+esc(o.name)+'</b><small>'+esc(o.description)+'</small></div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
+    );
+
+    html += block('Nástroje a štartovacie parametre',
+      tools.length ? tools.map(t=>'<div class="ai2-tool">'+
+        '<div class="ai2-tooltop">'+esc(t.operation)+'</div>'+
+        '<div class="ai2-toolgrid">'+
+          '<div><b>Nástroj:</b> '+esc(t.tool)+'</div>'+
+          '<div><b>Držiak:</b> '+esc(t.holder)+'</div>'+
+          '<div><b>Plátok:</b> '+esc(t.insert)+'</div>'+
+          '<div><b>Vc:</b> '+esc(t.vc)+'</div>'+
+          '<div><b>Posuv:</b> '+esc(t.feed)+'</div>'+
+          '<div><b>Otáčky:</b> '+esc(t.rpm)+'</div>'+
+        '</div></div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
+    );
+
+    html += block('Kritické rozmery na kontrolu', listHtml(critical));
+    html += block('Upozornenia a riziká', listHtml(warnings));
+    html += block('Poznámky', listHtml(notes));
+
+    document.getElementById(prefix+'Result').innerHTML=html;
+    document.getElementById(prefix+'ResultCard').classList.remove('hidden');
   }
-});
 
-$('navNew').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
-$('navResult').onclick=()=>{
-  if(!$('resultCard').classList.contains('hidden')) $('resultCard').scrollIntoView({behavior:'smooth',turnAiBlock:'start'});
-  else turnAiSetStatus('Výsledok sa zobrazí po úspešnej AI analýze.','');
-};
-$('navTop').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
+  function setup(prefix, operation){
+    const file=document.getElementById(prefix+'File');
+    const drop=document.getElementById(prefix+'Drop');
+    const name=document.getElementById(prefix+'FileName');
+    const preview=document.getElementById(prefix+'Preview');
+    const btn=document.getElementById(prefix+'AnalyzeBtn');
+    const status=document.getElementById(prefix+'Status');
+    const resultCard=document.getElementById(prefix+'ResultCard');
 
+    let selectedFile=null;
+
+    function statusMsg(message,type=''){
+      status.className='ai2-status '+type;
+      status.innerHTML=message;
+    }
+
+    function fileDataURL(f){
+      return new Promise((resolve,reject)=>{
+        const r=new FileReader();
+        r.onload=()=>resolve(r.result);
+        r.onerror=()=>reject(new Error('Nepodarilo sa načítať výkres.'));
+        r.readAsDataURL(f);
+      });
+    }
+
+    file.addEventListener('change',()=>{
+      selectedFile=file.files?.[0]||null;
+      preview.style.display='none';
+      preview.innerHTML='';
+      name.textContent=selectedFile ? selectedFile.name : 'PDF, PNG, JPG/JPEG alebo WEBP';
+
+      if(selectedFile){
+        if(selectedFile.type.startsWith('image/')){
+          preview.innerHTML='<img src="'+URL.createObjectURL(selectedFile)+'" alt="Náhľad výkresu">';
+        }else{
+          preview.innerHTML='<div class="ai2-pdf">📄 PDF výkres pripravený na odoslanie</div>';
+        }
+        preview.style.display='block';
+      }
+    });
+
+    ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{
+      e.preventDefault(); drop.classList.add('drag');
+    }));
+    ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{
+      e.preventDefault(); drop.classList.remove('drag');
+    }));
+    drop.addEventListener('drop',e=>{
+      const f=e.dataTransfer.files?.[0];
+      if(f){
+        file.files=e.dataTransfer.files;
+        file.dispatchEvent(new Event('change'));
+      }
+    });
+
+    btn.addEventListener('click',async()=>{
+      if(!selectedFile){
+        statusMsg('❌ Najprv vyber technický výkres (PDF, PNG, JPG/JPEG alebo WEBP).','error');
+        return;
+      }
+      if(selectedFile.size > 4.2*1024*1024){
+        statusMsg('❌ Súbor je príliš veľký. Skús výkres do približne 4 MB.','error');
+        return;
+      }
+
+      btn.disabled=true;
+      resultCard.classList.add('hidden');
+      statusMsg('<span class="spinner"></span> AI číta výkres a pripravuje technológiu…','loading');
+
+      try{
+        const fileData=await fileDataURL(selectedFile);
+        const payload={
+          type:operation,
+          operation:operation,
+          material:document.getElementById(prefix+'Material').value.trim(),
+          stock:document.getElementById(prefix+'Stock').value.trim(),
+          machine:document.getElementById(prefix+'Machine').value.trim(),
+          requirements:document.getElementById(prefix+'Requirements').value.trim(),
+          fileName:selectedFile.name,
+          fileData:fileData
+        };
+
+        const response=await fetch('/api/analyze',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(payload)
+        });
+
+        let data=null;
+        try{data=await response.json()}catch(_){}
+
+        if(!response.ok || !data || data.success!==true){
+          const msg=data?.error || ('Server odpovedal HTTP '+response.status+'.');
+          const details=data?.details ? '<br><small>'+esc(data.details)+'</small>' : '';
+          throw new Error(msg+details);
+        }
+
+        render(prefix,data);
+        statusMsg('✅ Analýza bola úspešne dokončená.','ok');
+        setTimeout(()=>resultCard.scrollIntoView({behavior:'smooth',block:'start'}),120);
+      }catch(err){
+        statusMsg('❌ '+(err.message||'Analýza zlyhala.')+
+          '<br><small>Skontroluj, či je tento index.html nasadený v rovnakom Vercel projekte ako priečinok /api.</small>','error');
+      }finally{
+        btn.disabled=false;
+      }
+    });
+  }
+
+  setup('turnAi','Sústruženie');
+  setup('millAi','Frézovanie');
+})();
 </script>
 </body>
 </html>

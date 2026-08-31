@@ -1194,7 +1194,7 @@ init('turnAi','turning');init('millAi','milling');
     const notes=Array.isArray(data.notes)?data.notes:[];
 
     let html='';
-    html += '<div class="ai2-block" style="border-color:#168fff"><b>⚙️ Technologický postup je pripravený.</b><br><span class="cnc-v4-muted">Ďalší krok: vytvoriť CNC program priamo z tejto analýzy.</span><br><button type="button" class="cnc-v4-btn" style="margin-top:10px" onclick="cncOpen('cnc-program');cncUseLastAnalysis();">🤖 VYTVORIŤ CNC PROGRAM Z TEJTO ANALÝZY</button></div>';
+    html += "<div class='ai2-block' style='border-color:#168fff'><b>⚙️ Technologický postup je pripravený.</b><br><span class='cnc-v4-muted'>Ďalší krok: vytvoriť CNC program priamo z tejto analýzy.</span><br><button type='button' class='cnc-v4-btn' style='margin-top:10px' onclick=\"cncOpen('cnc-program');cncUseLastAnalysis();\">🤖 VYTVORIŤ CNC PROGRAM Z TEJTO ANALÝZY</button></div>";
     html += block('Čítanie výkresu','<p>'+esc(data.drawing_read || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>');
     html += block('Upnutie a dátumy',
       '<p><b>Upnutie:</b> '+esc(setup.clamping || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'+

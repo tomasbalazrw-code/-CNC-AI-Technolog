@@ -266,6 +266,18 @@ li{margin:6px 0;line-height:1.45}
   .ai2-grid{grid-template-columns:1fr}
   .ai2-toolgrid{grid-template-columns:1fr}
 }
+
+/* ===== V4 DATABÁZA NÁSTROJOV A DRŽIAKOV ===== */
+.tooling-db{margin-top:14px;padding:14px;border:1px solid #285572;border-radius:16px;background:#07131e}
+.tooling-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.tooling-title{font-weight:900;font-size:16px}.tooling-badge{font-size:10px;padding:5px 8px;border-radius:999px;border:1px solid #24506d;color:#8ed8ff;background:#081723}
+.tooling-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tooling-grid label{display:block}
+.tooling-db select,.tooling-db input{width:100%;box-sizing:border-box;background:#08131e;color:#f5f8fc;border:1px solid #285572;border-radius:12px;padding:13px 12px;font-size:15px;outline:none;margin-top:5px}
+.tooling-db select:focus,.tooling-db input:focus{border-color:#16a8ff;box-shadow:0 0 0 3px rgba(22,168,255,.12)}
+.tooling-summary{margin-top:10px;padding:10px 12px;border:1px solid #1e3c50;border-radius:12px;color:#b9d8ea;background:#06101a;line-height:1.45;font-size:13px}
+.tooling-note{font-size:11px;line-height:1.45;color:#8fa3b5;margin-top:8px}
+.tooling-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.tooling-tag{padding:6px 9px;border-radius:999px;background:#0d1b28;border:1px solid #24465d;color:#b9c8d5;font-size:11px}
+@media(max-width:500px){.tooling-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -457,6 +469,21 @@ li{margin:6px 0;line-height:1.45}
       <input id="turnAiMachine" type="hidden" value="Fanuc">
     </div>
 
+
+    <div class="tooling-db" data-tooling-prefix="turnAi" data-tooling-process="turning">
+      <div class="tooling-head"><div class="tooling-title">🔩 Databáza držiakov pre revolver</div><span class="tooling-badge">ŠTANDARDNÉ UPnutia</span></div>
+      <div class="tooling-grid">
+        <div><label>Upnutie / rozhranie</label><select id="turnAiTurretInterface"><option value="">Vyber rozhranie…</option></select></div>
+        <div><label>Typ držiaka</label><select id="turnAiHolderType" disabled><option value="">Najprv rozhranie…</option></select></div>
+        <div><label>Veľkosť / stopka</label><select id="turnAiHolderSize" disabled><option value="">Vyber typ držiaka…</option></select></div>
+        <div><label>Orientácia</label><select id="turnAiHolderOrientation"><option value="Radiálny / vonkajší" >Radiálny / vonkajší</option><option value="Axiálny / čelný">Axiálny / čelný</option><option value="Vnútorný / vyvrtávací">Vnútorný / vyvrtávací</option><option value="Poháňaný radiálny">Poháňaný radiálny</option><option value="Poháňaný axiálny">Poháňaný axiálny</option></select></div>
+      </div>
+      <div class="tooling-summary" id="turnAiToolingSummary">Držiak zatiaľ nie je vybraný.</div>
+      <div class="tooling-tags"><span class="tooling-tag">VDI DIN 69880</span><span class="tooling-tag">BMT</span><span class="tooling-tag">CAPTO</span><span class="tooling-tag">HSK-T</span><span class="tooling-tag">ER / Weldon</span></div>
+      <div class="tooling-note">Databáza je zámerne zameraná na bežné štandardné statické, vyvrtávacie, axiálne, radiálne a poháňané držiaky. Presné rozhranie revolvera musí Technológ potvrdiť podľa konkrétneho stroja.</div>
+      <input id="turnAiTooling" type="hidden" value="">
+    </div>
+
     <div class="field">
       <label>Technický výkres</label>
       <div class="drop" id="turnAiDrop">
@@ -527,6 +554,21 @@ li{margin:6px 0;line-height:1.45}
     <div class="db-selected" id="millAiMachineSummary">Stroj zatiaľ nie je vybraný.</div>
     <div class="db-note">Technológ vyberie konkrétny stroj a riadenie. Výber sa odošle AI spolu s výkresom.</div>
     <input id="millAiMachine" type="hidden" value="Fanuc">
+   </div>
+
+
+   <div class="tooling-db" data-tooling-prefix="millAi" data-tooling-process="milling">
+    <div class="tooling-head"><div class="tooling-title">🛠️ Databáza frézovacích a otvorových nástrojov</div><span class="tooling-badge">NAJČASTEJŠIE NÁSTROJE</span></div>
+    <div class="tooling-grid">
+      <div><label>Kategória</label><select id="millAiToolCategory"><option value="">Vyber kategóriu…</option></select></div>
+      <div><label>Typ nástroja</label><select id="millAiToolType" disabled><option value="">Najprv kategória…</option></select></div>
+      <div><label>Veľkosť / priemer</label><select id="millAiToolSize" disabled><option value="">Vyber typ nástroja…</option></select></div>
+      <div><label>Upnutie nástroja</label><select id="millAiToolInterface"><option value="">Vyber upnutie…</option><option>HSK-A63</option><option>HSK-A100</option><option>BT30</option><option>BT40</option><option>BT50</option><option>CAT40</option><option>CAT50</option><option>SK40</option><option>SK50</option><option>DIN 69871 / ISO 7388-1</option><option>ER klieština</option><option>Weldon</option><option>Shrink Fit</option><option>Hydraulické skľučovadlo</option><option>Capto C5/C6</option></select></div>
+    </div>
+    <div class="tooling-summary" id="millAiToolingSummary">Nástroj zatiaľ nie je vybraný.</div>
+    <div class="tooling-tags"><span class="tooling-tag">VHM frézy</span><span class="tooling-tag">Vrtáky</span><span class="tooling-tag">Čelné frézy</span><span class="tooling-tag">Rohové frézy</span><span class="tooling-tag">Výstružníky</span><span class="tooling-tag">Závitníky</span><span class="tooling-tag">Vyvrtávanie</span></div>
+    <div class="tooling-note">Výber slúži ako technologická databáza. AI môže navrhnúť konkrétnu geometriu, materiál nástroja a rezné parametre podľa materiálu, výkresu a stroja.</div>
+    <input id="millAiTooling" type="hidden" value="">
    </div>
 
    <div class="ai2-field">
@@ -1068,6 +1110,7 @@ document.addEventListener('click',function(e){
           material:document.getElementById(prefix+'Material').value.trim(),
           stock:document.getElementById(prefix+'Stock').value.trim(),
           machine:document.getElementById(prefix+'Machine').value.trim(),
+          tooling:(document.getElementById(prefix+'Tooling')?.value||'').trim(),
           requirements:document.getElementById(prefix+'Requirements').value.trim(),
           fileName:selectedFile.name,
           fileData:fileData
@@ -1225,6 +1268,135 @@ function initMachineDatabase(prefix, process){
   const fanuc=CNC_CONTROL_DB.find(x=>x==='FANUC 0i-TF / 0i-TF Plus'); if(fanuc) control.value=fanuc;
   update();
 }
+
+
+/* ===== V4 DATABÁZA DRŽIAKOV A FRÉZOVACÍCH NÁSTROJOV ===== */
+const TURNING_HOLDER_DB = {
+  "VDI DIN 69880": {
+    "Statický vonkajší držiak": ["VDI 20 – 16×16 mm","VDI 20 – 20×20 mm","VDI 25 – 20×20 mm","VDI 30 – 20×20 mm","VDI 30 – 25×25 mm","VDI 40 – 25×25 mm","VDI 40 – 32×32 mm","VDI 50 – 32×32 mm","VDI 50 – 40×40 mm","VDI 60 – 40×40 mm","VDI 60 – 50×50 mm"],
+    "Vyvrtávací držiak": ["VDI 20 – Ø16 mm","VDI 25 – Ø20 mm","VDI 30 – Ø20 mm","VDI 30 – Ø25 mm","VDI 40 – Ø25 mm","VDI 40 – Ø32 mm","VDI 50 – Ø32 mm","VDI 50 – Ø40 mm","VDI 60 – Ø40 mm","VDI 60 – Ø50 mm"],
+    "Držiak pre vrták": ["VDI 20/25 – Weldon Ø12 mm","VDI 30 – Weldon Ø16 mm","VDI 40 – Weldon Ø20 mm","VDI 50 – Weldon Ø25 mm","VDI 40 – Ø16/20 mm vrták","VDI 50 – Ø20/25 mm vrták"],
+    "Poháňaný ER držiak": ["VDI 30 – ER16","VDI 30 – ER20","VDI 40 – ER20","VDI 40 – ER25","VDI 40 – ER32","VDI 50 – ER25","VDI 50 – ER32","VDI 50 – ER40"],
+    "Poháňaný Weldon držiak": ["VDI 30 – Weldon Ø10/12/16","VDI 40 – Weldon Ø16/20","VDI 50 – Weldon Ø20/25"],
+    "Poháňaný závitovací držiak": ["VDI 30 – synchronný závitník","VDI 40 – synchronný závitník","VDI 50 – synchronný závitník"],
+    "Poháňaná uhlová hlava": ["VDI 30 – axiálna uhlová hlava","VDI 40 – axiálna uhlová hlava","VDI 50 – axiálna uhlová hlava"]
+  },
+  "BMT": {
+    "Statický vonkajší držiak": ["BMT30 – 16×16 mm","BMT40 – 20×20 mm","BMT45 – 20×20 mm","BMT45 – 25×25 mm","BMT55 – 25×25 mm","BMT55 – 32×32 mm","BMT65 – 32×32 mm","BMT65 – 40×40 mm","BMT75 – 40×40 mm","BMT85 – 50×50 mm"],
+    "Vyvrtávací držiak": ["BMT30 – Ø16 mm","BMT40 – Ø20 mm","BMT45 – Ø25 mm","BMT55 – Ø25/32 mm","BMT65 – Ø32/40 mm","BMT75 – Ø40/50 mm","BMT85 – Ø50 mm"],
+    "Držiak pre vrták": ["BMT40 – Weldon Ø16 mm","BMT45 – Weldon Ø16/20 mm","BMT55 – Weldon Ø20/25 mm","BMT65 – Weldon Ø25/32 mm"],
+    "Poháňaný ER držiak": ["BMT40 – ER16/20","BMT45 – ER20/25","BMT55 – ER25/32","BMT65 – ER32/40","BMT75 – ER40"],
+    "Poháňaný Weldon držiak": ["BMT40 – Weldon Ø12/16","BMT45 – Weldon Ø16/20","BMT55 – Weldon Ø20/25","BMT65 – Weldon Ø25/32"],
+    "Poháňaný závitovací držiak": ["BMT40 – synchronný závitník","BMT45 – synchronný závitník","BMT55 – synchronný závitník","BMT65 – synchronný závitník"],
+    "Poháňaná uhlová hlava": ["BMT40 – axiálna/radiálna","BMT45 – axiálna/radiálna","BMT55 – axiálna/radiálna","BMT65 – axiálna/radiálna"]
+  },
+  "Coromant Capto": {
+    "Statický držiak": ["C3","C4","C5","C6","C8","C10"],
+    "Vyvrtávací držiak": ["C3 – Ø16/20 mm","C4 – Ø20/25 mm","C5 – Ø25/32 mm","C6 – Ø32/40 mm","C8 – Ø40/50 mm"],
+    "Poháňaný ER držiak": ["C4 – ER16/20","C5 – ER20/25","C6 – ER25/32/40","C8 – ER40"],
+    "Poháňaný Weldon držiak": ["C5 – Ø16/20 mm","C6 – Ø20/25 mm","C8 – Ø25/32 mm"]
+  },
+  "HSK-T": {
+    "Poháňaný ER držiak": ["HSK-T63 – ER16/20/25","HSK-T100 – ER25/32/40"],
+    "Poháňaný Weldon držiak": ["HSK-T63 – Ø16/20 mm","HSK-T100 – Ø20/25/32 mm"],
+    "Vyvrtávací adaptér": ["HSK-T63 – Ø20/25/32 mm","HSK-T100 – Ø32/40/50 mm"]
+  },
+  "Univerzálne / podľa OEM revolvera": {
+    "VDI/BMT kombinovaný držiak": ["VDI + BMT adaptér – podľa revolvera"],
+    "Držiak s rýchlovýmennou hlavou": ["VDI/BMT – quick change podľa OEM"],
+    "Špeciálny držiak": ["Podľa konkrétneho revolvera a OEM rozmerov"]
+  }
+};
+
+const MILLING_TOOL_DB = {
+  "Stopkové frézy – VHM": {
+    "2-britá univerzálna": ["Ø2","Ø3","Ø4","Ø5","Ø6","Ø8","Ø10","Ø12","Ø16","Ø20"],
+    "3-britá univerzálna": ["Ø3","Ø4","Ø5","Ø6","Ø8","Ø10","Ø12","Ø16"],
+    "4-britá štvorcová": ["Ø4","Ø5","Ø6","Ø8","Ø10","Ø12","Ø16","Ø20","Ø25"],
+    "5-britá / vysokoposuvová": ["Ø6","Ø8","Ø10","Ø12","Ø16","Ø20"],
+    "Guľová / Ball Nose": ["Ø2","Ø3","Ø4","Ø5","Ø6","Ø8","Ø10","Ø12","Ø16","Ø20"],
+    "Rohová / Corner Radius": ["Ø4 R0.5","Ø6 R0.5/R1","Ø8 R1/R2","Ø10 R1/R2","Ø12 R1/R2","Ø16 R2/R3","Ø20 R3"],
+    "Hrubovacia": ["Ø6","Ø8","Ø10","Ø12","Ø16","Ø20","Ø25","Ø32"],
+    "Dlhá / Long Reach": ["Ø4","Ø6","Ø8","Ø10","Ø12","Ø16"],
+    "Lollipop / torus": ["Ø6","Ø8","Ø10","Ø12","Ø16"],
+    "Kónická / 3D": ["Ø4","Ø6","Ø8","Ø10","Ø12"]
+  },
+  "Rohové a čelné frézy – vymeniteľné doštičky": {
+    "Rohová 90°": ["Ø16","Ø20","Ø25","Ø32","Ø40","Ø50","Ø63","Ø80"],
+    "Čelná fréza": ["Ø40","Ø50","Ø63","Ø80","Ø100","Ø125"],
+    "Vysokoposuvová": ["Ø16","Ø20","Ø25","Ø32","Ø40","Ø50","Ø63"],
+    "Dlhá britová / shoulder": ["Ø25","Ø32","Ø40","Ø50","Ø63"],
+    "Profilová / kopírovacia": ["Ø10","Ø12","Ø16","Ø20","Ø25","Ø32","Ø40"]
+  },
+  "Drážkovacie a špeciálne frézy": {
+    "Kotúčová / side & face": ["Šírka 2","Šírka 3","Šírka 4","Šírka 5","Šírka 6","Šírka 8","Šírka 10"],
+    "T-drážka": ["Ø8","Ø10","Ø12","Ø16","Ø20","Ø25"],
+    "Kotúčová na drážky": ["Ø40","Ø50","Ø63","Ø80","Ø100"],
+    "Rybinová": ["30°","45°","60°","70°"],
+    "Chamfer / odhrotovacia": ["90° Ø6/8/10/12","60° Ø6/8/10/12","45° Ø6/8/10/12"],
+    "Pilovitá": ["Ø40","Ø50","Ø63","Ø80"]
+  },
+  "Vŕtacie nástroje": {
+    "VHM vrták": ["Ø2–3","Ø3–5","Ø5–8","Ø8–10","Ø10–12","Ø12–16","Ø16–20"],
+    "HSS vrták": ["Ø1–3","Ø3–6","Ø6–10","Ø10–13","Ø13–20"],
+    "Vrták s vymeniteľnou doštičkou": ["Ø12–16","Ø16–20","Ø20–25","Ø25–32","Ø32–40","Ø40–50"],
+    "Stupňovitý / kombinovaný": ["Ø4/8","Ø6/10","Ø8/12","Ø10/16","Podľa výkresu"],
+    "Navrtávak / spot drill": ["Ø3","Ø4","Ø5","Ø6","Ø8","Ø10","Ø12"],
+    "Strediaci vrták": ["DIN 333 A/B – malé","DIN 333 – stredné","DIN 333 – veľké"]
+  },
+  "Výstružníky a zahlbníky": {
+    "VHM výstružník": ["Ø3–6","Ø6–10","Ø10–16","Ø16–20","Ø20–30"],
+    "HSS výstružník": ["Ø3–6","Ø6–10","Ø10–16","Ø16–20","Ø20–30"],
+    "Nastaviteľný výstružník": ["Ø10–12","Ø12–16","Ø16–20","Ø20–30"],
+    "Zahlbník 90°": ["Ø6","Ø8","Ø10","Ø12","Ø16","Ø20","Ø25"],
+    "Zahlbník 60°/90°": ["Ø6–12","Ø12–20","Ø20–30"]
+  },
+  "Závitové nástroje": {
+    "Závitník HSS-E": ["M3–M5","M6–M8","M10–M12","M14–M16","M18–M20","M22–M24"],
+    "Závitník VHM": ["M3–M5","M6–M8","M10–M12","M14–M16"],
+    "Tvárniaci závitník": ["M4–M6","M8–M10","M12–M16","M18–M24"],
+    "Fréza na závity": ["M4–M6","M8–M10","M12–M16","M18–M24","UNC/UNF"],
+    "Závitová fréza viacprofilová": ["M6–M12","M12–M20","M20–M30"]
+  },
+  "Vyvrtávanie": {
+    "Vyvrtávacia tyč": ["Ø10–16","Ø16–25","Ø25–40","Ø40–63","Ø63–100"],
+    "Vyvrtávacia hlava": ["Ø10–30","Ø20–50","Ø30–80","Ø50–120","Ø80–200"],
+    "Jemné vyvrtávanie": ["Ø20–40","Ø40–63","Ø63–100","Ø100–160"],
+    "Modulárna vyvrtávacia hlava": ["ISO/BT","HSK","Capto"]
+  },
+  "Ďalšie bežné nástroje": {
+    "Guľová fréza – vymeniteľná": ["Ø10","Ø12","Ø16","Ø20","Ø25","Ø32"],
+    "Barrel / segmentová fréza": ["Ø10","Ø12","Ø16","Ø20","Ø25"],
+    "Fréza na hliník": ["Ø4","Ø6","Ø8","Ø10","Ø12","Ø16","Ø20"],
+    "Fréza na nerez": ["Ø4","Ø6","Ø8","Ø10","Ø12","Ø16"],
+    "Fréza na kalený materiál": ["Ø4","Ø6","Ø8","Ø10","Ø12","Ø16"],
+    "Mikrofréza": ["Ø0.5","Ø0.8","Ø1","Ø1.5","Ø2","Ø3"]
+  }
+};
+
+function initTurningTooling(){
+  const i=document.getElementById('turnAiTurretInterface'), t=document.getElementById('turnAiHolderType'), z=document.getElementById('turnAiHolderSize'), o=document.getElementById('turnAiHolderOrientation'), sum=document.getElementById('turnAiToolingSummary'), hidden=document.getElementById('turnAiTooling');
+  if(!i) return;
+  Object.keys(TURNING_HOLDER_DB).forEach(x=>{let q=document.createElement('option');q.value=x;q.textContent=x;i.appendChild(q)});
+  function refresh(){
+    t.innerHTML='<option value="">Vyber typ držiaka…</option>'; z.innerHTML='<option value="">Vyber veľkosť…</option>'; t.disabled=!i.value; z.disabled=true;
+    Object.keys(TURNING_HOLDER_DB[i.value]||{}).forEach(x=>{let q=document.createElement('option');q.value=x;q.textContent=x;t.appendChild(q)}); update();
+  }
+  function refreshSize(){ z.innerHTML='<option value="">Vyber veľkosť…</option>'; z.disabled=!t.value; (TURNING_HOLDER_DB[i.value]?.[t.value]||[]).forEach(x=>{let q=document.createElement('option');q.value=x;q.textContent=x;z.appendChild(q)}); update(); }
+  function update(){const a=[i.value,t.value,z.value,o.value].filter(Boolean); sum.innerHTML=a.length?'<b>'+a.join(' • ')+'</b>':'Držiak zatiaľ nie je vybraný.'; hidden.value=a.join(' | ');}
+  i.addEventListener('change',refresh);t.addEventListener('change',refreshSize);z.addEventListener('change',update);o.addEventListener('change',update);update();
+}
+function initMillingTooling(){
+  const c=document.getElementById('millAiToolCategory'), t=document.getElementById('millAiToolType'), z=document.getElementById('millAiToolSize'), h=document.getElementById('millAiToolInterface'), sum=document.getElementById('millAiToolingSummary'), hidden=document.getElementById('millAiTooling');
+  if(!c) return;
+  Object.keys(MILLING_TOOL_DB).forEach(x=>{let q=document.createElement('option');q.value=x;q.textContent=x;c.appendChild(q)});
+  function refresh(){t.innerHTML='<option value="">Vyber typ nástroja…</option>';z.innerHTML='<option value="">Vyber veľkosť…</option>';t.disabled=!c.value;z.disabled=true;Object.keys(MILLING_TOOL_DB[c.value]||{}).forEach(x=>{let q=document.createElement('option');q.value=x;q.textContent=x;t.appendChild(q)});update();}
+  function refreshSize(){z.innerHTML='<option value="">Vyber veľkosť…</option>';z.disabled=!t.value;(MILLING_TOOL_DB[c.value]?.[t.value]||[]).forEach(x=>{let q=document.createElement('option');q.value=x;q.textContent=x;z.appendChild(q)});update();}
+  function update(){const a=[c.value,t.value,z.value,h.value].filter(Boolean);sum.innerHTML=a.length?'<b>'+a.join(' • ')+'</b>':'Nástroj zatiaľ nie je vybraný.';hidden.value=a.join(' | ');}
+  c.addEventListener('change',refresh);t.addEventListener('change',refreshSize);z.addEventListener('change',update);h.addEventListener('change',update);update();
+}
+initTurningTooling();
+initMillingTooling();
 
 initMachineDatabase('turnAi','turning');
 initMachineDatabase('millAi','milling');

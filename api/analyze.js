@@ -1,7 +1,8 @@
-/* CNC AI Technológ – fixed AI analysis endpoint */
+/* CNC AI Technológ – real technical drawing analysis */
 
 const OPENAI_URL = "https://api.openai.com/v1";
 const MODEL = "gpt-5.6-luna";
+
 function getOpenAIKey() {
   const raw = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || process.env.OPENAI_TOKEN || "";
   return String(raw).trim().replace(/^["']|["']$/g, "").trim();
@@ -11,6 +12,7 @@ const SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
+    drawing_read: { type: "string" },
     setup: { type: "object", additionalProperties: false, properties: {
       clamping: { type: "string" }, datum: { type: "string" }, supports: { type: "string" }, risks: { type: "string" }
     }, required: ["clamping", "datum", "supports", "risks"] },
@@ -21,10 +23,11 @@ const SCHEMA = {
       operation: { type: "string" }, tool: { type: "string" }, holder: { type: "string" }, insert: { type: "string" }, vc: { type: "string" }, feed: { type: "string" }, rpm: { type: "string" }
     }, required: ["operation", "tool", "holder", "insert", "vc", "feed", "rpm"] } },
     material: { type: "string" }, stock: { type: "string" },
+    critical_dimensions: { type: "array", items: { type: "string" } },
     warnings: { type: "array", items: { type: "string" } },
     notes: { type: "array", items: { type: "string" } }
   },
-  required: ["setup", "operations", "tools", "material", "stock", "warnings", "notes"]
+  required: ["drawing_read", "setup", "operations", "tools", "material", "stock", "critical_dimensions", "warnings", "notes"]
 };
 
 function fail(res, status, message, details = "") {
@@ -53,8 +56,34 @@ async function uploadFile(base64, fileName, mime, apiKey) {
 }
 
 function prompt(body, fileName) {
-  return `Si senior CNC technológ. Analyzuj technický výkres ${fileName}. Typ obrábania: ${body.type || body.operation || "Sústruženie"}. Materiál: ${body.material || "neuvedený"}. Polotovar: ${body.stock || "neuvedený"}. Stroj: ${body.machine || "neuvedený"}.
-Čítaj iba údaje skutočne viditeľné na výkrese. Nevymýšľaj chýbajúce rozmery ani tolerancie. Navrhni praktický technologický postup. Pri nástrojoch preferuj MASAM/BÖHLERIT, potom Sandvik, Walter, Seco alebo Ceratizit. Katalógové číslo uveď iba ak je spoľahlivo určiteľné, inak „overiť v katalógu“. Rezné parametre sú štartovacie hodnoty. Pri sústružení uvádzaj Vc, f a otáčky; pri frézovaní Vc, fz, posuv a otáčky. Nevytváraj CNC kód. Kritické veci uveď vo warnings.`;
+  return `Si SENIOR CNC technológ. SKUTOČNE PREČÍTAJ A VYHODNOŤ PRILOŽENÝ TECHNICKÝ VÝKRES ${fileName}.
+
+Vstup:
+- Typ obrábania: ${body.type || body.operation || "Sústruženie"}
+- Materiál: ${body.material || "neuvedený"}
+- Polotovar: ${body.stock || "neuvedený"}
+- Stroj/riadenie: ${body.machine || "neuvedený"}
+
+POVINNÉ:
+1. Prečítaj konkrétne rozmery, priemery, dĺžky, tolerancie, závity, rádiusy, uhly, drsnosti, geometrické tolerancie a poznámky z výkresu.
+2. Žiadna všeobecná ukážka a žiadne prázdne polia. Výsledok musí vychádzať z výkresu.
+3. Ak údaj nie je čitateľný alebo nie je uvedený, napíš „NIE JE UVEDENÉ/ČITATEĽNÉ“. Nevymýšľaj si ho.
+4. Navrhni reálny technologický postup v správnom poradí.
+5. Navrhni konkrétne nástroje; preferuj MASAM/BÖHLERIT, potom Sandvik, Walter, Seco alebo Ceratizit. Katalógové číslo len ak je spoľahlivo určiteľné, inak „overiť v katalógu“.
+6. Uveď štartovacie rezné podmienky. Sústruženie: Vc, f, otáčky. Frézovanie: Vc, fz, posuv, otáčky. Ak chýba materiál, označ parametre ako orientačné.
+7. Uveď kritické rozmery na kontrolu po obrábaní.
+8. Uveď konkrétne riziká upnutia, vibrácií, výbehu, kolízie alebo tolerancií, ak sa týkajú dielu.
+9. Nevytváraj CNC kód.
+10. Odpoveď musí byť založená iba na skutočne dostupných údajoch z výkresu a vstupe používateľa.`;
+}
+
+function extractOutputText(data) {
+  if (typeof data.output_text === "string" && data.output_text.trim()) return data.output_text;
+  const parts = [];
+  for (const item of data.output || []) for (const content of item.content || []) {
+    if (typeof content.text === "string") parts.push(content.text);
+  }
+  return parts.join("\n");
 }
 
 export default async function handler(req, res) {
@@ -81,13 +110,30 @@ export default async function handler(req, res) {
     const r = await fetch(`${OPENAI_URL}/responses`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: MODEL, input: [{ role: "user", content: [inputFile, { type: "input_text", text: prompt(body, fileName) }] }], text: { format: { type: "json_schema", name: "cnc_plan", strict: true, schema: SCHEMA } } })
+      body: JSON.stringify({
+        model: MODEL,
+        input: [{ role: "user", content: [inputFile, { type: "input_text", text: prompt(body, fileName) }] }],
+        text: { format: { type: "json_schema", name: "cnc_plan", strict: true, schema: SCHEMA } }
+      })
     });
+
     const responseText = await r.text();
     if (!r.ok) return fail(res, 502, "OpenAI analýza zlyhala.", responseText);
     const data = JSON.parse(responseText);
-    const plan = JSON.parse(data.output_text || "{}");
-    return res.status(200).json({ success: true, file: fileName, operation: body.type || body.operation || "Sústruženie", material: body.material || "", stock: body.stock || "", machine: body.machine || "", ...plan });
+    const outputText = extractOutputText(data);
+    if (!outputText) return fail(res, 502, "OpenAI nevrátilo výsledok analýzy.", responseText.slice(0, 4000));
+
+    let plan;
+    try { plan = JSON.parse(outputText); }
+    catch { return fail(res, 502, "OpenAI vrátilo neplatný formát analýzy.", outputText.slice(0, 4000)); }
+
+    return res.status(200).json({
+      success: true, analyzed: true, file: fileName,
+      operation: body.type || body.operation || "Sústruženie",
+      material: body.material || plan.material || "",
+      stock: body.stock || plan.stock || "",
+      machine: body.machine || "", ...plan
+    });
   } catch (err) {
     console.error(err);
     return fail(res, 500, "Chyba servera pri AI analýze.", err?.message || String(err));

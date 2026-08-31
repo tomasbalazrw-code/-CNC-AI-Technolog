@@ -372,7 +372,8 @@ li{margin:6px 0;line-height:1.45}
   <div class="cnc-v4-top"><button class="cnc-v4-back" onclick="cncClose()">← Späť</button><b>G CNC PROGRAM</b></div>
   <div class="cnc-v4-card">
    <h2>Vytvorenie CNC programu</h2>
-   <div class="cnc-v4-muted">Vytvorí základný program G-kódu. Pred použitím na stroji vždy skontroluj nulový bod, korekcie, nástroj, otáčky, posuvy a simuláciu.</div>
+   <div class="cnc-v4-muted">Program sa vytvorí priamo z poslednej AI analýzy výkresu. Nemusíš ručne prepisovať rozmery.</div>
+   <div id="programAiSource" class="cnc-v4-result" style="margin-top:12px">⚠️ Zatiaľ nie je načítaná AI analýza.</div>
    <label>Riadenie
     <select id="progControl" class="cnc-v4-input">
       <option>Fanuc / ISO</option><option>Siemens</option><option>Heidenhain</option>
@@ -393,7 +394,8 @@ li{margin:6px 0;line-height:1.45}
     <label>Posuv F [mm/ot]<input id="progF" class="cnc-v4-input" type="number" step="0.01" placeholder="0.20"></label>
    </div>
    <label>Nástroj / korekcia<input id="progTool" class="cnc-v4-input" placeholder="napr. T0101"></label>
-   <button class="cnc-v4-btn" onclick="cncGenerateProgram()">VYTVORIŤ CNC PROGRAM</button>
+   <button class="cnc-v4-btn" onclick="cncUseLastAnalysis()">↻ POUŽIŤ POSLEDNÚ AI ANALÝZU</button>
+   <button class="cnc-v4-btn" onclick="cncGenerateProgram()">🤖 VYGENEROVAŤ PROGRAM Z ANALÝZY</button>
    <div id="programResult" class="cnc-v4-result" style="display:none"></div>
  </div>
  </div>
@@ -910,27 +912,72 @@ function cncMillCalc(){
   r.innerHTML='<b>Štartovacie parametre</b><br>Otáčky: '+Math.round(n)+' ot/min<br>Posuv: '+vf.toFixed(1)+' mm/min';
 }
 
-function cncGenerateProgram(){
-  var control=document.getElementById('progControl').value,
-      op=document.getElementById('progOp').value,
-      mat=document.getElementById('progMaterial').value.trim()||'neuvedený',
-      d=parseFloat(document.getElementById('progD').value)||0,
-      l=parseFloat(document.getElementById('progL').value)||0,
-      s=parseInt(document.getElementById('progS').value)||0,
-      f=parseFloat(document.getElementById('progF').value)||0,
-      tool=document.getElementById('progTool').value.trim()||'T0101',
-      r=document.getElementById('programResult');
-
-  var code='';
-  if(op==='Vŕtanie'){
-    code='%'+'\nO1001 (CNC AI TECHNOLOG - VRTANIE)'+'\n( RIADENIE: '+control+' )'+'\n( MATERIAL: '+mat+' )'+'\nG21 G40 G80 G90'+'\n'+tool+' M06'+'\nG97 S'+s+' M03'+'\nG00 X0 Z5'+'\nG01 Z-'+l.toFixed(2)+' F'+f.toFixed(2)+'\nG00 Z5'+'\nM05'+'\nG28 G91 Z0'+'\nG28 G91 X0'+'\nM30'+'\n%';
-  } else if(op==='Frézovanie drážky'){
-    code='%'+'\nO1002 (CNC AI TECHNOLOG - DRAZKA)'+'\n( RIADENIE: '+control+' )'+'\n( MATERIAL: '+mat+' )'+'\nG21 G17 G40 G49 G80 G90'+'\n'+tool+' M06'+'\nS'+s+' M03'+'\nG00 Z5'+'\nG00 X0 Y0'+'\nG01 Z-'+l.toFixed(2)+' F'+f.toFixed(2)+'\nG01 X'+d.toFixed(2)+' F'+f.toFixed(2)+'\nG00 Z5'+'\nM05'+'\nM30'+'\n%';
-  } else {
-    code='%'+'\nO1000 (CNC AI TECHNOLOG - '+op.toUpperCase()+')'+'\n( RIADENIE: '+control+' )'+'\n( MATERIAL: '+mat+' )'+'\nG21 G40 G80 G90'+'\n'+tool+' M06'+'\nG97 S'+s+' M03'+'\nG00 X'+d.toFixed(2)+' Z5'+'\nG01 Z0 F'+f.toFixed(2)+'\n'+(op==='Čelné sústruženie' ? 'G01 X0 F'+f.toFixed(2) : 'G01 Z-'+l.toFixed(2)+' F'+f.toFixed(2))+'\nG00 X'+(d+5).toFixed(2)+' Z5'+'\nM05'+'\nG28 G91 Z0'+'\nG28 G91 X0'+'\nM30'+'\n%';
+function cncUseLastAnalysis(){
+  var plan=window.CNC_LAST_PLAN;
+  var source=document.getElementById('programAiSource');
+  if(!plan){
+    if(source) source.innerHTML='⚠️ Najprv vykonaj AI analýzu výkresu.';
+    return;
   }
+  var control=plan.control||'';
+  if(control){
+    var sel=document.getElementById('progControl');
+    if(sel){
+      var found=[...sel.options].find(o=>o.text.toLowerCase().includes(String(control).toLowerCase()) || String(control).toLowerCase().includes(o.text.toLowerCase()));
+      if(found) sel.value=found.value;
+    }
+  }
+  if(source) source.innerHTML='<b>✓ Použitá posledná AI analýza</b><br><span class="cnc-v4-muted">'+
+    (plan.operation||window.CNC_LAST_OPERATION||'')+' · '+(plan.file||'výkres')+'</span>';
+  var mat=document.getElementById('progMaterial');
+  if(mat) mat.value=plan.material||'';
+  var op=document.getElementById('progOp');
+  if(op){
+    var target=String(plan.operation||window.CNC_LAST_OPERATION||'').toLowerCase();
+    if(target.includes('fréz')) op.value='Frézovanie drážky';
+    else if(target.includes('vrt')) op.value='Vŕtanie';
+    else if(target.includes('čel')) op.value='Čelné sústruženie';
+    else op.value='Valcové sústruženie';
+  }
+  var result=document.getElementById('programResult');
+  if(result) result.innerHTML='<b>✓ Analýza je načítaná.</b><br><br><span class="cnc-v4-muted">Klikni na „VYGENEROVAŤ PROGRAM Z ANALÝZY“.</span>';
+}
+async function cncGenerateProgram(){
+  var r=document.getElementById('programResult');
+  var plan=window.CNC_LAST_PLAN;
+  if(!plan){
+    r.style.display='block';
+    r.innerHTML='<b>⚠️ Najprv vykonaj AI analýzu výkresu.</b><br><br><span class="cnc-v4-muted">Choď do Sústruženie alebo Frézovanie, nahraj výkres a spusti AI analýzu. Potom sa program vytvorí priamo z jej výsledku.</span>';
+    return;
+  }
+  var control=document.getElementById('progControl')?.value || plan.control || 'Fanuc / ISO';
+  var zero='G54';
   r.style.display='block';
-  r.innerHTML='<b>✓ Program vytvorený – '+control+'</b><br><br><textarea class="cnc-code" id="generatedCncCode" spellcheck="false">'+code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</textarea><br><button class="cnc-v4-btn" style="margin-top:10px" onclick="cncCopyProgram()">KOPÍROVAŤ PROGRAM</button><div class="cnc-v4-muted" style="margin-top:10px">⚠ Toto je základná šablóna. Pred spustením na CNC stroji vykonaj simuláciu a over program podľa konkrétneho stroja a nástroja.</div>';
+  r.innerHTML='<b>🤖 AI vytvára CNC program z poslednej analýzy…</b><br><br><span class="cnc-v4-muted">Používam geometriu výkresu, technologický postup, nástroje, stroj a riadenie.</span>';
+  try{
+    var response=await fetch('/api/program',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({control:control,zero:zero,plan:plan})
+    });
+    var data=null;
+    try{data=await response.json()}catch(_){}
+    if(!response.ok || !data || data.success!==true){
+      throw new Error((data&&data.error)||('Server odpovedal HTTP '+response.status)+((data&&data.details)?' – '+data.details:''));
+    }
+    var esc=function(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+    var assumptions=Array.isArray(data.assumptions)?data.assumptions:[];
+    var checks=Array.isArray(data.checks)?data.checks:[];
+    r.innerHTML='<b>✓ CNC program vytvorený z AI analýzy</b><br><br>'+
+      '<textarea class="cnc-code" id="generatedCncCode" spellcheck="false">'+esc(data.program||'')+'</textarea>'+
+      '<br><button class="cnc-v4-btn" style="margin-top:10px" onclick="cncCopyProgram()">KOPÍROVAŤ PROGRAM</button>'+
+      '<div class="cnc-v4-muted" style="margin-top:12px"><b>Poznámka:</b> '+esc(data.notes||'')+'</div>'+
+      (assumptions.length?'<div style="margin-top:12px"><b>Predpoklady:</b><ul>'+assumptions.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'')+
+      (checks.length?'<div style="margin-top:12px"><b>Kontroly pred spustením:</b><ul>'+checks.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>':'');
+  }catch(err){
+    r.style.display='block';
+    r.innerHTML='<b>❌ Generovanie CNC programu zlyhalo</b><br><br><span class="cnc-v4-muted">'+String(err.message||err)+'</span><br><br><small class="cnc-v4-muted">Skontroluj, či je /api/program v rovnakom Vercel projekte ako index.html a či je nasadená aktuálna verzia.</small>';
+  }
 }
 function cncCopyProgram(){
   var t=document.getElementById('generatedCncCode');
@@ -1147,6 +1194,7 @@ init('turnAi','turning');init('millAi','milling');
     const notes=Array.isArray(data.notes)?data.notes:[];
 
     let html='';
+    html += '<div class="ai2-block" style="border-color:#168fff"><b>⚙️ Technologický postup je pripravený.</b><br><span class="cnc-v4-muted">Ďalší krok: vytvoriť CNC program priamo z tejto analýzy.</span><br><button type="button" class="cnc-v4-btn" style="margin-top:10px" onclick="cncOpen('cnc-program');cncUseLastAnalysis();">🤖 VYTVORIŤ CNC PROGRAM Z TEJTO ANALÝZY</button></div>';
     html += block('Čítanie výkresu','<p>'+esc(data.drawing_read || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>');
     html += block('Upnutie a dátumy',
       '<p><b>Upnutie:</b> '+esc(setup.clamping || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'+
@@ -1281,6 +1329,7 @@ init('turnAi','turning');init('millAi','milling');
           material:document.getElementById(prefix+'Material').value.trim(),
           stock:document.getElementById(prefix+'Stock').value.trim(),
           machine:document.getElementById(prefix+'Machine').value.trim(),
+          control:document.getElementById(prefix+'Control')?.value.trim() || '',
           tooling:(document.getElementById(prefix+'Tooling')?.value||'').trim(),
           requirements:document.getElementById(prefix+'Requirements').value.trim(),
           selectedInsertFamily: prefix==='turnAi' ? (document.getElementById('turnInsertFamily')?.value||'') : (document.getElementById('millInsertFamily')?.value||''),
@@ -1308,6 +1357,10 @@ init('turnAi','turning');init('millAi','milling');
         }
 
         render(prefix,data);
+        window.CNC_LAST_PLAN=data;
+        window.CNC_LAST_OPERATION=operation;
+        var source=document.getElementById('programAiSource');
+        if(source) source.innerHTML='<b>✓ Posledná AI analýza pripravená</b><br><span class="cnc-v4-muted">'+esc(operation)+' · '+esc(data.file||selectedFile.name)+'</span>';
         statusMsg('✅ Analýza bola úspešne dokončená.','ok');
         setTimeout(()=>resultCard.scrollIntoView({behavior:'smooth',block:'start'}),120);
       }catch(err){

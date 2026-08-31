@@ -358,16 +358,164 @@ function cncFileName(){
   document.getElementById('cncFileText').textContent=f?f.name:'PDF / JPG / PNG / DXF / DWG';
 }
 function cncAnalyze(){
-  var f=document.getElementById('cncFile').files[0],
-      t=document.getElementById('cncType').value,
-      s=document.getElementById('cncStock').value||'nezadaný',
-      r=document.getElementById('cncResult');
+  var f = document.getElementById('cncFile').files[0];
+  var t = document.getElementById('cncType').value;
+  var s = document.getElementById('cncStock').value || 'nezadaný';
+  var r = document.getElementById('cncResult');
+
+  function esc(v){
+    return String(v ?? '')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;');
+  }
+
+  if(!f){
+    r.style.display='block';
+    r.innerHTML =
+      '<b>⚠️ Najprv vyber výkres</b><br><br>' +
+      '<span class="cnc-v4-muted">Vyber PDF, JPG, PNG alebo WEBP výkres a potom spusti AI analýzu.</span>';
+    return;
+  }
+
+  if(f.size > 4 * 1024 * 1024){
+    r.style.display='block';
+    r.innerHTML =
+      '<b>⚠️ Súbor je príliš veľký</b><br><br>' +
+      '<span class="cnc-v4-muted">Pre túto verziu musí mať výkres menej ako približne 4 MB.</span>';
+    return;
+  }
+
   r.style.display='block';
-  r.innerHTML='<b>Výkres pripravený na AI analýzu</b><br><br>'+
-    'Súbor: '+(f?f.name:'nebol nahraný')+'<br>'+
-    'Operácia: '+t+'<br>'+
-    'Polotovar: '+s+'<br><br>'+
-    '<span class="cnc-v4-muted">AI backend ešte nie je pripojený. Po jeho pripojení bude táto obrazovka vracať rozmery, prvky, operácie, nástroje a odporúčané rezné parametre.</span>';
+  r.innerHTML =
+    '<b>🤖 AI analyzuje výkres…</b><br><br>' +
+    '<span class="cnc-v4-muted">Čítam výkres a pripravujem technologický postup, nástroje a štartovacie rezné parametre.</span>';
+
+  var reader = new FileReader();
+
+  reader.onload = async function(){
+    try{
+      var response = await fetch('/api/analyze',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({
+          fileData:reader.result,
+          fileName:f.name,
+          type:t,
+          stock:s,
+          material:'',
+          machine:''
+        })
+      });
+
+      var data = await response.json();
+
+      if(!response.ok || !data.success){
+        throw new Error(
+          data.error ||
+          data.details ||
+          ('HTTP chyba ' + response.status)
+        );
+      }
+
+      var setup = data.setup || {};
+      var operations = Array.isArray(data.operations) ? data.operations : [];
+      var tools = Array.isArray(data.tools) ? data.tools : [];
+      var warnings = Array.isArray(data.warnings) ? data.warnings : [];
+      var notes = Array.isArray(data.notes) ? data.notes : [];
+
+      var html =
+        '<div style="font-size:22px;font-weight:900;margin-bottom:18px;">' +
+          '🤖 AI analýza hotová' +
+        '</div>' +
+
+        '<div style="margin-bottom:18px;">' +
+          '<b>Výkres:</b> ' + esc(data.file || f.name) + '<br>' +
+          '<b>Operácia:</b> ' + esc(data.operation || t) + '<br>' +
+          '<b>Polotovar:</b> ' + esc(data.stock || s) +
+          (data.material ? '<br><b>Materiál:</b> ' + esc(data.material) : '') +
+        '</div>' +
+
+        '<div style="margin-bottom:18px;">' +
+          '<b>🔧 Upnutie a nastavenie</b><br><br>' +
+          '<b>Upnutie:</b> ' + esc(setup.clamping) + '<br>' +
+          '<b>Datový bod:</b> ' + esc(setup.datum) + '<br>' +
+          '<b>Podpery:</b> ' + esc(setup.supports) + '<br>' +
+          '<b>Riziká:</b> ' + esc(setup.risks) +
+        '</div>';
+
+      if(operations.length){
+        html += '<div style="margin-bottom:18px;"><b>📋 Technologický postup</b><br><br>';
+        operations.forEach(function(op){
+          html +=
+            '<div style="padding:10px 0;border-bottom:1px solid #26384d;">' +
+              '<b>' + esc(op.order) + '. ' + esc(op.name) + '</b><br>' +
+              '<span class="cnc-v4-muted">' + esc(op.description) + '</span>' +
+            '</div>';
+        });
+        html += '</div>';
+      }
+
+      if(tools.length){
+        html += '<div style="margin-bottom:18px;"><b>🛠️ Nástroje a rezné parametre</b><br><br>';
+        tools.forEach(function(x){
+          html +=
+            '<div style="padding:12px 0;border-bottom:1px solid #26384d;">' +
+              '<b>' + esc(x.operation) + '</b><br>' +
+              '<b>Nástroj:</b> ' + esc(x.tool) + '<br>' +
+              '<b>Držiak:</b> ' + esc(x.holder) + '<br>' +
+              '<b>Plátok:</b> ' + esc(x.insert) + '<br>' +
+              '<b>Vc:</b> ' + esc(x.vc) + '<br>' +
+              '<b>Posuv:</b> ' + esc(x.feed) + '<br>' +
+              '<b>Otáčky:</b> ' + esc(x.rpm) +
+            '</div>';
+        });
+        html += '</div>';
+      }
+
+      if(warnings.length){
+        html += '<div style="margin-bottom:18px;"><b>⚠️ Upozornenia</b><br><br><ul>';
+        warnings.forEach(function(w){
+          html += '<li style="margin-bottom:7px;">' + esc(w) + '</li>';
+        });
+        html += '</ul></div>';
+      }
+
+      if(notes.length){
+        html += '<div><b>📝 Poznámky</b><br><br><ul>';
+        notes.forEach(function(n){
+          html += '<li style="margin-bottom:7px;">' + esc(n) + '</li>';
+        });
+        html += '</ul></div>';
+      }
+
+      r.innerHTML = html;
+
+    }catch(err){
+      console.error(err);
+
+      r.style.display='block';
+      r.innerHTML =
+        '<b>❌ AI analýza zlyhala</b><br><br>' +
+        '<span class="cnc-v4-muted">' +
+        esc(err.message || 'Neznáma chyba') +
+        '</span><br><br>' +
+        '<small class="cnc-v4-muted">Skontroluj OPENAI_API_KEY vo Verceli a deployment.</small>';
+    }
+  };
+
+  reader.onerror = function(){
+    r.style.display='block';
+    r.innerHTML =
+      '<b>❌ Výkres sa nepodarilo načítať</b><br><br>' +
+      '<span class="cnc-v4-muted">Skús výkres vybrať znova.</span>';
+  };
+
+  reader.readAsDataURL(f);
 }
 function cncCalc(){
   var d=parseFloat(document.getElementById('cncD').value),

@@ -195,6 +195,23 @@ li{margin:6px 0;line-height:1.45}
 .machine-db .db-selected{font-size:13px;color:#b9d8ea;background:#07111a;border:1px solid #1e3c50;border-radius:12px;padding:10px 12px;line-height:1.4}
 @media(max-width:360px){.machine-db .db-row{grid-template-columns:1fr}}
 
+
+/* V5 – AI chooses tooling automatically. Manual tooling databases stay hidden. */
+.tooling-db[data-tooling-process="turning"],
+.tooling-db[data-tooling-process="milling"]{
+  display:none !important;
+}
+.ai-auto-tooling{
+  margin-top:12px;
+  padding:14px;
+  border:1px solid #285572;
+  border-radius:16px;
+  background:#07131e;
+}
+.ai-auto-tooling h3{margin:0 0 7px;font-size:16px}
+.ai-auto-tooling p{margin:0;color:#9eb1c2;font-size:12px;line-height:1.5}
+.ai-auto-tooling b{color:#fff}
+
 </style>
 
 <style id="cnc-v4-css">
@@ -536,6 +553,17 @@ li{margin:6px 0;line-height:1.45}
       <input id="turnAiTooling" type="hidden" value="">
     </div>
 
+
+<div class="ai-auto-tooling">
+  <h3>🤖 AI – automatický výber nástrojov</h3>
+  <p><b>Technológ nemusí vyberať držiak ani plátok ručne.</b>
+  AI vyberie pre každú operáciu vhodný a navzájom kompatibilný nástroj podľa výkresu,
+  materiálu, polotovaru, konkrétneho stroja, CNC riadenia, typu upnutia a požadovanej geometrie.
+  Pri sústružení vyberie držiak + presné označenie VBD; pri frézovaní frézu/teleso + presné označenie VBD
+  alebo VHM nástroja. Katalógové označenie nesmie byť vymyslené – ak ho nemožno spoľahlivo potvrdiť,
+  označí ho ako „overiť v katalógu“.</p>
+</div>
+
     <div class="field">
       <label>Technický výkres</label>
       <div class="drop" id="turnAiDrop">
@@ -787,6 +815,9 @@ function cncAnalyze(){
           'Content-Type':'application/json'
         },
         body:JSON.stringify({
+      machineManufacturer:document.getElementById('turnAiManufacturer')?.value||document.getElementById('millAiManufacturer')?.value||'',
+      machineModel:document.getElementById('turnAiModel')?.value||document.getElementById('millAiModel')?.value||'',
+      control:document.getElementById('turnAiControl')?.value||document.getElementById('millAiControl')?.value||'',
           fileData:reader.result,
           fileName:f.name,
           type:t,
@@ -1383,8 +1414,18 @@ init('turnAi','turning');init('millAi','milling');
           stock:getStockValue(),
           machine:document.getElementById(prefix+'Machine').value.trim(),
           control:document.getElementById(prefix+'Control')?.value.trim() || '',
-          tooling:(document.getElementById(prefix+'Tooling')?.value||'').trim(),
-          requirements:document.getElementById(prefix+'Requirements').value.trim(),
+          machineManufacturer:document.getElementById(prefix+'Manufacturer')?.value.trim() || '',
+          machineModel:document.getElementById(prefix+'Model')?.value.trim() || '',
+          machineDatabaseSelection:document.getElementById(prefix+'MachineSummary')?.innerText.trim() || '',
+          tooling:'',
+          autoToolSelection:true,
+          requirements:[
+            document.getElementById(prefix+'Requirements').value.trim(),
+            'AUTOMATICKÝ VÝBER NÁSTROJOV: AI musí sama vybrať vhodný konkrétny držiak/teleso a konkrétny plátok/VBD alebo VHM nástroj pre KAŽDÚ operáciu.',
+            'Výber musí vychádzať z výkresu, materiálu, polotovaru, stroja, CNC riadenia a dostupného rozhrania/upnutia.',
+            'Pri sústružení vyber kompatibilný revolverový držiak a VBD; pri frézovaní kompatibilné frézovacie teleso alebo VHM nástroj a VBD.',
+            'Uvádzaj presné označenie iba vtedy, keď je spoľahlivo určiteľné; inak uveď štandardnú ISO rodinu a položku na overenie v katalógu.'
+          ].filter(Boolean).join('\\n') ,
           selectedInsertFamily: prefix==='turnAi' ? (document.getElementById('turnInsertFamily')?.value||'') : (document.getElementById('millInsertFamily')?.value||''),
           selectedInsertSize: prefix==='turnAi' ? (document.getElementById('turnInsertSize')?.value||'') : (document.getElementById('millInsertSize')?.value||''),
           selectedInsertBody: prefix==='turnAi' ? (document.getElementById('turnInsertBody')?.value||'') : (document.getElementById('millInsertBody')?.value||''),

@@ -544,7 +544,7 @@ li{margin:6px 0;line-height:1.45}
         <div class="fileName" id="turnAiFileName">PDF, PNG, JPG/JPEG alebo WEBP</div>
         <div class="preview" id="turnAiPreview"></div>
       </div>
-      <div class="notice">Výkres sa odošle priamo na existujúci backend <b>/api/analyze</b>. API kľúč zostáva na serveri.</div>
+      <div class="notice">Výkres sa odošle priamo na existujúci backend <b>/api/analyze</b>. API kľúč zostáva na serveri.</div><div class="notice" style="margin-top:8px"><b>AI výber:</b> držiak, plátok/VHM a rezné podmienky sa určia automaticky z výkresu, materiálu, stroja a operácie. Ručný výber je iba voliteľný podklad.</div>
     </div>
 
     <div class="field">
@@ -631,7 +631,7 @@ li{margin:6px 0;line-height:1.45}
       <div class="ai2-file" id="millAiFileName">PDF, PNG, JPG/JPEG alebo WEBP</div>
       <div class="ai2-preview" id="millAiPreview"></div>
     </div>
-    <div class="ai2-note">Výkres sa odošle na existujúci backend <b>/api/analyze</b>. API kľúč zostáva na serveri.</div>
+    <div class="ai2-note">Výkres sa odošle na existujúci backend <b>/api/analyze</b>. API kľúč zostáva na serveri.</div><div class="ai2-note"><b>AI výber:</b> fréza/teleso, VBD alebo VHM, presné označenie a parametre sa určia automaticky podľa výkresu, materiálu, stroja a upnutia.</div>
    </div>
 
    <div class="ai2-field">
@@ -979,7 +979,7 @@ async function cncGenerateProgram(){
     var response=await fetch('/api/program',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({control:control,zero:zero,plan:plan})
+      body:JSON.stringify({control:control,zero:zero,machine:plan.machine||'',plan:plan})
     });
     var data=null;
     try{data=await response.json()}catch(_){}
@@ -1379,11 +1379,18 @@ init('turnAi','turning');init('millAi','milling');
         const payload={
           type:operation,
           operation:operation,
-          mode:prefix==='turnAi' ? 'turning' : 'milling',
           material:document.getElementById(prefix+'Material').value.trim(),
           stock:getStockValue(),
           machine:document.getElementById(prefix+'Machine').value.trim(),
           control:document.getElementById(prefix+'Control')?.value.trim() || '',
+          machineManufacturer:document.getElementById(prefix+'Manufacturer')?.value || '',
+          machineModel:document.getElementById(prefix+'Model')?.value || '',
+          machineSummary:document.getElementById(prefix+'MachineSummary')?.innerText || '',
+          turretInterface:document.getElementById(prefix==='turnAi'?'turnAiTurretInterface':'millAiToolInterface')?.value || '',
+          holderType:document.getElementById(prefix==='turnAi'?'turnAiHolderType':'millAiToolType')?.value || '',
+          holderSize:document.getElementById(prefix==='turnAi'?'turnAiHolderSize':'millAiToolSize')?.value || '',
+          holderOrientation:document.getElementById(prefix==='turnAi'?'turnAiHolderOrientation':'millAiToolInterface')?.value || '',
+          millingToolInterface:document.getElementById(prefix+'ToolInterface')?.value || '',
           tooling:(document.getElementById(prefix+'Tooling')?.value||'').trim(),
           requirements:document.getElementById(prefix+'Requirements').value.trim(),
           selectedInsertFamily: prefix==='turnAi' ? (document.getElementById('turnInsertFamily')?.value||'') : (document.getElementById('millInsertFamily')?.value||''),
@@ -1406,16 +1413,11 @@ init('turnAi','turning');init('millAi','milling');
 
         if(!response.ok || !data || data.success!==true){
           const msg=data?.error || ('Server odpovedal HTTP '+response.status+'.');
-          const details=data?.details ? '<br><small>'+String(data.details).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c]))+'</small>' : '';
+          const details=data?.details ? '<br><small>'+esc(data.details)+'</small>' : '';
           throw new Error(msg+details);
         }
 
-        try{
-          render(prefix,data);
-        }catch(renderErr){
-          console.error('CNC AI render error:',renderErr);
-          throw new Error('AI analýza prebehla, ale výsledok sa nepodarilo zobraziť: '+(renderErr?.message||String(renderErr)));
-        }
+        render(prefix,data);
         window.CNC_LAST_PLAN=data;
         window.CNC_LAST_OPERATION=operation;
         var source=document.getElementById('programAiSource');

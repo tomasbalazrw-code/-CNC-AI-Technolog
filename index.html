@@ -317,6 +317,8 @@ li{margin:6px 0;line-height:1.45}
 .cnc-op-visual-v17 .motion{stroke-dasharray:9 7;animation:cncV17Motion 1s linear infinite}
 @keyframes cncV17Motion{to{stroke-dashoffset:-32}}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(window.pdfjsLib){pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";}</script>
 </head>
 <body>
 <div class="app">
@@ -541,7 +543,7 @@ li{margin:6px 0;line-height:1.45}
       </div>
       <div class="tooling-summary" id="turnAiToolingSummary">Držiak zatiaľ nie je vybraný.</div>
       <div class="tooling-tags"><span class="tooling-tag">VDI DIN 69880</span><span class="tooling-tag">BMT</span><span class="tooling-tag">CAPTO</span><span class="tooling-tag">HSK-T</span><span class="tooling-tag">ER / Weldon</span></div>
-      <div class="tooling-note">Databáza je zámerne zameraná na bežné štandardné statické, vyvrtávacie, axiálne, radiálne a poháňané držiaky. Presné rozhranie revolvera musí Technológ potvrdiť podľa konkrétneho stroja.</div>
+      <div class="tooling-note">Technológ nemusí vyberať držiak ručne – AI vyberie kompatibilný typ podľa stroja a rozhrania. Databáza je zameraná na bežné štandardné statické, vyvrtávacie, axiálne, radiálne a poháňané držiaky. Presné rozhranie revolvera musí Technológ potvrdiť podľa konkrétneho stroja.</div>
       <input id="turnAiTooling" type="hidden" value="">
     </div>
 
@@ -708,7 +710,7 @@ li{margin:6px 0;line-height:1.45}
    <h2>Databáza nástrojov</h2>
    <label>Hľadať nástroj<input id="toolSearch" class="cnc-v4-input" placeholder="napr. DNMG 1506, VHM D12"></label>
    <button class="cnc-v4-btn" onclick="cncToolSearch()">Vyhľadať</button>
-   <div id="toolResult" class="cnc-v4-result">Zadaj označenie nástroja. Databázu výrobcov môžeme doplniť v ďalšom kroku.</div>
+   <div id="toolResult" class="cnc-v4-result">AI používa overené katalógové položky a pri chýbajúcej položke vykoná webové overenie u výrobcu. Ručné hľadanie je len doplnok.</div>
   </div>
  </div>
 </div>
@@ -1126,181 +1128,88 @@ document.addEventListener('click',function(e){
     return data && (data.recommended_tool || data.tool_selection || data.selected_tool);
   }
 
-  function render(prefix, data){
-    const reco=document.getElementById(prefix+"AutoReco");
-    const override=document.getElementById(prefix+"ManualOverride");
-    if(!reco || !override) return;
-
-    const material=document.getElementById(prefix+"Material")?.value||"";
-    const k=materialClass(material);
-    const isMill=prefix==="millAi";
-    const base=isMill?MILL[k]:TURN[k];
-    const ex=explicit(data);
-
-    let r=base;
-    if(ex){
-      r={
-        family:ex.insert_family || ex.family || base.family,
-        size:ex.insert_size || ex.size || base.size,
-        holder:ex.holder || base.holder,
-        body:ex.body || ex.tool_body || base.body,
-        reason:ex.reason || ex.justification || "Výber dodaný AI analýzou."
-      };
-    }
-
-    const third=isMill?r.body:r.holder;
-    reco.innerHTML='<span class="auto-badge">✓ AI VÝBER NÁSTROJA</span>'+
-      '<div class="auto-reco-grid">'+
-      '<div class="auto-reco-item"><span>PLÁTOK</span><b>'+esc(r.family)+" "+esc(r.size)+'</b></div>'+
-      '<div class="auto-reco-item"><span>'+ (isMill?"TELO FRÉZY":"DRŽIAK") +'</span><b>'+esc(third)+'</b></div>'+
-      '<div class="auto-reco-item"><span>MATERIÁL</span><b>'+esc(material||"podľa výkresu")+'</b></div>'+
-      '<div class="auto-reco-item"><span>DÔVOD</span><b>'+esc(r.reason)+'</b></div></div>';
-
-    override.innerHTML='<option value="">Použiť automatický výber AI</option>'+
-      '<option value="'+esc(r.family+"|"+r.size+"|"+third)+'">Použiť odporúčanie: '+esc(r.family+" "+r.size+" — "+third)+'</option>';
-  }
-
-  function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
-  window.CNCV7AutoTool={render};
-})();
-</script>
-
-<script id="insert-compatibility-v2">
-const INSERT_COMPATIBILITY = {"turning": {"CNMG": ["Vonkajší držiak pre CNMG", "Vyvŕtavacia tyč pre CNMG"], "DNMG": ["Vonkajší držiak pre DNMG", "Vyvŕtavacia tyč pre DNMG"], "WNMG": ["Vonkajší držiak pre WNMG"], "TNMG": ["Vonkajší držiak pre TNMG", "Vyvŕtavacia tyč pre TNMG"], "SNMG": ["Vonkajší držiak pre SNMG"], "VNMG": ["Vonkajší držiak pre VNMG", "Vyvŕtavacia tyč pre VNMG"], "CCMT": ["Vonkajší pozitívny držiak CCMT", "Vyvŕtavacia tyč CCMT"], "DCMT": ["Vonkajší pozitívny držiak DCMT", "Vyvŕtavacia tyč DCMT"], "TCMT": ["Vonkajší pozitívny držiak TCMT", "Vyvŕtavacia tyč TCMT"], "VBMT": ["Vonkajší pozitívny držiak VBMT", "Vyvŕtavacia tyč VBMT"], "VCMT": ["Vonkajší pozitívny držiak VCMT", "Vyvŕtavacia tyč VCMT"], "SCMT": ["Vonkajší pozitívny držiak SCMT", "Vyvŕtavacia tyč SCMT"], "RCMT": ["Vonkajší držiak pre RCMT"], "CCGT": ["Vonkajší pozitívny držiak CCGT", "Držiak CCGT pre hliník"], "DCGT": ["Vonkajší pozitívny držiak DCGT", "Držiak DCGT pre hliník"], "TCGT": ["Vonkajší pozitívny držiak TCGT", "Držiak TCGT pre hliník"], "MGMN": ["Zapichovací držiak MGMN", "Upichovací držiak MGMN"], "16ER": ["Vonkajší závitovací držiak 16ER"], "16IR": ["Vnútorný závitovací držiak 16IR"]}, "milling": {"APKT": ["Frézovacie teleso APKT", "90° čelná/rohová fréza APKT"], "APMT": ["Frézovacie teleso APMT", "90° čelná/rohová fréza APMT"], "SEKT": ["Čelná fréza SEKT", "Rohová fréza SEKT"], "SEHT": ["Čelná fréza SEHT", "Rohová fréza SEHT"], "SPMT": ["Čelná fréza SPMT", "Rohová fréza SPMT"], "RPMT": ["Kopírovacia fréza RPMT", "3D fréza RPMT"], "RDMT": ["Kopírovacia fréza RDMT", "3D fréza RDMT"], "RPKT": ["Vysokoposuvová fréza RPKT"], "SNMX": ["Ťažká čelná fréza SNMX"], "ONMU": ["Ťažká čelná fréza ONMU"], "LNMU": ["Vysokoposuvová fréza LNMU"], "XNMU": ["Ťažká čelná fréza XNMU"], "XDKT": ["Profilová/rohová fréza XDKT"], "WNMU": ["Hrubovacia fréza WNMU"], "SDMT": ["Vysokoposuvová fréza SDMT"]}};
-(function(){
-  function initCompat(prefix, kind){
-    const family=document.getElementById(prefix+'InsertFamily');
-    const size=document.getElementById(prefix+'InsertSize');
-    const body=document.getElementById(prefix+'InsertBody');
-    const msg=document.getElementById(prefix+'CompatMsg');
-    if(!family||!size||!body||!msg) return;
-
-    function refresh(){
-      const key=family.value;
-      const choices=INSERT_COMPATIBILITY[kind][key]||[];
-      body.innerHTML='<option value="">Vyber kompatibilné telo…</option>';
-      choices.forEach(x=>{
-        const o=document.createElement('option');
-        o.value=x;o.textContent=x;body.appendChild(o);
-      });
-      body.disabled=!choices.length;
-      if(choices.length){
-        msg.className='compat-ok';
-        msg.textContent='✓ Zobrazené sú iba štandardné typy telies určené pre túto rodinu plátku.';
-      }else{
-        msg.className='compat-warn';
-        msg.textContent='Vyber plátok, aby sa zobrazila kompatibilita.';
-      }
-    }
-
-    family.addEventListener('change', refresh);
-    body.addEventListener('change', function(){
-      if(!body.value) return;
-      msg.className='compat-ok';
-      msg.textContent='✓ Vybrané: '+body.value;
-    });
-  }
-  initCompat('turnAi','turning');
-  initCompat('millAi','milling');
-})();
-</script>
-
-<script id="standard-inserts-db">
-const STANDARD_INSERTS={"turning": [{"family": "CNMG", "shape": "80° negatívny kosoštvorec", "use": "všeobecné sústruženie, čelo, hrubovanie", "sizes": ["CNMG 120404", "CNMG 120408", "CNMG 120412", "CNMG 160604", "CNMG 160608"]}, {"family": "DNMG", "shape": "55° negatívny kosoštvorec", "use": "profilovanie, dokončovanie", "sizes": ["DNMG 110404", "DNMG 150604", "DNMG 150608"]}, {"family": "WNMG", "shape": "80° trigon", "use": "hrubovanie a stabilné obrábanie", "sizes": ["WNMG 080404", "WNMG 080408", "WNMG 080412"]}, {"family": "TNMG", "shape": "60° trojuholník", "use": "univerzálne a ťažšie sústruženie", "sizes": ["TNMG 160404", "TNMG 160408", "TNMG 160412"]}, {"family": "SNMG", "shape": "90° štvorec", "use": "ťažké hrubovanie", "sizes": ["SNMG 120404", "SNMG 120408", "SNMG 150608"]}, {"family": "VNMG", "shape": "35° kosoštvorec", "use": "profilovanie", "sizes": ["VNMG 160404", "VNMG 160408"]}, {"family": "CCMT", "shape": "80° pozitívny kosoštvorec", "use": "ľahké sústruženie, vyvrtávanie", "sizes": ["CCMT 060204", "CCMT 09T304", "CCMT 120404"]}, {"family": "DCMT", "shape": "55° pozitívny kosoštvorec", "use": "dokončovanie, vyvrtávanie", "sizes": ["DCMT 070204", "DCMT 11T304"]}, {"family": "TCMT", "shape": "60° pozitívny trojuholník", "use": "vnútorné sústruženie", "sizes": ["TCMT 110204", "TCMT 16T304"]}, {"family": "VBMT", "shape": "35° pozitívny kosoštvorec", "use": "profilovanie a dokončovanie", "sizes": ["VBMT 110302", "VBMT 160404", "VBMT 160408"]}, {"family": "VCMT", "shape": "35° pozitívny kosoštvorec", "use": "jemné profilovanie", "sizes": ["VCMT 110302", "VCMT 160404"]}, {"family": "SCMT", "shape": "90° pozitívny štvorec", "use": "ľahké sústruženie", "sizes": ["SCMT 060204", "SCMT 09T304"]}, {"family": "RCMT", "shape": "okrúhly", "use": "kopírovanie, profilovanie, prerušený rez", "sizes": ["RCMT 10T3", "RCMT 12T3"]}, {"family": "CCGT", "shape": "80° pozitívny leštený", "use": "hliník a neželezné kovy", "sizes": ["CCGT 060204", "CCGT 09T304", "CCGT 120404"]}, {"family": "DCGT", "shape": "55° pozitívny leštený", "use": "hliník a dokončovanie", "sizes": ["DCGT 070204", "DCGT 11T304"]}, {"family": "TCGT", "shape": "60° pozitívny leštený", "use": "hliník a neželezné kovy", "sizes": ["TCGT 110204", "TCGT 16T304"]}, {"family": "MGMN", "shape": "zapichovací / upichovací", "use": "zapichovanie a upichovanie", "sizes": ["MGMN 200", "MGMN 300", "MGMN 400"]}, {"family": "16ER", "shape": "vonkajší závit", "use": "závitovanie", "sizes": ["16ER 1.0 ISO", "16ER 1.5 ISO", "16ER 2.0 ISO"]}, {"family": "16IR", "shape": "vnútorný závit", "use": "vnútorné závitovanie", "sizes": ["16IR 1.0 ISO", "16IR 1.5 ISO", "16IR 2.0 ISO"]}], "milling": [{"family": "APKT", "shape": "pozitívny 90°", "use": "čelné a rohové frézovanie", "sizes": ["APKT 1604", "APKT 1003"]}, {"family": "APMT", "shape": "pozitívny 90°", "use": "čelné a rohové frézovanie", "sizes": ["APMT 1604", "APMT 1135"]}, {"family": "SEKT", "shape": "štvorcový", "use": "čelné frézovanie", "sizes": ["SEKT 1204", "SEKT 1505"]}, {"family": "SEHT", "shape": "štvorcový", "use": "čelné frézovanie", "sizes": ["SEHT 1204"]}, {"family": "SPMT", "shape": "štvorcový pozitívny", "use": "čelné frézovanie", "sizes": ["SPMT 07T308", "SPMT 1204"]}, {"family": "RPMT", "shape": "okrúhly", "use": "kopírovanie a 3D frézovanie", "sizes": ["RPMT 10T3", "RPMT 1604"]}, {"family": "RDMT", "shape": "okrúhly", "use": "kopírovanie a profilovanie", "sizes": ["RDMT 10T3", "RDMT 1604"]}, {"family": "RPKT", "shape": "okrúhly vysokoposuvový", "use": "vysokoposuvové frézovanie", "sizes": ["RPKT 10T3", "RPKT 16T3"]}, {"family": "SNMX", "shape": "štvorcový negatívny", "use": "ťažké frézovanie", "sizes": ["SNMX 1206", "SNMX 1507"]}, {"family": "ONMU", "shape": "osemhranný", "use": "ťažké hrubovanie", "sizes": ["ONMU 0505", "ONMU 0806"]}, {"family": "LNMU", "shape": "paralelogram", "use": "vysokoposuvové frézovanie", "sizes": ["LNMU 0303", "LNMU 0504"]}, {"family": "XNMU", "shape": "viacstranný negatívny", "use": "ťažké hrubovanie", "sizes": ["XNMU 0604", "XNMU 0906"]}, {"family": "XDKT", "shape": "pozitívny profilový", "use": "90° a profilové frézovanie", "sizes": ["XDKT 0904", "XDKT 1104"]}, {"family": "WNMU", "shape": "trigon negatívny", "use": "hrubovanie", "sizes": ["WNMU 06T3", "WNMU 0804"]}, {"family": "SDMT", "shape": "vysokoposuvový", "use": "vysokoposuvové frézovanie", "sizes": ["SDMT 07T308", "SDMT 1204"]}]};
-(function(){
-function init(prefix,kind){
- const f=document.getElementById(prefix+'InsertFamily'),s=document.getElementById(prefix+'InsertSize'),i=document.getElementById(prefix+'InsertInfo');
- if(!f||!s||!i)return;
- STANDARD_INSERTS[kind].forEach(x=>{let o=document.createElement('option');o.value=x.family;o.textContent=x.family+' — '+x.use;f.appendChild(o)});
- f.addEventListener('change',()=>{let x=STANDARD_INSERTS[kind].find(v=>v.family===f.value);s.innerHTML='<option value="">Vyber rozmer…</option>';s.disabled=!x;
- if(x)x.sizes.forEach(z=>{let o=document.createElement('option');o.value=z;o.textContent=z;s.appendChild(o)});i.innerHTML=x?'<b>'+x.family+'</b>'+x.shape+'<br><span style="color:#b4c5d3">'+x.use+'</span>':'Vyber typ plátku. AI ho použije ako preferenciu.'});
- s.addEventListener('change',()=>{let x=STANDARD_INSERTS[kind].find(v=>v.family===f.value);if(x&&s.value)i.innerHTML='<b>'+x.family+' '+s.value+'</b>'+x.shape+'<br><span style="color:#b4c5d3">'+x.use+'</span>'});
-}
-init('turnAi','turning');init('millAi','milling');
-})();
-</script>
-<script id="turn-ai-v3-js">
-(function(){
-  function esc(v){
-    return String(v ?? '').replace(/[&<>"']/g, c => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
-    }[c]));
-  }
-
   function listHtml(arr){
     if(!Array.isArray(arr) || !arr.length) return '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>';
     return '<ul>'+arr.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
   }
-
-  function block(title, body){
-    return '<div class="ai2-block"><h3>'+esc(title)+'</h3>'+body+'</div>';
+  function block(title, body){ return '<div class="ai2-block"><h3>'+esc(title)+'</h3>'+body+'</div>'; }
+  function opVisual(op, process, tool){
+    const e=esc, txt=((op&&op.name)||'')+' '+((op&&op.features)||'')+' '+((op&&op.description)||'');
+    const turning=/sústru|vŕt|zápich|čel/i.test(process+' '+txt);
+    const drilling=/vŕt|vrt|otvor|diera/i.test(txt);
+    const groove=/zápich|dráž/i.test(txt);
+    const facing=/čel/i.test(txt);
+    const label=tool ? ((tool.manufacturer||'')+' '+(tool.holder_or_body_code||'')+' '+(tool.insert_or_tool_code||'')) : 'NÁSTROJ NEOVERENÝ';
+    const feature=(op&&op.features)||'Prvok výkresu nie je jednoznačne určený';
+    if(turning){
+      let path=drilling
+        ? '<line x1="320" y1="55" x2="320" y2="195" stroke="#25a8ff" stroke-width="5" stroke-dasharray="10 8"/><polygon points="320,205 311,187 329,187" fill="#25a8ff"/>'
+        : '<path d="M300 75 L365 75 L410 110 L470 110" fill="none" stroke="#25a8ff" stroke-width="5" stroke-dasharray="10 8"/><polygon points="470,110 451,101 451,119" fill="#25a8ff"/>';
+      return '<div class="cnc-op-visual-v17"><h4>🎯 Znázornenie operácie</h4><svg viewBox="0 0 720 230">'+
+        '<rect x="35" y="80" width="420" height="78" rx="5" fill="#435563" stroke="#dce8ee"/>'+ 
+        (groove?'<rect x="240" y="76" width="18" height="86" fill="#07131d"/>':'')+
+        (facing?'<rect x="35" y="80" width="35" height="78" fill="#61798a"/>':'')+
+        '<polygon points="280,42 325,42 320,78 290,78" fill="#d8e4ea" stroke="#fff"/>'+path+
+        '<text x="485" y="55" fill="#dce8ee" font-size="13">PRVOK</text><text x="485" y="78" fill="#9db5c4" font-size="12">'+e(feature)+'</text>'+ 
+        '<text x="485" y="113" fill="#dce8ee" font-size="13">KONKRÉTNY NÁSTROJ</text><text x="485" y="136" fill="#8fd5ff" font-size="12">'+e(label)+'</text>'+ 
+        '<text x="485" y="171" fill="#9db5c4" font-size="12">'+e(drilling?'Axiálne vŕtanie':groove?'Radiálny zápich':facing?'Čelné sústruženie':'Pozdĺžne sústruženie')+'</text></svg>'+ 
+        '<div class="legend">Schéma je viazaná na operáciu a prvok výkresu; nie je to simulácia dráhy. Pred výrobou over dráhu v CAM/simulácii.</div></div>';
+    }
+    return '<div class="cnc-op-visual-v17"><h4>🎯 Znázornenie operácie</h4><svg viewBox="0 0 720 230">'+
+      '<rect x="45" y="145" width="500" height="45" rx="4" fill="#435563" stroke="#dce8ee"/>'+ 
+      '<rect x="205" y="95" width="170" height="50" rx="4" fill="#7e929e" stroke="#dce8ee"/>'+ 
+      '<circle cx="290" cy="68" r="27" fill="#dbe6eb" stroke="#fff"/>'+ 
+      '<line x1="290" y1="18" x2="290" y2="42" stroke="#25a8ff" stroke-width="5" stroke-dasharray="9 7"/><polygon points="290,10 281,28 299,28" fill="#25a8ff"/>'+ 
+      '<path d="M290 68 L370 68 L425 112" fill="none" stroke="#25a8ff" stroke-width="5" stroke-dasharray="10 8"/><polygon points="425,112 406,104 414,122" fill="#25a8ff"/>'+ 
+      '<text x="560" y="55" fill="#dce8ee" font-size="13">PRVOK</text><text x="560" y="78" fill="#9db5c4" font-size="12">'+e(feature)+'</text>'+ 
+      '<text x="560" y="113" fill="#dce8ee" font-size="13">NÁSTROJ</text><text x="560" y="136" fill="#8fd5ff" font-size="12">'+e(label)+'</text>'+ 
+      '<text x="560" y="171" fill="#9db5c4" font-size="12">'+e(/vŕt|vrt|otvor/i.test(txt)?'Vŕtanie':/dráž|slot/i.test(txt)?'Drážka':/čel/i.test(txt)?'Čelné frézovanie':'Kontúra / plocha')+'</text></svg>'+ 
+      '<div class="legend">Schéma je viazaná na operáciu a prvok výkresu; nie je to simulácia dráhy. Pred výrobou over dráhu v CAM/simulácii.</div></div>';
   }
 
   function render(prefix, data){
-    const setup=data.setup || {};
+    const setup=data.setup||{};
     const ops=Array.isArray(data.operations)?data.operations:[];
     const tools=Array.isArray(data.tools)?data.tools:[];
+    const features=Array.isArray(data.drawing_features)?data.drawing_features:[];
+    const checks=Array.isArray(data.drawing_checks)?data.drawing_checks:[];
     const critical=Array.isArray(data.critical_dimensions)?data.critical_dimensions:[];
     const warnings=Array.isArray(data.warnings)?data.warnings:[];
     const notes=Array.isArray(data.notes)?data.notes:[];
-
     let html='';
-    html += "<div class='ai2-block' style='border-color:#168fff'><b>⚙️ Technologický postup je pripravený.</b><br><span class='cnc-v4-muted'>Ďalší krok: vytvoriť CNC program priamo z tejto analýzy.</span><br><button type='button' class='cnc-v4-btn' style='margin-top:10px' onclick=\"cncOpen('cnc-program');cncUseLastAnalysis();\">🤖 VYTVORIŤ CNC PROGRAM Z TEJTO ANALÝZY</button></div>";
-    html += block('Čítanie výkresu','<p>'+esc(data.drawing_read || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>');
-    html += block('Upnutie a dátumy',
-      '<p><b>Upnutie:</b> '+esc(setup.clamping || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'+
-      '<p><b>Dátum:</b> '+esc(setup.datum || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'+
-      '<p><b>Opory:</b> '+esc(setup.supports || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'+
-      '<p><b>Riziká:</b> '+esc(setup.risks || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'
-    );
-
-    if(prefix==='millAi'){
-      html += '<div class="ai2-setup">'+
-        '<div class="ai2-setup-title">🔩 Schéma odporúčaného upnutia</div>'+
-        '<div class="ai2-diagram">'+
-        '<svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">'+
-          '<rect width="700" height="300" fill="#08111a"/>'+
-          '<rect x="55" y="225" width="590" height="32" rx="8" fill="#344a5d"/>'+
-          '<rect x="125" y="170" width="150" height="55" rx="7" fill="#50677a"/>'+
-          '<rect x="425" y="170" width="150" height="55" rx="7" fill="#50677a"/>'+
-          '<rect x="260" y="145" width="165" height="55" rx="5" fill="#9aa9b5"/>'+
-          '<rect x="275" y="132" width="135" height="14" rx="4" fill="#c1cbd2"/>'+
-          '<line x1="342" y1="65" x2="342" y2="132" stroke="#168cff" stroke-width="6"/>'+
-          '<path d="M325 88 L342 60 L359 88" fill="none" stroke="#168cff" stroke-width="6"/>'+
-          '<circle cx="342" cy="48" r="18" fill="#168cff"/>'+
-          '<text x="365" y="54" fill="#d8e7f2" font-size="20" font-family="Arial">Nástroj</text>'+
-          '<text x="302" y="178" fill="#111820" font-size="18" font-family="Arial" font-weight="700">OBROBOK</text>'+
-          '<text x="115" y="278" fill="#a9bac9" font-size="17" font-family="Arial">Zverák / čeľuste</text>'+
-          '<text x="430" y="278" fill="#a9bac9" font-size="17" font-family="Arial">CNC stôl</text>'+
-        '</svg></div>'+
-        '<div class="ai2-note">Ilustračná schéma – pred obrábaním potvrď skutočné upnutie podľa stroja a výkresu.</div>'+
-      '</div>';
-    }
-
-    html += block('Technologický postup',
-      ops.length ? ops.map(o=>'<div class="ai2-op"><b>'+esc(o.order)+'. '+esc(o.name)+'</b><small>'+esc(o.description)+'</small></div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
-    );
-
-    html += block('Nástroje a štartovacie parametre',
-      tools.length ? tools.map(t=>'<div class="ai2-tool">'+
-        '<div class="ai2-tooltop">'+esc(t.operation)+'</div>'+
-        '<div class="ai2-toolgrid">'+
-          '<div><b>Nástroj:</b> '+esc(t.tool)+'</div>'+
-          '<div><b>Držiak:</b> '+esc(t.holder)+'</div>'+
-          '<div><b>Plátok:</b> '+esc(t.insert)+'</div>'+
-          '<div><b>Vc:</b> '+esc(t.vc)+'</div>'+
-          '<div><b>Posuv:</b> '+esc(t.feed)+'</div>'+
-          '<div><b>Otáčky:</b> '+esc(t.rpm)+'</div>'+
-        '</div></div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
-    );
-
-    html += block('Kritické rozmery na kontrolu', listHtml(critical));
-    html += block('Upozornenia a riziká', listHtml(warnings));
-    html += block('Poznámky', listHtml(notes));
-
+    html += "<div class='ai2-block' style='border-color:#168fff'><b>⚙️ Technologický plán pripravený</b><br><span class='cnc-v4-muted'>Výkres → overené rozmery → operácie → konkrétne nástroje → parametre.</span><br><button type='button' class='cnc-v4-btn' style='margin-top:10px' onclick=\"cncOpen('cnc-program');cncUseLastAnalysis();\">🤖 VYTVORIŤ CNC PROGRAM Z TEJTO ANALÝZY</button></div>";
+    html += block('📐 Čítanie výkresu','<p>'+esc(data.drawing_read||'NIE JE ČITATEĽNÉ')+'</p>');
+    if(features.length){ html += block('📏 Prvky a rozmery z výkresu','<div>'+features.map(f=>'<div class="ai2-op"><b>'+esc(f.feature)+'</b><small>Hodnota: '+esc(f.value)+' · Tolerancia: '+esc(f.tolerance)+' · Zdroj: '+esc(f.source)+'<br>'+esc(f.location)+'</small></div>').join('')+'</div>'); }
+    if(checks.length){ html += block('🔎 Kontrola čitateľnosti výkresu','<div>'+checks.map(c=>'<div class="ai2-op"><b>'+esc(c.item)+' — '+esc(c.value)+'</b><small>Istota: '+esc(c.confidence)+'<br>'+esc(c.reason)+'</small></div>').join('')+'</div>'); }
+    html += block('🔧 Upnutie a dátumy','<p><b>Upnutie:</b> '+esc(setup.clamping||'NIE JE UVEDENÉ')+'</p><p><b>Dátum:</b> '+esc(setup.datum||'NIE JE UVEDENÉ')+'</p><p><b>Opory:</b> '+esc(setup.supports||'NIE JE UVEDENÉ')+'</p><p><b>Riziká:</b> '+esc(setup.risks||'NIE JE UVEDENÉ')+'</p>');
+    if(prefix==='millAi') html += '<div class="ai2-setup"><div class="ai2-setup-title">🔩 Schéma odporúčaného upnutia pri frézovaní</div><div class="ai2-diagram"><svg viewBox="0 0 700 300"><rect width="700" height="300" fill="#08111a"/><rect x="55" y="225" width="590" height="32" rx="8" fill="#344a5d"/><rect x="125" y="170" width="150" height="55" rx="7" fill="#50677a"/><rect x="425" y="170" width="150" height="55" rx="7" fill="#50677a"/><rect x="260" y="145" width="165" height="55" rx="5" fill="#9aa9b5"/><rect x="275" y="132" width="135" height="14" rx="4" fill="#c1cbd2"/><line x1="342" y1="65" x2="342" y2="132" stroke="#168cff" stroke-width="6"/><path d="M325 88 L342 60 L359 88" fill="none" stroke="#168cff" stroke-width="6"/><circle cx="342" cy="48" r="18" fill="#168cff"/><text x="365" y="54" fill="#d8e7f2" font-size="20">Nástroj</text><text x="302" y="178" fill="#111820" font-size="18" font-weight="700">OBROBOK</text><text x="115" y="278" fill="#a9bac9" font-size="17">Zverák / čeľuste</text><text x="430" y="278" fill="#a9bac9" font-size="17">CNC stôl</text></svg></div></div>';
+    html += block('📋 Technologický postup',ops.length?ops.map(o=>{let mt=tools.find(t=>String(t.operation||'').toLowerCase()===String(o.name||'').toLowerCase()||String(t.operation||'').toLowerCase().includes(String(o.name||'').toLowerCase())||String(o.name||'').toLowerCase().includes(String(t.operation||'').toLowerCase())); return '<div class="ai2-op"><b>'+esc(o.order)+'. '+esc(o.name)+'</b><small><b>Prvok:</b> '+esc(o.features||'NIE JE URČENÉ')+'<br><b>Postup:</b> '+esc(o.description||'NIE JE URČENÉ')+'<br><b>Upnutie:</b> '+esc(o.setup||setup.clamping||'NIE JE URČENÉ')+'<br><b>Nástroj:</b> '+esc(mt?((mt.manufacturer||'')+' · '+(mt.product_family||'')+' · '+(mt.holder_or_body_code||'')+' · '+(mt.insert_or_tool_code||'')):(o.tool_id||'OVERIŤ V DATABÁZE'))+'<br><b>Parametre:</b> '+esc(o.parameters||'OVERIŤ')+'</small>'+opVisual(o,data.operation||prefix,mt)+'</div>';}).join(''):'<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>');
+    html += block('🛠️ Konkrétne nástroje z databázy výrobcov',tools.length?tools.map(t=>'<div class="ai2-tool"><div class="ai2-tooltop">'+esc(t.operation)+'</div><div class="ai2-toolgrid"><div><b>Výrobca:</b> '+esc(t.manufacturer)+'</div><div><b>Produktová rada:</b> '+esc(t.product_family)+'</div><div><b>Držiak/teleso:</b> '+esc(t.holder_or_body)+'</div><div><b>Presný kód:</b> '+esc(t.holder_or_body_code)+'</div><div><b>Plátok/nástroj:</b> '+esc(t.insert_or_tool)+'</div><div><b>Presný kód:</b> '+esc(t.insert_or_tool_code)+'</div><div><b>Grade:</b> '+esc(t.grade)+'</div><div><b>Geometria:</b> '+esc(t.geometry)+'</div><div><b>Kompatibilita:</b> '+esc(t.compatibility)+'</div><div><b>Overenie:</b> '+esc(t.verification_status)+'</div></div>'+(t.source_url?'<div style="margin-top:8px;font-size:12px">Zdroj: <a href="'+e(t.source_url)+'" target="_blank" rel="noopener">katalóg výrobcu</a></div>':'')+'<div style="margin-top:7px;color:#9db5c4;font-size:12px">'+esc(t.reason||'')+'</div></div>').join(''):'<p>AI nenašla overený konkrétny nástroj. Nebude vymýšľať katalógový kód.</p>');
+    html += block('📌 Kritické rozmery na kontrolu',listHtml(critical));
+    html += block('⚠️ Upozornenia a riziká',listHtml(warnings));
+    html += block('📝 Poznámky a zdroje',listHtml(notes.concat(Array.isArray(data.tool_sources)?data.tool_sources:[])));
     document.getElementById(prefix+'Result').innerHTML=html;
     if(window.CNCV7AutoTool) CNCV7AutoTool.render(prefix,data);
     document.getElementById(prefix+'ResultCard').classList.remove('hidden');
+  }
+
+  async function pdfToPageImages(file, maxPages=8){
+    if(!window.pdfjsLib) throw new Error('PDF.js sa nenačítal. Skús obnoviť stránku.');
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    const out=[];
+    const n=Math.min(pdf.numPages,maxPages);
+    for(let i=1;i<=n;i++){
+      const page=await pdf.getPage(i);
+      const base=page.getViewport({scale:1.0});
+      const scale=Math.min(2.0, 1500/base.width);
+      const vp=page.getViewport({scale});
+      const c=document.createElement('canvas'); c.width=Math.ceil(vp.width); c.height=Math.ceil(vp.height);
+      const ctx=c.getContext('2d',{alpha:false});
+      await page.render({canvasContext:ctx,viewport:vp}).promise;
+      out.push(c.toDataURL('image/jpeg',0.86));
+    }
+    return out;
   }
 
   function setup(prefix, operation){
@@ -1395,8 +1304,8 @@ init('turnAi','turning');init('millAi','milling');
         }
       }
 
-      if(selectedFile.size > 4.2*1024*1024){
-        statusMsg('❌ Súbor je príliš veľký. Skús výkres do približne 4 MB.','error');
+      if(selectedFile.size > 8*1024*1024){
+        statusMsg('❌ Súbor je príliš veľký. Skús výkres do približne 8 MB.','error');
         return;
       }
 
@@ -1406,6 +1315,10 @@ init('turnAi','turning');init('millAi','milling');
 
       try{
         const fileData=await fileDataURL(selectedFile);
+        let pageImages=[];
+        if(selectedFile.type==='application/pdf' || /\.pdf$/i.test(selectedFile.name)){
+          pageImages=await pdfToPageImages(selectedFile,8);
+        }
         const payload={
           type:operation,
           operation:operation,
@@ -1429,7 +1342,8 @@ init('turnAi','turning');init('millAi','milling');
           autoToolSelection: true,
           manualToolOverride: prefix==='turnAi' ? (document.getElementById('turnManualOverride')?.value||'') : (document.getElementById('millManualOverride')?.value||''),
           fileName:selectedFile.name,
-          fileData:fileData
+          fileData:fileData,
+          pageImages:pageImages
         };
 
         const response=await fetch('/api/analyze',{

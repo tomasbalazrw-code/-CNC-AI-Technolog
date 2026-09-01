@@ -833,6 +833,11 @@ function cncAnalyze(){
           (data.material ? '<br><b>Materiál:</b> ' + esc(data.material) : '') +
         '</div>' +
 
+        '<div style="margin-bottom:18px;"><b>📐 Čítanie výkresu</b><br><br>' +
+          esc(data.drawing_read || 'NIE JE ČITATEĽNÉ') + '<br><br>' +
+          (Array.isArray(data.critical_dimensions) ? '<b>Kritické rozmery:</b><ul>' + data.critical_dimensions.map(function(x){return '<li>'+esc(x)+'</li>';}).join('') + '</ul>' : '') +
+        '</div>' +
+
         '<div style="margin-bottom:18px;">' +
           '<b>🔧 Upnutie a nastavenie</b><br><br>' +
           '<b>Upnutie:</b> ' + esc(setup.clamping) + '<br>' +
@@ -844,10 +849,20 @@ function cncAnalyze(){
       if(operations.length){
         html += '<div style="margin-bottom:18px;"><b>📋 Technologický postup</b><br><br>';
         operations.forEach(function(op){
+          var mt = tools.find(function(x){
+            var a=String(x.operation||'').toLowerCase(), b=String(op.name||'').toLowerCase();
+            return a===b || a.includes(b) || b.includes(a);
+          });
           html +=
-            '<div style="padding:10px 0;border-bottom:1px solid #26384d;">' +
-              '<b>' + esc(op.order) + '. ' + esc(op.name) + '</b><br>' +
-              '<span class="cnc-v4-muted">' + esc(op.description) + '</span>' +
+            '<div style="padding:14px 0;border-bottom:1px solid #26384d;">' +
+              '<b style="font-size:17px;">' + esc(op.order) + '. ' + esc(op.name) + '</b><br><br>' +
+              '<b>Čo sa obrába:</b> ' + esc(op.features||'NIE JE URČENÉ') + '<br>' +
+              '<b>Postup:</b> ' + esc(op.description||'NIE JE URČENÉ') + '<br>' +
+              '<b>Upnutie:</b> ' + esc(op.setup||setup.clamping||'NIE JE URČENÉ') + '<br>' +
+              '<b>Nástroj:</b> ' + esc(mt ? ((mt.manufacturer||'')+' · '+(mt.holder_or_body||'')+' · '+(mt.insert_or_tool||'')) : (op.tool_id||'OVERIŤ V KATALÓGU')) + '<br>' +
+              '<b>Presné označenie:</b> ' + esc(mt ? ((mt.holder_or_body_code||'')+' / '+(mt.insert_or_tool_code||'')) : 'OVERIŤ V KATALÓGU') + '<br>' +
+              '<b>Parametre:</b> ' + esc(op.parameters||'Štartovacie hodnoty') +
+              cncV17OperationVisual(op, data.operation||t, mt) +
             '</div>';
         });
         html += '</div>';
@@ -859,9 +874,15 @@ function cncAnalyze(){
           html +=
             '<div style="padding:12px 0;border-bottom:1px solid #26384d;">' +
               '<b>' + esc(x.operation) + '</b><br>' +
-              '<b>Nástroj:</b> ' + esc(x.tool) + '<br>' +
-              '<b>Držiak:</b> ' + esc(x.holder) + '<br>' +
-              '<b>Plátok:</b> ' + esc(x.insert) + '<br>' +
+              '<b>Výrobca:</b> ' + esc(x.manufacturer) + '<br>' +
+              '<b>Držiak / teleso:</b> ' + esc(x.holder_or_body) + '<br>' +
+              '<b>Kód držiaka / telesa:</b> ' + esc(x.holder_or_body_code) + '<br>' +
+              '<b>Plátok / nástroj:</b> ' + esc(x.insert_or_tool) + '<br>' +
+              '<b>Kód plátku / nástroja:</b> ' + esc(x.insert_or_tool_code) + '<br>' +
+              '<b>Grade:</b> ' + esc(x.grade) + '<br>' +
+              '<b>Geometria:</b> ' + esc(x.geometry) + '<br>' +
+              '<b>Kompatibilita:</b> ' + esc(x.compatibility) + '<br>' +
+              '<b>Overenie:</b> ' + esc(x.verification_status) + '<br>' +
               '<b>Vc:</b> ' + esc(x.vc) + '<br>' +
               '<b>Posuv:</b> ' + esc(x.feed) + '<br>' +
               '<b>Otáčky:</b> ' + esc(x.rpm) +
@@ -1703,54 +1724,32 @@ initMachineDatabase('millAi','milling');
 </script>
 
 <script>
-function cncV17OperationVisual(op, process){
+function cncV17OperationVisual(op, process, tool){
   const e=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
-  const t=((op&&op.name)||"")+" "+((op&&op.description)||"");
-  const milling=/fréz|fr[eé]z|milling|kaps|dráž|d[íi]ra|otvor/i.test(String(process||"")+" "+t);
-  const drilling=/vrt|drill|otvor|diera/i.test(t);
-  const facing=/čel|face/i.test(t);
-  const x=drilling?185:(facing?310:225);
-  if(!milling){
-    const path=drilling
-      ? `<path class="motion" d="M185 55 L185 155" stroke="#9bd7ff" stroke-width="4" fill="none"/><polygon points="185,169 178,151 192,151" fill="#9bd7ff"/>`
-      : `<path class="motion" d="M${x} 62 L${x+58} 62 L${x+92} 102 L${x+34} 140" stroke="#9bd7ff" stroke-width="4" fill="none"/><polygon points="${x+34},140 ${x+27},124 ${x+42},130" fill="#9bd7ff"/>`;
-    return `<div class="cnc-op-visual-v17">
-      <h4>🎯 Znázornenie operácie – nástroj a smer pohybu</h4>
-      <svg viewBox="0 0 650 230">
-        <rect x="55" y="78" width="340" height="76" rx="5" fill="#394b55" stroke="#c4d0d6"/>
-        <line x1="55" y1="78" x2="395" y2="78" stroke="#e4eaed" stroke-width="2"/>
-        <line x1="55" y1="154" x2="395" y2="154" stroke="#e4eaed" stroke-width="2"/>
-        <polygon points="${x},48 ${x+44},48 ${x+20},91 ${x-5},91" fill="#d4e1e7" stroke="#fff"/>
-        ${path}
-        <text x="425" y="76" fill="#dbe6eb" font-size="13">OBROBOK</text>
-        <text x="425" y="101" fill="#9bd7ff" font-size="13">→ smer posuvu</text>
-        <text x="425" y="128" fill="#afc0c9" font-size="12">${e(op&&op.tool_id?("T"+op.tool_id):"AI vybraný nástroj")}</text>
-        <text x="425" y="151" fill="#afc0c9" font-size="12">${e(op&&op.features||"prvok podľa výkresu")}</text>
-      </svg>
-      <div class="legend">Názorné znázornenie operácie podľa technologického plánu. Nie je to náhrada simulácie CNC dráhy.</div>
-    </div>`;
-  }
-  return `<div class="cnc-op-visual-v17">
-    <h4>🎯 Znázornenie frézovacej operácie – nástroj a smer pohybu</h4>
-    <svg viewBox="0 0 650 230">
-      <rect x="55" y="132" width="370" height="56" rx="4" fill="#394b55" stroke="#c4d0d6"/>
-      <rect x="120" y="151" width="110" height="23" fill="#263740"/>
-      <circle cx="290" cy="94" r="29" fill="#d0dde2" stroke="#fff"/>
-      <rect x="281" y="36" width="18" height="58" fill="#a9bcc5"/>
-      <path class="motion" d="M290 94 L360 94 L402 123" stroke="#9bd7ff" stroke-width="4" fill="none"/>
-      <polygon points="402,123 387,118 394,131" fill="#9bd7ff"/>
-      <text x="448" y="79" fill="#dbe6eb" font-size="13">NÁSTROJ</text>
-      <text x="448" y="103" fill="#9bd7ff" font-size="13">→ smer posuvu</text>
-      <text x="448" y="130" fill="#afc0c9" font-size="12">${e(op&&op.tool_id?("T"+op.tool_id):"AI vybraný nástroj")}</text>
-      <text x="448" y="153" fill="#afc0c9" font-size="12">${e(op&&op.features||"prvok podľa výkresu")}</text>
-    </svg>
-    <div class="legend">Názorné znázornenie operácie podľa technologického plánu. Nie je to náhrada simulácie CNC dráhy.</div>
-  </div>`;
+  const text=String((op&&op.name)||"")+" "+String((op&&op.features)||"")+" "+String((op&&op.description)||"");
+  const all=String(process||"")+" "+text;
+  const turn=/sústru|turn/i.test(all);
+  const drill=/vrt|drill|otvor|diera/i.test(text);
+  const groove=/zápich|dráž/i.test(text);
+  const face=/čel|face/i.test(text);
+  const toolLabel=tool ? ((tool.manufacturer||"")+(tool.holder_or_body_code?" · "+tool.holder_or_body_code:"")+(tool.insert_or_tool_code?" · "+tool.insert_or_tool_code:"")) : "OVERIŤ V KATALÓGU";
+  const action=drill?"Vŕtanie – axiálny pohyb":groove?"Zápich / drážka – radiálny pohyb":face?"Čelné obrábanie":"Pozdĺžne obrábanie";
+  if(turn) return '<div class="cnc-op-visual-v17"><h4>🎯 Ako nástroj obrába prvok výkresu</h4><svg viewBox="0 0 700 230">'+
+    '<rect x="40" y="82" width="370" height="78" rx="5" fill="#394b55" stroke="#d0dbe0"/>'+
+    '<polygon points="220,48 268,48 247,84 215,84" fill="#d4e1e7" stroke="#fff"/>'+
+    (drill?'<path class="motion" d="M247 84 L247 174" stroke="#8fd3ff" stroke-width="4"/><polygon points="247,188 240,170 254,170" fill="#8fd3ff"/>':
+      '<path class="motion" d="M247 67 L305 67 L348 108 L397 108" stroke="#8fd3ff" stroke-width="4" fill="none"/><polygon points="397,108 380,101 380,115" fill="#8fd3ff"/>')+
+    '<text x="435" y="58" fill="#dbe6eb" font-size="13">PRVOK VÝKRESU</text><text x="435" y="81" fill="#9fb4c0" font-size="12">'+e(op&&op.features||"neurčené")+'</text>'+
+    '<text x="435" y="115" fill="#dbe6eb" font-size="13">KONKRÉTNY NÁSTROJ</text><text x="435" y="138" fill="#9fd8ff" font-size="12">'+e(toolLabel)+'</text>'+
+    '<text x="435" y="170" fill="#9fb4c0" font-size="12">'+e(action)+'</text></svg><div class="legend">Schéma znázorňuje vzťah nástroja k operácii. Presnú CNC dráhu treba overiť simuláciou.</div></div>';
+  return '<div class="cnc-op-visual-v17"><h4>🎯 Ako nástroj obrába prvok výkresu</h4><svg viewBox="0 0 700 230">'+
+    '<rect x="40" y="138" width="390" height="50" rx="4" fill="#394b55" stroke="#d0dbe0"/><rect x="135" y="153" width="120" height="20" fill="#263740"/>'+
+    '<circle cx="300" cy="94" r="30" fill="#d0dde2" stroke="#fff"/><rect x="291" y="36" width="18" height="58" fill="#a9bcc5"/>'+
+    '<path class="motion" d="M300 94 L365 94 L410 124" stroke="#8fd3ff" stroke-width="4" fill="none"/><polygon points="410,124 394,119 401,132" fill="#8fd3ff"/>'+
+    '<text x="455" y="58" fill="#dbe6eb" font-size="13">PRVOK VÝKRESU</text><text x="455" y="81" fill="#9fb4c0" font-size="12">'+e(op&&op.features||"neurčené")+'</text>'+
+    '<text x="455" y="115" fill="#dbe6eb" font-size="13">KONKRÉTNY NÁSTROJ</text><text x="455" y="138" fill="#9fd8ff" font-size="12">'+e(toolLabel)+'</text>'+
+    '<text x="455" y="170" fill="#9fb4c0" font-size="12">'+e(drill?"Axiálne vŕtanie":groove?"Frézovanie drážky":face?"Čelné frézovanie":"Posuv po kontúre")+'</text></svg><div class="legend">Schéma znázorňuje vzťah nástroja k operácii. Presnú CNC dráhu treba overiť simuláciou.</div></div>';
 }
-</script>
-
-<script>
-/* V17 fallback hook: adds the visualizer to operation cards in the existing renderer. */
 (function(){
   function addVisuals(){
     try{

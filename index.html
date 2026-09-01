@@ -1100,6 +1100,17 @@ document.addEventListener('click',function(e){
 
 <script id="auto-tool-selection-v7">
 (function(){
+  // Globálna escape funkcia pre renderer AI výsledkov.
+  // Oprava chyby Safari: \"Can\'t find variable: esc\".
+  function esc(v){
+    return String(v ?? '')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/\"/g,'&quot;')
+      .replace(/'/g,'&#039;');
+  }
+
   const TURN = {
     steel:{family:"CNMG",size:"CNMG 120408",holder:"Vonkajší držiak pre CNMG",reason:"stabilná negatívna geometria pre bežné ocele"},
     stainless:{family:"CNMG",size:"CNMG 120408",holder:"Vonkajší držiak pre CNMG",reason:"robustná geometria; triedu/povlak treba zvoliť podľa nerezovej ocele"},

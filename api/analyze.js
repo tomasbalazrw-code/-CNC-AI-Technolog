@@ -28,12 +28,13 @@ const SCHEMA={
   },required:["operation","vc","rpm","feed","fz","ap","ae","coolant","note"]}},
   material:{type:"string"},stock:{type:"string"},
   critical_dimensions:{type:"array",items:{type:"string"}},
+  drawing_checks:{type:"array",items:{type:"object",additionalProperties:false,properties:{item:{type:"string"},value:{type:"string"},confidence:{type:"string"},reason:{type:"string"}},required:["item","value","confidence","reason"]}},
   missing_information:{type:"array",items:{type:"string"}},
   tool_sources:{type:"array",items:{type:"string"}},
   warnings:{type:"array",items:{type:"string"}},
   notes:{type:"array",items:{type:"string"}}
  },
- required:["drawing_read","drawing_features","setup","operations","tools","parameters","material","stock","critical_dimensions","missing_information","tool_sources","warnings","notes"]
+ required:["drawing_read","drawing_features","setup","operations","tools","parameters","material","stock","critical_dimensions","drawing_checks","missing_information","tool_sources","warnings","notes"]
 };
 
 function parseDataUrl(v,name){
@@ -72,6 +73,17 @@ VSTUP:
 - Ďalšie požiadavky: ${b.requirements||"žiadne"}
 
 ZÁSADNÉ PRAVIDLÁ:
+A. VÝKRES JE ZDROJ PRAVDY. Najprv urob samostatné čítanie výkresu, až potom technológiu.
+B. Systematicky skontroluj všetky pohľady a rezy: celkové rozmery, Ø, dĺžky, hrúbky, rádiusy, skosenia, zápichy, závity, otvory, kužele, tolerancie, drsnosť, datumy a poznámky.
+C. Každý použitý rozmer musí byť buď PRIAMO ČITATEĽNÝ alebo jednoznačne ODVODENÝ Z GEOMETRIE. Nikdy si nevymýšľaj rozmery.
+D. Ak je údaj nečitateľný, napíš NIE JE ČITATEĽNÉ / POTREBNÉ OVERIŤ a nevytváraj z neho operáciu.
+E. drawing_checks musí obsahovať najdôležitejšie rozmery, prvky a mieru istoty.
+F. Každá operácia musí uviesť konkrétny prvok výkresu, ktorý obrába, a konkrétny spôsob obrábania. Žiadne všeobecné frázy.
+G. Pri veľkom úbere rozdeľ hrubovanie na viac záberov a uveď ponechaný prídavok.
+H. Pri každej operácii vyber konkrétny nástroj: výrobca, držiak/teleso, presný kód, plátok/VHM, presný kód, grade a geometria. Ak kód nevieš spoľahlivo potvrdiť, napíš OVERIŤ V KATALÓGU, nikdy nehádaj.
+I. Kompatibilitu kontroluj držiak↔plátok, upnutie↔revolver/stroj a pri frézovaní nástroj↔vreteno.
+J. Textové zadanie, polotovar a stroj sú iba doplnkový kontext; nesmú nahradiť rozmery z výkresu.
+
 1. Najprv výkres dôkladne prečítaj. Vypíš všetky relevantné rozmery a výrobné prvky, nie iba celkový rozmer.
 2. Pri každom rozmere uveď, či je priamo čitateľný z výkresu. Nikdy nevymýšľaj hodnotu.
 3. Technologický postup musí byť konkrétny a naviazaný na prvky výkresu. Žiadne všeobecné frázy typu "vykonať obrábanie".

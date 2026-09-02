@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V19 -->
+<!-- CNC AI Technolog V20 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -303,6 +303,7 @@ li{margin:6px 0;line-height:1.45}
 .brand-pref{margin-top:14px;padding:15px;border:1px solid #2d5e78;border-radius:16px;background:linear-gradient(135deg,#081a27,#09131d)}
 .brand-pref-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px}.brand-pref-title{font-weight:900;font-size:16px}.brand-pref-badge{font-size:10px;padding:5px 8px;border-radius:999px;border:1px solid #3182a9;color:#91dcff;background:#092235}
 .brand-pref-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}.brand-pref label{font-size:12px;color:#aebdcc}.brand-pref select{width:100%;margin-top:5px;padding:12px 10px;border-radius:11px;border:1px solid #31536e;background:#08131e;color:#fff;font-size:14px}.brand-pref-note{margin-top:9px;color:#8fa5b8;font-size:11px;line-height:1.45}
+.material-custom{display:none!important;margin-top:9px!important}.material-custom[style*="block"]{display:block!important}
 @media(max-width:600px){.brand-pref-grid{grid-template-columns:1fr}}
 </style>
 <style>
@@ -364,7 +365,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V19</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V20</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -531,7 +532,8 @@ li{margin:6px 0;line-height:1.45}
     <div class="grid">
       <div class="field">
         <label for="turnAiMaterial">Materiál</label>
-        <input id="turnAiMaterial" type="text" value="C45" placeholder="napr. C45, 42CrMo4, S355">
+        <select id="turnAiMaterial" class="material-select" data-material-prefix="turnAi"></select>
+        <input id="turnAiMaterialCustom" class="material-custom" type="text" placeholder="Napíš presné označenie materiálu…">
       </div>
       <div class="field">
         <label for="turnAiStockType">Typ polotovaru</label>
@@ -634,7 +636,8 @@ li{margin:6px 0;line-height:1.45}
    <div class="ai2-grid">
     <div class="ai2-field">
      <label for="millAiMaterial">Materiál</label>
-     <input id="millAiMaterial" type="text" value="C45" placeholder="napr. C45, 42CrMo4, S355">
+     <select id="millAiMaterial" class="material-select" data-material-prefix="millAi"></select>
+     <input id="millAiMaterialCustom" class="material-custom" type="text" placeholder="Napíš presné označenie materiálu…">
     </div>
     <div class="ai2-field">
      <label for="millAiStock">Polotovar</label>
@@ -1113,6 +1116,28 @@ function cncLoadSettings(){
 }
 
 const CNC_TOOL_BRANDS=['MASAM','Walter','Ceratizit','Böhlerit','Sandvik Coromant','Seco','Iscar','Tungaloy','Kennametal','Mitsubishi Materials','Sumitomo','Kyocera','TaeguTec','Korloy','Pramet'];
+const CNC_MATERIAL_GROUPS=[
+  ['Konštrukčné a legované ocele',['C35','C45','C60','42CrMo4','34CrNiMo6','16MnCr5','20MnCr5','100Cr6','11SMn30','S235JR','S355J2','S690QL','Hardox 450','Hardox 500']],
+  ['Nehrdzavejúce ocele',['1.4301 / AISI 304','1.4305 / AISI 303','1.4404 / AISI 316L','1.4541 / AISI 321','1.4571 / AISI 316Ti','1.4021 / AISI 420','1.4112 / AISI 440B','1.4542 / 17-4PH']],
+  ['Nástrojové ocele',['1.2379','1.2343','1.2344','1.2311','1.2312']],
+  ['Liatiny',['EN-GJL-250 – sivá liatina','EN-GJS-400-15 – tvárna liatina','EN-GJS-500-7 – tvárna liatina']],
+  ['Hliník a zliatiny',['EN AW-6082','EN AW-7075','EN AW-6061','EN AW-5083','AlSi10Mg']],
+  ['Meď, mosadz a bronz',['Cu-ETP','CuCrZr','CuZn39Pb3 – mosadz','CuSn12 – bronz']],
+  ['Titán a niklové zliatiny',['Titán Grade 2','Ti-6Al-4V / Titán Grade 5','Inconel 718','Inconel 625','Hastelloy C-276']],
+  ['Technické plasty',['POM-C','PA6','PE-UHMW','PEEK','PTFE']]
+];
+function cncInitMaterials(){
+  document.querySelectorAll('.material-select').forEach(function(el){
+    el.innerHTML='<option value="">Vyber materiál…</option>'+CNC_MATERIAL_GROUPS.map(function(group){return '<optgroup label="'+group[0]+'">'+group[1].map(function(x){return '<option value="'+x+'">'+x+'</option>'}).join('')+'</optgroup>'}).join('')+'<option value="__custom__">Iný materiál – doplniť</option>';
+    el.value='C45';
+    el.addEventListener('change',function(){var custom=document.getElementById(el.dataset.materialPrefix+'MaterialCustom');if(!custom)return;custom.style.display=el.value==='__custom__'?'block':'none';if(el.value==='__custom__')custom.focus()});
+  });
+}
+function cncGetMaterial(prefix){
+  var select=document.getElementById(prefix+'Material');
+  if(!select)return '';
+  return select.value==='__custom__'?(document.getElementById(prefix+'MaterialCustom')?.value.trim()||''):select.value.trim();
+}
 function cncFillBrandSelect(id){
   var el=document.getElementById(id);if(!el)return;
   var first=el.dataset.brandRole==='primary'?'Bez preferencie':'Bez náhradného výrobcu';
@@ -1131,6 +1156,7 @@ function cncInitToolBrands(){
   cncLoadSettings();
 }
 cncInitToolBrands();
+cncInitMaterials();
 document.addEventListener('click',function(e){
   var el=e.target.closest('button,a,.nav,.small,.card,.ai');
   if(!el)return;
@@ -1460,7 +1486,7 @@ init('turnAi','turning');init('millAi','milling');
         const payload={
           type:operation,
           operation:operation,
-          material:document.getElementById(prefix+'Material').value.trim(),
+          material:cncGetMaterial(prefix),
           stock:getStockValue(),
           machine:document.getElementById(prefix+'Machine').value.trim(),
           control:document.getElementById(prefix+'Control')?.value.trim() || '',
@@ -1920,7 +1946,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V19 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V20 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

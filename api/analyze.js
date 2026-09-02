@@ -10,19 +10,19 @@ const SCHEMA={
  properties:{
   drawing_read:{type:"string"},
   drawing_features:{type:"array",items:{type:"object",additionalProperties:false,properties:{
-   feature:{type:"string"},value:{type:"string"},tolerance:{type:"string"},surface_finish:{type:"string"},location:{type:"string"},source:{type:"string"}
-  },required:["feature","value","tolerance","surface_finish","location","source"]}},
+   feature:{type:"string"},feature_scope:{type:"string"},value:{type:"string"},tolerance:{type:"string"},surface_finish:{type:"string"},location:{type:"string"},source:{type:"string"}
+  },required:["feature","feature_scope","value","tolerance","surface_finish","location","source"]}},
   setup:{type:"object",additionalProperties:false,properties:{
    clamping:{type:"string"},datum:{type:"string"},supports:{type:"string"},risks:{type:"string"}
   },required:["clamping","datum","supports","risks"]},
   operations:{type:"array",items:{type:"object",additionalProperties:false,properties:{
-   order:{type:"integer"},name:{type:"string"},description:{type:"string"},setup:{type:"string"},features:{type:"string"},tool_id:{type:"string"},parameters:{type:"string"}
-  },required:["order","name","description","setup","features","tool_id","parameters"]}},
+   order:{type:"integer"},name:{type:"string"},machining_scope:{type:"string"},description:{type:"string"},setup:{type:"string"},features:{type:"string"},tool_id:{type:"string"},parameters:{type:"string"}
+  },required:["order","name","machining_scope","description","setup","features","tool_id","parameters"]}},
   tools:{type:"array",items:{type:"object",additionalProperties:false,properties:{
    tool_id:{type:"string"},tool_type:{type:"string"},quantity:{type:"integer"},operation:{type:"string"},manufacturer:{type:"string"},holder_or_body:{type:"string"},holder_or_body_code:{type:"string"},
    insert_or_tool:{type:"string"},insert_or_tool_code:{type:"string"},grade:{type:"string"},geometry:{type:"string"},
-   compatibility:{type:"string"},reason:{type:"string"},verification_status:{type:"string"}
-  },required:["tool_id","tool_type","quantity","operation","manufacturer","holder_or_body","holder_or_body_code","insert_or_tool","insert_or_tool_code","grade","geometry","compatibility","reason","verification_status"]}},
+   compatibility:{type:"string"},reason:{type:"string"},supplier_search_path:{type:"string"},verification_status:{type:"string"}
+  },required:["tool_id","tool_type","quantity","operation","manufacturer","holder_or_body","holder_or_body_code","insert_or_tool","insert_or_tool_code","grade","geometry","compatibility","reason","supplier_search_path","verification_status"]}},
   parameters:{type:"array",items:{type:"object",additionalProperties:false,properties:{
    operation:{type:"string"},vc:{type:"string"},rpm:{type:"string"},feed:{type:"string"},fz:{type:"string"},ap:{type:"string"},ae:{type:"string"},coolant:{type:"string"},note:{type:"string"}
   },required:["operation","vc","rpm","feed","fz","ap","ae","coolant","note"]}},
@@ -54,6 +54,11 @@ function outputText(d){
  let a=[]; for(const i of d.output||[])for(const c of i.content||[])if(typeof c.text==="string")a.push(c.text);
  return a.join("\n");
 }
+function cadSummary(g){
+ if(!g||g.processed!==true)return "CAD GEOMETRIA NEBOLA SPRACOVANÁ";
+ const profile=Array.isArray(g.profile)?g.profile.slice(0,120):[];
+ return JSON.stringify({mode:g.mode,axis:g.axis,unit:g.unit||"mm",bounds:g.bounds,length:g.length,maxDiameter:g.maxDiameter,profile});
+}
 function prompt(b,name){
  const turn=String(b.type||b.operation||"").toLowerCase().includes("sústru");
  return `Si SENIOR CNC technológ a zároveň odborník na obrábacie nástroje.
@@ -72,16 +77,17 @@ VSTUP:
 - Držiak/teleso: ${b.holderType||"AI MÁ VYBRAŤ"}
 - Preferovaný výrobca nástrojov: ${b.preferredToolManufacturer||"BEZ PREFERENCIE"}
 - Náhradní výrobcovia: ${Array.isArray(b.alternativeToolManufacturers)&&b.alternativeToolManufacturers.length?b.alternativeToolManufacturers.join(", "):"NEUVEDENÍ"}
+- Spracovaná geometria CAD modelu: ${cadSummary(b.cadGeometry)}
 - Ďalšie požiadavky: ${b.requirements||"žiadne"}
 
 ZÁSADNÉ PRAVIDLÁ:
-1. Najprv výkres dôkladne prečítaj. Vypíš všetky relevantné rozmery a výrobné prvky, nie iba celkový rozmer.
-2. Pri každom rozmere uveď, či je priamo čitateľný z výkresu. Nikdy nevymýšľaj hodnotu.
+1. Najprv výkres dôkladne prečítaj. Vytvor si samostatnú mapu všetkých relevantných rozmerov a výrobných prvkov, nie iba celkového rozmeru.
+2. Každý prvok povinne klasifikuj vo feature_scope presne ako VONKAJŠÍ, VNÚTORNÝ, ČELNÝ/OSOVÝ alebo NEJASNÝ. Vonkajší priemer nesmieš zameniť za vnútorný otvor. Rozmer priraď k prvku iba podľa kótovacích čiar, šípok, rezu a osi; nie iba podľa jeho polohy na obrázku.
 3. Technologický postup musí byť konkrétny a naviazaný na prvky výkresu. Žiadne všeobecné frázy typu "vykonať obrábanie".
 4. Každá operácia musí mať konkrétny účel, prvky výkresu, spôsob upnutia, nástroj a parametre.
 5. Pri veľkom úbere z polotovaru rozdeľ hrubovanie na viac záberov a zohľadni tuhosť, výkon a geometriu.
 6. ${turn?"Pre sústruženie rozlišuj čelné sústruženie, OD/ID hrubovanie, dokončovanie, zápichy, závity, vŕtanie a ďalšie operácie iba podľa výkresu. Pri rúre rešpektuj skutočný vnútorný priemer polotovaru.":"Pre frézovanie rozlišuj čelné frézovanie, kapsy, obrysy, drážky, otvory, závity, 3D plochy a ďalšie operácie iba podľa výkresu."}
-7. Nástroje musia byť konkrétne. Použi reálne katalógové označenie iba vtedy, keď ho vieš spoľahlivo overiť. Ak nie, napíš presne "OVERIŤ V KATALÓGU" a nehádej.
+7. Nástroje musia byť konkrétne. Použi reálne katalógové označenie iba vtedy, keď ho vieš spoľahlivo overiť. Text "OVERIŤ V KATALÓGU" smieš použiť až po vykonaní celého postupu preverovania výrobcov podľa pravidiel 22 až 25.
 8. Pre každý nástroj uveď výrobcu, držiak/teleso, katalógový kód držiaka/telesa, plátok/VHM, katalógový kód plátku/nástroja, triedu a geometriu.
 9. Over kompatibilitu: držiak ↔ plátok, rozhranie ↔ stroj/revolver, pri frézovaní upnutie ↔ vreteno.
 10. Ak máš web_search, použi ho na kontrolu katalógového označenia v oficiálnych alebo dôveryhodných katalógoch výrobcu. Do tool_sources uveď, čo bolo overené. Nikdy nevymýšľaj URL ani kód.
@@ -95,7 +101,13 @@ ZÁSADNÉ PRAVIDLÁ:
 18. Každý nástroj musí mať jedinečné tool_id (napríklad T01, T02). Pole tool_id v každej operácii musí presne odkazovať na tool_id nástroja v zozname tools. Ak jedna operácia potrebuje dva nástroje, rozdeľ ju na dve konkrétne operácie.
 19. tool_type pomenuj jednoznačne, napríklad "Sústružnícky nôž – vonkajšie hrubovanie", "VBD vrták", "VHM špirálový vrták" alebo "Stopková fréza". quantity je počet rovnakých kusov potrebných v zostave.
 20. Pri monolitnom vrtáku alebo fréze uveď do insert_or_tool celý nástroj a do holder_or_body vhodné upínacie puzdro alebo držiak. Ak nástroj nepoužíva VBD, v geometrii jasne napíš "MONOLITNÝ – BEZ VBD". Pri nástroji s VBD musí byť samostatne uvedené teleso/držiak aj kompatibilný plátok.
-21. Preferovaného výrobcu použi pre každú kategóriu, ktorú reálne ponúka. Ak musíš použiť náhradného výrobcu, uveď dôvod pri konkrétnom nástroji. Názov výrobcu bez konkrétneho typu nástroja, držiaka a plátku nie je dostatočný výstup.`;
+21. Preferovaného výrobcu použi pre každú kategóriu, ktorú reálne ponúka. Ak musíš použiť náhradného výrobcu, uveď dôvod pri konkrétnom nástroji. Názov výrobcu bez konkrétneho typu nástroja, držiaka a plátku nie je dostatočný výstup.
+22. PRE KAŽDÝ jednotlivý nástroj postupuj v pevnom poradí: (1) preferovaný výrobca, (2) prvý náhradný výrobca, (3) druhý náhradný výrobca. Ďalšieho výrobcu začni preverovať iba vtedy, keď predchádzajúci nemá vhodný nástroj alebo jeho kompatibilný katalógový kód nemožno nájsť.
+23. Pri výrobcovi MASAM povinne prever jeho oficiálnu webovú stránku a dostupné katalógy na tejto stránke. Rovnakým spôsobom uprednostni oficiálne webové katalógy každého ďalšieho vybraného výrobcu.
+24. Do supplier_search_path pri každom nástroji zapíš skutočný priebeh, napríklad "MASAM: nenájdené → Walter: overené". Do tool_sources zapíš názov výrobcu, katalóg alebo oficiálnu stránku a čo sa v nich podarilo overiť. Nevymýšľaj, že si zdroj preveril, ak sa tak nestalo.
+25. "OVERIŤ V KATALÓGU" použi až vtedy, keď vhodný a overiteľný výsledok nebol nájdený u ŽIADNEHO z vybraných výrobcov. Ak vybraní výrobcovia danú kategóriu nemajú, môžeš navrhnúť známeho ďalšieho výrobcu, ale jasne ho označ ako riešenie mimo preferovaného zoznamu.
+26. Pred vytvorením operácií vykonaj kontrolu konzistencie rozmerov: porovnaj vonkajšie priemery s vonkajšou obálkou CAD, vnútorné rozmery s dierami/rezmi a polotovarom. CAD obálka potvrdzuje vonkajší profil, nie automaticky vnútorné diery. Pri konflikte nevytváraj operáciu z dohadu; zapíš rozpor do missing_information a warnings.
+27. machining_scope každej operácie musí byť presne VONKAJŠIE, VNÚTORNÉ, ČELNÉ/OSOVÉ alebo NEJASNÉ a musí súhlasiť s feature_scope obrábaného prvku.`;
 }
 export default async function handler(req,res){
  try{

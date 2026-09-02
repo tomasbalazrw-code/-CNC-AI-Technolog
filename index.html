@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V20 -->
+<!-- CNC AI Technolog V21 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -304,7 +304,9 @@ li{margin:6px 0;line-height:1.45}
 .brand-pref-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px}.brand-pref-title{font-weight:900;font-size:16px}.brand-pref-badge{font-size:10px;padding:5px 8px;border-radius:999px;border:1px solid #3182a9;color:#91dcff;background:#092235}
 .brand-pref-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}.brand-pref label{font-size:12px;color:#aebdcc}.brand-pref select{width:100%;margin-top:5px;padding:12px 10px;border-radius:11px;border:1px solid #31536e;background:#08131e;color:#fff;font-size:14px}.brand-pref-note{margin-top:9px;color:#8fa5b8;font-size:11px;line-height:1.45}
 .material-custom{display:none!important;margin-top:9px!important}.material-custom[style*="block"]{display:block!important}
+.clamping-db{margin-top:14px;padding:15px;border:1px solid #315b75;border-radius:16px;background:#081722}.clamping-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px}.clamping-title{font-weight:900;font-size:16px}.clamping-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.clamping-db label{font-size:12px;color:#aebdcc}.clamping-db select{width:100%;margin-top:5px;padding:12px 10px;border-radius:11px;border:1px solid #31536e;background:#08131e;color:#fff;font-size:14px}.clamping-note{margin-top:9px;color:#8fa5b8;font-size:11px;line-height:1.45}
 @media(max-width:600px){.brand-pref-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.clamping-grid{grid-template-columns:1fr}}
 </style>
 <style>
 .stdins{margin-top:14px;border:1px solid #29465d;border-radius:15px;background:#08131d;padding:13px}
@@ -365,7 +367,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V20</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V21</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -574,6 +576,26 @@ li{margin:6px 0;line-height:1.45}
       <input id="turnAiMachine" type="hidden" value="Fanuc">
     </div>
 
+    <div class="clamping-db">
+      <div class="clamping-head"><div class="clamping-title">🔩 Upínanie nástrojov na sústruhu</div><span class="tooling-badge">KOMPATIBILITA</span></div>
+      <div class="clamping-grid">
+        <label>Rozhranie / rozmer držiaka
+          <select id="turnAiTurretInterface">
+            <option value="">Vyber upínanie…</option>
+            <optgroup label="Kvadrátová stopka"><option>12 × 12 mm</option><option>16 × 16 mm</option><option selected>20 × 20 mm</option><option>25 × 25 mm</option><option>32 × 32 mm</option><option>40 × 40 mm</option></optgroup>
+            <optgroup label="Vnútorná vyvrtávacia tyč"><option>Ø 16 mm</option><option>Ø 20 mm</option><option>Ø 25 mm</option><option>Ø 32 mm</option><option>Ø 40 mm</option><option>Ø 50 mm</option><option>Ø 60 mm</option></optgroup>
+            <optgroup label="Capto"><option>Capto C3</option><option>Capto C4</option><option>Capto C5</option><option>Capto C6</option><option>Capto C8</option></optgroup>
+            <optgroup label="VDI – DIN 69880"><option>VDI 20</option><option>VDI 25</option><option>VDI 30</option><option>VDI 40</option><option>VDI 50</option><option>VDI 60</option></optgroup>
+            <optgroup label="BMT"><option>BMT 45</option><option>BMT 55</option><option>BMT 65</option><option>BMT 75</option><option>BMT 85</option></optgroup>
+          </select>
+        </label>
+        <label>Orientácia / použitie
+          <select id="turnAiHolderOrientation"><option>Radiálny – vonkajšie sústruženie</option><option>Axiálny – čelné operácie</option><option>Vnútorný – vyvrtávacia tyč</option><option>Zapichovanie a upichovanie</option><option>Závitovanie</option><option>Poháňaný radiálny držiak</option><option>Poháňaný axiálny držiak</option></select>
+        </label>
+      </div>
+      <div class="clamping-note">AI musí navrhnúť držiak kompatibilný s týmto rozhraním a rozmerom. Pri Capto, VDI alebo BMT zohľadní aj potrebný adaptér.</div>
+    </div>
+
     <div class="brand-pref">
       <div class="brand-pref-head"><div class="brand-pref-title">🏭 Preferovaní výrobcovia nástrojov</div><span class="tooling-badge">VOLITEĽNÉ</span></div>
       <div class="brand-pref-grid">
@@ -655,6 +677,26 @@ li{margin:6px 0;line-height:1.45}
     <div class="db-selected" id="millAiMachineSummary">Stroj zatiaľ nie je vybraný.</div>
     <div class="db-note">Technológ vyberie konkrétny stroj a riadenie. Výber sa odošle AI spolu s výkresom.</div>
     <input id="millAiMachine" type="hidden" value="Fanuc">
+   </div>
+
+   <div class="clamping-db">
+    <div class="clamping-head"><div class="clamping-title">🔩 Upínanie nástrojov pri frézovaní</div><span class="tooling-badge">KOMPATIBILITA</span></div>
+    <div class="clamping-grid">
+     <label>Rozhranie vretena
+      <select id="millAiToolInterface">
+       <option value="">Vyber rozhranie…</option>
+       <optgroup label="BT / MAS 403"><option>BT30</option><option selected>BT40</option><option>BT50</option></optgroup>
+       <optgroup label="SK / DIN 69871"><option>SK30</option><option>SK40</option><option>SK50</option></optgroup>
+       <optgroup label="CAT"><option>CAT30</option><option>CAT40</option><option>CAT50</option></optgroup>
+       <optgroup label="HSK"><option>HSK-A32</option><option>HSK-A40</option><option>HSK-A50</option><option>HSK-A63</option><option>HSK-A80</option><option>HSK-A100</option><option>HSK-E40</option><option>HSK-E50</option></optgroup>
+       <optgroup label="Capto"><option>Capto C3</option><option>Capto C4</option><option>Capto C5</option><option>Capto C6</option><option>Capto C8</option></optgroup>
+      </select>
+     </label>
+     <label>Spôsob upnutia nástroja
+      <select id="millAiHolderClamping"><option>ER klieština</option><option>Weldon – bočná skrutka</option><option>Tepelné upínanie – Shrink Fit</option><option>Hydraulické skľučovadlo</option><option>Presné frézovacie skľučovadlo</option><option>Silové frézovacie skľučovadlo</option><option>Upínací tŕň pre nástrčnú frézu</option><option>Combi tŕň</option><option>Drill chuck – vŕtacie skľučovadlo</option><option>Synchro závitovacie skľučovadlo</option><option>Rýchlovýmenné závitovacie skľučovadlo</option><option>Priame monolitné teleso</option></select>
+     </label>
+    </div>
+    <div class="clamping-note">AI vyberie iba držiak vhodný pre zvolené vreteno a spôsob upnutia. Ak je potrebná redukcia alebo adaptér, uvedie ho v návrhu.</div>
    </div>
 
    <div class="brand-pref">
@@ -1498,6 +1540,7 @@ init('turnAi','turning');init('millAi','milling');
           holderSize:document.getElementById(prefix==='turnAi'?'turnAiHolderSize':'millAiToolSize')?.value || '',
           holderOrientation:document.getElementById(prefix==='turnAi'?'turnAiHolderOrientation':'millAiToolInterface')?.value || '',
           millingToolInterface:document.getElementById(prefix+'ToolInterface')?.value || '',
+          toolClampingMethod:prefix==='millAi'?(document.getElementById('millAiHolderClamping')?.value||''):(document.getElementById('turnAiHolderOrientation')?.value||''),
           tooling:(document.getElementById(prefix+'Tooling')?.value||'').trim(),
           preferredToolManufacturer:document.getElementById(prefix+'ToolBrandPrimary')?.value||'',
           alternativeToolManufacturers:[document.getElementById(prefix+'ToolBrandAlt1')?.value||'',document.getElementById(prefix+'ToolBrandAlt2')?.value||''].filter(Boolean),
@@ -1781,7 +1824,7 @@ const MILLING_TOOL_DB = {
 
 function initTurningTooling(){
   const i=document.getElementById('turnAiTurretInterface'), t=document.getElementById('turnAiHolderType'), z=document.getElementById('turnAiHolderSize'), o=document.getElementById('turnAiHolderOrientation'), sum=document.getElementById('turnAiToolingSummary'), hidden=document.getElementById('turnAiTooling');
-  if(!i) return;
+  if(!i||!t||!z||!o||!sum||!hidden) return;
   Object.keys(TURNING_HOLDER_DB).forEach(x=>{let q=document.createElement('option');q.value=x;q.textContent=x;i.appendChild(q)});
   function refresh(){
     t.innerHTML='<option value="">Vyber typ držiaka…</option>'; z.innerHTML='<option value="">Vyber veľkosť…</option>'; t.disabled=!i.value; z.disabled=true;
@@ -1946,7 +1989,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V20 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V21 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

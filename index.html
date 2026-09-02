@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V27 -->
+<!-- CNC AI Technolog V28 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -370,7 +370,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V27</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V28</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -542,7 +542,7 @@ li{margin:6px 0;line-height:1.45}
 
     <div class="grid">
       <div class="field">
-        <label for="turnAiMaterial">Materiál</label>
+        <label for="turnAiMaterial">Materiál – voliteľné potvrdenie</label>
         <select id="turnAiMaterial" class="material-select" data-material-prefix="turnAi"></select>
         <input id="turnAiMaterialCustom" class="material-custom" type="text" placeholder="Napíš presné označenie materiálu…">
       </div>
@@ -666,7 +666,7 @@ li{margin:6px 0;line-height:1.45}
 
    <div class="ai2-grid">
     <div class="ai2-field">
-     <label for="millAiMaterial">Materiál</label>
+     <label for="millAiMaterial">Materiál – voliteľné potvrdenie</label>
      <select id="millAiMaterial" class="material-select" data-material-prefix="millAi"></select>
      <input id="millAiMaterialCustom" class="material-custom" type="text" placeholder="Napíš presné označenie materiálu…">
     </div>
@@ -1226,8 +1226,8 @@ function cncInitClampingChecks(){
 }
 function cncInitMaterials(){
   document.querySelectorAll('.material-select').forEach(function(el){
-    el.innerHTML='<option value="">Vyber materiál…</option>'+CNC_MATERIAL_GROUPS.map(function(group){return '<optgroup label="'+group[0]+'">'+group[1].map(function(x){return '<option value="'+x+'">'+x+'</option>'}).join('')+'</optgroup>'}).join('')+'<option value="__custom__">Iný materiál – doplniť</option>';
-    el.value='C45';
+    el.innerHTML='<option value="">Automaticky prečítať z výkresu</option>'+CNC_MATERIAL_GROUPS.map(function(group){return '<optgroup label="'+group[0]+'">'+group[1].map(function(x){return '<option value="'+x+'">'+x+'</option>'}).join('')+'</optgroup>'}).join('')+'<option value="__custom__">Iný materiál – doplniť</option>';
+    el.value='';
     el.addEventListener('change',function(){var custom=document.getElementById(el.dataset.materialPrefix+'MaterialCustom');if(!custom)return;custom.style.display=el.value==='__custom__'?'block':'none';if(el.value==='__custom__')custom.focus()});
   });
 }
@@ -1430,6 +1430,12 @@ init('turnAi','turning');init('millAi','milling');
       ? "<div class='ai2-block' style='border-color:#168fff'><b>⚙️ Technologický postup a 3D model sú pripravené.</b><br><span class='cnc-v4-muted'>Po kontrole technológom môžeš pokračovať na vytvorenie testovacieho CNC programu.</span><br><button type='button' class='cnc-v4-btn' style='margin-top:10px' onclick=\"cncOpen('cnc-program');cncUseLastAnalysis();\">🤖 VYTVORIŤ CNC PROGRAM Z TEJTO ANALÝZY</button></div>"
       : "<div class='ai2-block' style='border-color:#8e7120'><b>⚠️ Technologický postup je pripravený, CNC program je zablokovaný.</b><br><span class='cnc-v4-muted'>Nahraj skutočný 3D model STEP, IGES, STL, Parasolid, OBJ alebo 3MF. DXF/DWG sú iba doplnkové 2D dáta.</span></div>";
     html += block('Čítanie výkresu','<p>'+esc(data.drawing_read || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>');
+    html += block('Materiál použitý pre výber nástrojov',
+      '<p><b>Materiál:</b> '+esc(data.material||'NEPOTVRDENÝ')+'</p>'+
+      '<p><b>Zdroj:</b> '+esc(data.materialSource||'NEUVEDENÝ')+'</p>'+
+      '<p><b>Istota čítania:</b> '+esc(data.materialConfidence||'NEUVEDENÁ')+'</p>'+
+      (data.materialCondition?'<p><b>Stav/tvrdosť:</b> '+esc(data.materialCondition)+'</p>':'')
+    );
     html += block('Kontrolná mapa prvkov a rozmerov',
       drawingFeatures.length ? drawingFeatures.map(f=>'<div class="ai2-op"><b>'+esc(f.feature_scope)+' · '+esc(f.feature)+'</b><small><b>Rozmer:</b> '+esc(f.value||'NIE JE ČITATEĽNÉ')+' · <b>Poloha:</b> '+esc(f.location||'NEJASNÁ')+'</small><small><b>Zdroj vo výkrese:</b> '+esc(f.source||'NEUVEDENÝ')+'</small></div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
     );
@@ -1537,7 +1543,7 @@ init('turnAi','turning');init('millAi','milling');
       if(cadName)cadName.textContent=meta?meta.name:'STEP/STP, IGES/IGS, STL, Parasolid X_T/X_B, OBJ, 3MF, DXF alebo DWG';
       if(cadStatus){
         if(!meta){cadStatus.className='cad-upload-note';cadStatus.textContent='Technologický postup je možný iba z výkresu. CNC program sa odomkne až po nahraní skutočného 3D modelu.';}
-        else if(prefix!=='turnAi'){cadStatus.className='cad-file-warn';cadStatus.textContent='⚠️ Geometrické dráhy V27 sú zatiaľ pripravené pre sústruženie. Frézovanie doplníme v nasledujúcej fáze.';}
+        else if(prefix!=='turnAi'){cadStatus.className='cad-file-warn';cadStatus.textContent='⚠️ Geometrické dráhy V28 sú zatiaľ pripravené pre sústruženie. Frézovanie doplníme v nasledujúcej fáze.';}
         else if(meta.is3D){
           cadStatus.className='cad-upload-note';cadStatus.textContent='⏳ Spracúvam skutočnú geometriu modelu…';
           try{
@@ -2115,7 +2121,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V27 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V28 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

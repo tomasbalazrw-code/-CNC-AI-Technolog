@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V25 -->
+<!-- CNC AI Technolog V26 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -370,7 +370,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V25</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V26</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -1447,7 +1447,7 @@ init('turnAi','turning');init('millAi','milling');
     }
 
     html += block('Technologický postup',
-      ops.length ? ops.map(o=>'<div class="ai2-op"><b>'+esc(o.order)+'. '+esc(o.name)+'</b><small>'+esc(o.description)+'</small></div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
+      ops.length ? ops.map(o=>'<div class="ai2-op"><b>'+esc(o.order)+'. '+esc(o.name)+'</b><small>'+esc(o.description)+'</small>'+(o.machining_scope?'<small><b>Oblasť obrábania:</b> '+esc(o.machining_scope)+'</small>':'')+'</div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
     );
 
     html += block('Konkrétne nástroje, plátky a štartovacie parametre',
@@ -1479,6 +1479,7 @@ init('turnAi','turning');init('millAi','milling');
             '<div><b>Chladenie:</b> '+esc(p.coolant||'—')+'</div>'+
           '</div>'+
           '<p><b>Dôvod výberu:</b> '+esc(t.reason||'NIE JE UVEDENÝ')+'</p>'+
+          '<p><b>Poradie preverovaných výrobcov:</b> '+esc(t.supplier_search_path||'NIE JE UVEDENÉ')+'</p>'+
           '<p><b>Overenie katalógu:</b> <span style="color:'+verifyColor+';font-weight:900">'+esc(t.verification_status||'OVERIŤ V KATALÓGU')+'</span></p>'+
           (p.note?'<p><b>Poznámka k podmienkam:</b> '+esc(p.note)+'</p>':'')+
         '</div>';
@@ -1518,7 +1519,7 @@ init('turnAi','turning');init('millAi','milling');
       if(cadName)cadName.textContent=meta?meta.name:'STEP/STP, IGES/IGS, STL, Parasolid X_T/X_B, OBJ, 3MF, DXF alebo DWG';
       if(cadStatus){
         if(!meta){cadStatus.className='cad-upload-note';cadStatus.textContent='Technologický postup je možný iba z výkresu. CNC program sa odomkne až po nahraní skutočného 3D modelu.';}
-        else if(prefix!=='turnAi'){cadStatus.className='cad-file-warn';cadStatus.textContent='⚠️ Geometrické dráhy V25 sú zatiaľ pripravené pre sústruženie. Frézovanie doplníme v nasledujúcej fáze.';}
+        else if(prefix!=='turnAi'){cadStatus.className='cad-file-warn';cadStatus.textContent='⚠️ Geometrické dráhy V26 sú zatiaľ pripravené pre sústruženie. Frézovanie doplníme v nasledujúcej fáze.';}
         else if(meta.is3D){
           cadStatus.className='cad-upload-note';cadStatus.textContent='⏳ Spracúvam skutočnú geometriu modelu…';
           try{
@@ -1649,6 +1650,7 @@ init('turnAi','turning');init('millAi','milling');
           selectedInsertSize: prefix==='turnAi' ? (document.getElementById('turnInsertSize')?.value||'') : (document.getElementById('millInsertSize')?.value||''),
           selectedInsertBody: prefix==='turnAi' ? (document.getElementById('turnInsertBody')?.value||'') : (document.getElementById('millInsertBody')?.value||''),
           autoToolSelection: true,
+          cadGeometry:selectedCadGeometry,
           manualToolOverride: prefix==='turnAi' ? (document.getElementById('turnManualOverride')?.value||'') : (document.getElementById('millManualOverride')?.value||''),
           fileName:selectedFile.name,
           fileData:fileData
@@ -2094,7 +2096,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V25 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V26 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

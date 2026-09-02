@@ -103,6 +103,27 @@ body{
 }
 @media(min-width:600px){body{background:#020408}.app{box-shadow:0 0 80px #000}}
 
+/* ===== V16 – úvodná prihlasovacia obrazovka ===== */
+body.auth-locked{overflow:hidden}
+.auth-screen{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;padding:24px 18px calc(24px + env(safe-area-inset-bottom));background:radial-gradient(circle at 78% 12%,rgba(22,168,255,.22),transparent 28%),linear-gradient(180deg,#05080d,#07111b)}
+.auth-screen.hidden{display:none!important}
+.auth-wrap{width:min(100%,410px)}
+.auth-brand{text-align:center;margin-bottom:25px}
+.auth-logo{width:68px;height:68px;margin:0 auto 15px;border-radius:21px;display:grid;place-items:center;background:linear-gradient(145deg,#159eff,#075fca);box-shadow:0 14px 36px rgba(22,168,255,.28);font-size:25px;font-weight:950;letter-spacing:-1px}
+.auth-brand h1{font-size:29px;line-height:1.05;margin:0;letter-spacing:-.8px}.auth-brand h1 span{color:#38b4ff}.auth-brand p{margin:9px 0 0;color:#92a3b5;font-size:14px}
+.auth-card{padding:22px;border:1px solid #23374a;border-radius:24px;background:rgba(11,19,29,.94);box-shadow:0 24px 70px rgba(0,0,0,.42)}
+.auth-title{font-size:22px;font-weight:900;margin-bottom:5px}.auth-subtitle{font-size:14px;color:#91a3b5;margin-bottom:20px}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;border-radius:13px;background:#07111a;margin-bottom:18px}
+.auth-tab{border:0;border-radius:10px;padding:10px;background:transparent;color:#8191a2;font-weight:800;font-size:14px}.auth-tab.active{background:#142637;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.auth-field{margin-bottom:14px}.auth-field label{display:block;margin-bottom:7px;font-size:13px;color:#c9d4df;font-weight:750}.auth-field input{width:100%;min-height:50px;border:1px solid #2a475e;border-radius:14px;background:#07111b;color:#fff;padding:13px 44px 13px 14px;font-size:16px;outline:none}.auth-field input:focus{border-color:#16a8ff;box-shadow:0 0 0 3px rgba(22,168,255,.13)}
+.auth-password{position:relative}.auth-eye{position:absolute;right:7px;top:5px;width:40px;height:40px;border:0;background:transparent;color:#8fa4b7;font-size:18px}
+.auth-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 17px;font-size:13px}.auth-check{display:flex;align-items:center;gap:8px;color:#b8c5d1}.auth-check input{width:17px;height:17px;accent-color:#159eff}.auth-link{border:0;background:transparent;color:#44b9ff;padding:0;font-size:13px;font-weight:750}
+.auth-submit{width:100%;min-height:52px;border:0;border-radius:14px;background:linear-gradient(180deg,#20adff,#087fe8);color:#fff;font-size:16px;font-weight:900;box-shadow:0 10px 26px rgba(8,127,232,.26)}.auth-submit:active{transform:translateY(1px)}
+.auth-message{display:none;margin:14px 0 0;padding:11px 12px;border-radius:11px;font-size:13px;line-height:1.4}.auth-message.error{display:block;background:#2a1115;border:1px solid #6e2931;color:#ffb3bc}.auth-message.ok{display:block;background:#0f2a1a;border:1px solid #28613c;color:#a8edbb}
+.auth-terms{text-align:center;color:#718294;font-size:11px;line-height:1.45;margin:16px 12px 0}
+.auth-account{position:absolute;z-index:4;right:15px;top:18px;border:1px solid #2b4a62;border-radius:999px;background:rgba(6,15,23,.82);color:#dce8f2;padding:8px 11px;font-size:12px;font-weight:800;backdrop-filter:blur(12px)}
+body.auth-locked .app,body.auth-locked .bottom{visibility:hidden}
+
 .programCard{
   position:relative;margin-top:14px;padding:20px 20px 20px 18px;
   border:1px solid rgba(22,168,255,.65);border-radius:22px;
@@ -310,7 +331,33 @@ li{margin:6px 0;line-height:1.45}
 </style>
 </head>
 <body>
+<section id="authScreen" class="auth-screen" aria-label="Prihlásenie">
+  <div class="auth-wrap">
+    <div class="auth-brand">
+      <div class="auth-logo">CNC</div>
+      <h1>CNC <span>AI TECHNOLÓG</span></h1>
+      <p>Prihláste sa a pokračujte vo svojej práci.</p>
+    </div>
+    <div class="auth-card">
+      <div class="auth-title" id="authTitle">Vitajte späť</div>
+      <div class="auth-subtitle" id="authSubtitle">Zadajte svoje prihlasovacie údaje.</div>
+      <div class="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab active" id="loginTab" onclick="cncAuthMode('login')">Prihlásenie</button>
+        <button type="button" class="auth-tab" id="registerTab" onclick="cncAuthMode('register')">Registrácia</button>
+      </div>
+      <form id="authForm" onsubmit="return cncAuthSubmit(event)">
+        <div class="auth-field"><label for="authEmail">E-mail</label><input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="vas@email.sk" required></div>
+        <div class="auth-field"><label for="authPassword">Heslo</label><div class="auth-password"><input id="authPassword" type="password" autocomplete="current-password" placeholder="Minimálne 6 znakov" minlength="6" required><button type="button" class="auth-eye" onclick="cncTogglePassword()" aria-label="Zobraziť heslo">◉</button></div></div>
+        <div class="auth-row"><label class="auth-check"><input id="authRemember" type="checkbox" checked> Zapamätať si ma</label><button type="button" class="auth-link" id="forgotButton" onclick="cncForgotPassword()">Zabudnuté heslo?</button></div>
+        <button type="submit" class="auth-submit" id="authSubmit">Prihlásiť sa</button>
+        <div id="authMessage" class="auth-message" role="status"></div>
+      </form>
+    </div>
+    <div class="auth-terms">Pokračovaním súhlasíte s podmienkami používania a ochranou osobných údajov.</div>
+  </div>
+</section>
 <div class="app">
+  <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
       <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V2</b></span></div>
@@ -1691,6 +1738,73 @@ initMillingTooling();
 initMachineDatabase('turnAi','turning');
 initMachineDatabase('millAi','milling');
 
+</script>
+<script id="cnc-auth-v16">
+(function(){
+  var mode='login';
+  window.cncAuthMode=function(next){
+    mode=next;
+    var register=next==='register';
+    document.getElementById('loginTab').classList.toggle('active',!register);
+    document.getElementById('registerTab').classList.toggle('active',register);
+    document.getElementById('authTitle').textContent=register?'Vytvoriť účet':'Vitajte späť';
+    document.getElementById('authSubtitle').textContent=register?'Zaregistrujte sa pomocou e-mailu.':'Zadajte svoje prihlasovacie údaje.';
+    document.getElementById('authSubmit').textContent=register?'Vytvoriť účet':'Prihlásiť sa';
+    document.getElementById('forgotButton').style.visibility=register?'hidden':'visible';
+    document.getElementById('authPassword').autocomplete=register?'new-password':'current-password';
+    cncAuthMessage('','');
+  };
+  window.cncTogglePassword=function(){
+    var p=document.getElementById('authPassword');
+    p.type=p.type==='password'?'text':'password';
+  };
+  function cncAuthMessage(text,type){
+    var box=document.getElementById('authMessage');
+    box.textContent=text;box.className='auth-message'+(type?' '+type:'');
+  }
+  function getUsers(){try{return JSON.parse(localStorage.getItem('cncAuthUsers')||'{}')}catch(e){return {}}}
+  function enterApp(email,remember){
+    var storage=remember?localStorage:sessionStorage;
+    storage.setItem('cncAuthSession',email);
+    document.body.classList.remove('auth-locked');
+    document.getElementById('authScreen').classList.add('hidden');
+    document.getElementById('authAccountLabel').textContent=email.split('@')[0];
+  }
+  window.cncAuthSubmit=function(event){
+    event.preventDefault();
+    var email=document.getElementById('authEmail').value.trim().toLowerCase();
+    var password=document.getElementById('authPassword').value;
+    var remember=document.getElementById('authRemember').checked;
+    if(!email||!email.includes('@')){cncAuthMessage('Zadajte platnú e-mailovú adresu.','error');return false}
+    if(password.length<6){cncAuthMessage('Heslo musí mať aspoň 6 znakov.','error');return false}
+    var users=getUsers();
+    if(mode==='register'){
+      if(users[email]){cncAuthMessage('Účet s týmto e-mailom už existuje. Prihláste sa.','error');return false}
+      users[email]={password:password,createdAt:new Date().toISOString()};
+      localStorage.setItem('cncAuthUsers',JSON.stringify(users));
+      cncAuthMessage('Účet bol vytvorený. Prihlasujem…','ok');
+      setTimeout(function(){enterApp(email,remember)},350);
+      return false;
+    }
+    if(!users[email]){cncAuthMessage('Účet neexistuje. Najprv sa zaregistrujte.','error');return false}
+    if(users[email].password!==password){cncAuthMessage('Nesprávny e-mail alebo heslo.','error');return false}
+    enterApp(email,remember);return false;
+  };
+  window.cncForgotPassword=function(){
+    var email=document.getElementById('authEmail').value.trim().toLowerCase(),users=getUsers();
+    if(!email){cncAuthMessage('Najprv zadajte e-mail svojho účtu.','error');return}
+    if(!users[email]){cncAuthMessage('Účet s týmto e-mailom sa nenašiel.','error');return}
+    cncAuthMessage('V tejto testovacej verzii vytvorte nový účet alebo vymažte údaje aplikácie. Online obnova hesla bude pripojená k serveru.','ok');
+  };
+  window.cncLogout=function(){
+    localStorage.removeItem('cncAuthSession');sessionStorage.removeItem('cncAuthSession');
+    document.getElementById('authForm').reset();document.getElementById('authRemember').checked=true;
+    cncAuthMode('login');document.getElementById('authScreen').classList.remove('hidden');document.body.classList.add('auth-locked');
+  };
+  var session=localStorage.getItem('cncAuthSession')||sessionStorage.getItem('cncAuthSession');
+  if(session){document.getElementById('authScreen').classList.add('hidden');document.getElementById('authAccountLabel').textContent=session.split('@')[0]}
+  else document.body.classList.add('auth-locked');
+})();
 </script>
 </body>
 </html>

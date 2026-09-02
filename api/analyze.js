@@ -14,10 +14,14 @@ const INSPECTION_SCHEMA={
   },required:["feature","feature_scope","value","tolerance","surface_finish","location","source"]}},
   external_undercuts:{type:"array",items:{type:"string"}},
   internal_features:{type:"array",items:{type:"string"}},
+  material_detected:{type:"string"},
+  material_condition_detected:{type:"string"},
+  material_source:{type:"string"},
+  material_confidence:{type:"string"},
   uncertainties:{type:"array",items:{type:"string"}},
   consistency_check:{type:"string"}
  },
- required:["drawing_read","drawing_features","external_undercuts","internal_features","uncertainties","consistency_check"]
+ required:["drawing_read","drawing_features","external_undercuts","internal_features","material_detected","material_condition_detected","material_source","material_confidence","uncertainties","consistency_check"]
 };
 
 const SCHEMA={
@@ -97,7 +101,11 @@ Povinné pravidlá:
 4. Nevytváraj spojenie medzi rozmerom a prvkom iba preto, že sú na obrázku blízko seba.
 5. Vonkajšiu CAD obálku používaj iba na kontrolu vonkajšieho profilu; nepotvrdzuje vnútorné otvory.
 6. Ak sa klasifikácia nedá spoľahlivo určiť, označ NEJASNÝ. Nikdy nehádaj.
-7. Do external_undercuts samostatne vypíš všetky rozpoznané vonkajšie podpichy a zápichy, ich šírku, priemer dna, polohu a rádiusy, ak sú čitateľné.`;
+7. Do external_undercuts samostatne vypíš všetky rozpoznané vonkajšie podpichy a zápichy, ich šírku, priemer dna, polohu a rádiusy, ak sú čitateľné.
+8. Materiál hľadaj výhradne v titulnom poli, technických poznámkach, označení polotovaru alebo materiálovej norme na výkrese. Rozmer, číslo výkresu ani názov súčiastky nesmieš považovať za materiál.
+9. material_detected musí obsahovať presné označenie, napríklad 42CrMo4, iba ak je na výkrese priamo čitateľné. material_source opíše, kde bolo označenie nájdené.
+10. material_confidence použi presne VYSOKÁ, STREDNÁ, NÍZKA alebo ŽIADNA. VYSOKÁ je povolená iba pri priamo čitateľnom označení na výkrese.
+11. Stav, tepelné spracovanie a tvrdosť zapíš do material_condition_detected iba vtedy, keď sú priamo uvedené. Inak nechaj prázdny reťazec.`;
 }
 function prompt(b,name,inspection){
  const turn=String(b.type||b.operation||"").toLowerCase().includes("sústru");
@@ -167,10 +175,21 @@ export default async function handler(req,res){
   else if(/^image\/(png|jpeg|jpg|webp)$/.test(mime)){const mm=mime==="image/jpg"?"image/jpeg":mime;inputFile={type:"input_image",image_url:`data:${mm};base64,${base64}`,detail:"high"};}
   else return fail(res,400,"Podporované sú PDF, PNG, JPG/JPEG a WEBP.");
   const inspection=await structuredResponse(apiKey,inputFile,inspectionPrompt(b,name),"cnc_drawing_inspection",INSPECTION_SCHEMA,false);
+  const manualMaterial=String(b.material||"").trim();
+  const detectedMaterial=String(inspection.material_detected||"").trim();
+  const confidence=String(inspection.material_confidence||"ŽIADNA").trim().toUpperCase();
+  if(!manualMaterial&&(!detectedMaterial||confidence!=="VYSOKÁ")){
+   return fail(res,409,"Materiál sa z výkresu nepodarilo spoľahlivo potvrdiť.",`AI našla: ${detectedMaterial||"nič"}; istota: ${confidence}. Vyber materiál zo zoznamu a spusti analýzu znova.`);
+  }
+  const effectiveMaterial=manualMaterial||detectedMaterial;
+  const materialSource=manualMaterial?"Potvrdené technológom vo formulári":String(inspection.material_source||"Prečítané z výkresu");
+  b.material=effectiveMaterial;
+  if(!String(b.materialCondition||"").trim()&&String(inspection.material_condition_detected||"").trim())b.materialCondition=String(inspection.material_condition_detected).trim();
   const plan=await structuredResponse(apiKey,inputFile,prompt(b,name,inspection),"cnc_detailed_plan",SCHEMA,true);
   plan.drawing_read=inspection.drawing_read;
   plan.drawing_features=inspection.drawing_features;
+  plan.material=effectiveMaterial;
   plan.missing_information=[...new Set([...(plan.missing_information||[]),...(inspection.uncertainties||[])])];
-  return res.status(200).json({success:true,analyzed:true,file:name,operation:b.type||b.operation||"Sústruženie",machine:b.machine||"",control:b.control||"",material:b.material||plan.material||"",stock:b.stock||plan.stock||"",toolPreferences:{preferred:b.preferredToolManufacturer||"",alternatives:Array.isArray(b.alternativeToolManufacturers)?b.alternativeToolManufacturers:[]},...plan});
+  return res.status(200).json({success:true,analyzed:true,file:name,operation:b.type||b.operation||"Sústruženie",machine:b.machine||"",control:b.control||"",material:effectiveMaterial,materialCondition:b.materialCondition||"",materialSource,materialConfidence:manualMaterial?"POTVRDENÉ TECHNOLÓGOM":confidence,stock:b.stock||plan.stock||"",toolPreferences:{preferred:b.preferredToolManufacturer||"",alternatives:Array.isArray(b.alternativeToolManufacturers)?b.alternativeToolManufacturers:[]},...plan});
  }catch(e){console.error(e);return fail(res,500,"Chyba servera pri AI analýze.",e?.message||String(e));}
 }

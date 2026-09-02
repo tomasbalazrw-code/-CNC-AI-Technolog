@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V24 -->
+<!-- CNC AI Technolog V25 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -370,7 +370,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V24</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V25</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -1406,6 +1406,7 @@ init('turnAi','turning');init('millAi','milling');
     const setup=data.setup || {};
     const ops=Array.isArray(data.operations)?data.operations:[];
     const tools=Array.isArray(data.tools)?data.tools:[];
+    const parameters=Array.isArray(data.parameters)?data.parameters:[];
     const critical=Array.isArray(data.critical_dimensions)?data.critical_dimensions:[];
     const warnings=Array.isArray(data.warnings)?data.warnings:[];
     const notes=Array.isArray(data.notes)?data.notes:[];
@@ -1449,17 +1450,39 @@ init('turnAi','turning');init('millAi','milling');
       ops.length ? ops.map(o=>'<div class="ai2-op"><b>'+esc(o.order)+'. '+esc(o.name)+'</b><small>'+esc(o.description)+'</small></div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
     );
 
-    html += block('Nástroje a štartovacie parametre',
-      tools.length ? tools.map(t=>'<div class="ai2-tool">'+
-        '<div class="ai2-tooltop">'+esc(t.operation)+'</div>'+
-        '<div class="ai2-toolgrid">'+
-          '<div><b>Nástroj:</b> '+esc(t.tool)+'</div>'+
-          '<div><b>Držiak:</b> '+esc(t.holder)+'</div>'+
-          '<div><b>Plátok:</b> '+esc(t.insert)+'</div>'+
-          '<div><b>Vc:</b> '+esc(t.vc)+'</div>'+
-          '<div><b>Posuv:</b> '+esc(t.feed)+'</div>'+
-          '<div><b>Otáčky:</b> '+esc(t.rpm)+'</div>'+
-        '</div></div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
+    html += block('Konkrétne nástroje, plátky a štartovacie parametre',
+      tools.length ? tools.map(t=>{
+        const operation=String(t.operation||'');
+        const norm=x=>String(x||'').trim().toLocaleLowerCase('sk');
+        const p=parameters.find(x=>norm(x.operation)===norm(operation)) ||
+          parameters.find(x=>norm(x.operation).includes(norm(operation)) || norm(operation).includes(norm(x.operation))) || {};
+        const verified=String(t.verification_status||'').toUpperCase();
+        const verifyColor=verified.includes('OVEREN')&&!verified.includes('NEOVEREN')?'#8fe8a0':'#ffd56a';
+        return '<div class="ai2-tool">'+
+          '<div class="ai2-tooltop">'+esc(t.tool_id?('#'+t.tool_id+' · '):'')+esc(operation||'Operácia neuvedená')+'</div>'+
+          '<div class="ai2-toolgrid">'+
+            '<div><b>Typ nástroja:</b> '+esc(t.tool_type||t.tool||'NIE JE UVEDENÉ')+'</div>'+
+            '<div><b>Počet:</b> '+esc(t.quantity||1)+' ks</div>'+
+            '<div><b>Výrobca:</b> '+esc(t.manufacturer||'NIE JE UVEDENÝ')+'</div>'+
+            '<div><b>Držiak / teleso:</b> '+esc(t.holder_or_body||t.holder||'NIE JE UVEDENÉ')+'</div>'+
+            '<div><b>Kód držiaka / telesa:</b> '+esc(t.holder_or_body_code||'OVERIŤ V KATALÓGU')+'</div>'+
+            '<div><b>Plátok / vrták / fréza:</b> '+esc(t.insert_or_tool||t.insert||'NIE JE UVEDENÉ')+'</div>'+
+            '<div><b>Kód plátku / nástroja:</b> '+esc(t.insert_or_tool_code||'OVERIŤ V KATALÓGU')+'</div>'+
+            '<div><b>Trieda materiálu nástroja:</b> '+esc(t.grade||'NIE JE UVEDENÁ')+'</div>'+
+            '<div><b>Geometria:</b> '+esc(t.geometry||'NIE JE UVEDENÁ')+'</div>'+
+            '<div><b>Kompatibilita:</b> '+esc(t.compatibility||'NIE JE OVERENÁ')+'</div>'+
+            '<div><b>Vc:</b> '+esc(p.vc||t.vc||'—')+'</div>'+
+            '<div><b>Otáčky:</b> '+esc(p.rpm||t.rpm||'—')+'</div>'+
+            '<div><b>Posuv:</b> '+esc(p.feed||t.feed||'—')+'</div>'+
+            '<div><b>fz:</b> '+esc(p.fz||'—')+'</div>'+
+            '<div><b>ap / ae:</b> '+esc((p.ap||'—')+' / '+(p.ae||'—'))+'</div>'+
+            '<div><b>Chladenie:</b> '+esc(p.coolant||'—')+'</div>'+
+          '</div>'+
+          '<p><b>Dôvod výberu:</b> '+esc(t.reason||'NIE JE UVEDENÝ')+'</p>'+
+          '<p><b>Overenie katalógu:</b> <span style="color:'+verifyColor+';font-weight:900">'+esc(t.verification_status||'OVERIŤ V KATALÓGU')+'</span></p>'+
+          (p.note?'<p><b>Poznámka k podmienkam:</b> '+esc(p.note)+'</p>':'')+
+        '</div>';
+      }).join('') : '<p>AI nevrátila zoznam nástrojov. Analýzu zopakuj a skontroluj výber výrobcu, materiálu a stroja.</p>'
     );
 
     html += block('Kritické rozmery na kontrolu', listHtml(critical));
@@ -1495,7 +1518,7 @@ init('turnAi','turning');init('millAi','milling');
       if(cadName)cadName.textContent=meta?meta.name:'STEP/STP, IGES/IGS, STL, Parasolid X_T/X_B, OBJ, 3MF, DXF alebo DWG';
       if(cadStatus){
         if(!meta){cadStatus.className='cad-upload-note';cadStatus.textContent='Technologický postup je možný iba z výkresu. CNC program sa odomkne až po nahraní skutočného 3D modelu.';}
-        else if(prefix!=='turnAi'){cadStatus.className='cad-file-warn';cadStatus.textContent='⚠️ Geometrické dráhy V24 sú zatiaľ pripravené pre sústruženie. Frézovanie doplníme v nasledujúcej fáze.';}
+        else if(prefix!=='turnAi'){cadStatus.className='cad-file-warn';cadStatus.textContent='⚠️ Geometrické dráhy V25 sú zatiaľ pripravené pre sústruženie. Frézovanie doplníme v nasledujúcej fáze.';}
         else if(meta.is3D){
           cadStatus.className='cad-upload-note';cadStatus.textContent='⏳ Spracúvam skutočnú geometriu modelu…';
           try{
@@ -2071,7 +2094,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V24 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V25 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

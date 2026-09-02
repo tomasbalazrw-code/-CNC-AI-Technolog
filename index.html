@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V26 -->
+<!-- CNC AI Technolog V27 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -370,7 +370,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V26</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V27</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -534,6 +534,12 @@ li{margin:6px 0;line-height:1.45}
       </select>
     </div>
 
+    <div class="field">
+      <label for="turnAiMaterialCondition">Stav a tvrdosť materiálu</label>
+      <input id="turnAiMaterialCondition" type="text" placeholder="napr. 42CrMo4 zušľachtená, 280–320 HB / 30–34 HRC">
+      <div class="notice">Ak tvrdosť nepoznáš, nechaj pole prázdne. AI označí triedu plátku ako štartovací návrh.</div>
+    </div>
+
     <div class="grid">
       <div class="field">
         <label for="turnAiMaterial">Materiál</label>
@@ -668,6 +674,12 @@ li{margin:6px 0;line-height:1.45}
      <label for="millAiStock">Polotovar</label>
      <input id="millAiStock" type="text" placeholder="napr. 120 × 80 × 40 mm">
     </div>
+   </div>
+
+   <div class="ai2-field">
+    <label for="millAiMaterialCondition">Stav a tvrdosť materiálu</label>
+    <input id="millAiMaterialCondition" type="text" placeholder="napr. 42CrMo4 zušľachtená, 280–320 HB / 30–34 HRC">
+    <div class="ai2-note">Tvrdosť pomáha vybrať správnu triedu a geometriu plátku. Ak ju nepoznáš, nechaj pole prázdne.</div>
    </div>
 
    <div class="machine-db" data-db-prefix="millAi" data-process="milling">
@@ -1407,6 +1419,8 @@ init('turnAi','turning');init('millAi','milling');
     const ops=Array.isArray(data.operations)?data.operations:[];
     const tools=Array.isArray(data.tools)?data.tools:[];
     const parameters=Array.isArray(data.parameters)?data.parameters:[];
+    const drawingFeatures=Array.isArray(data.drawing_features)?data.drawing_features:[];
+    const toolSources=Array.isArray(data.tool_sources)?data.tool_sources:[];
     const critical=Array.isArray(data.critical_dimensions)?data.critical_dimensions:[];
     const warnings=Array.isArray(data.warnings)?data.warnings:[];
     const notes=Array.isArray(data.notes)?data.notes:[];
@@ -1416,6 +1430,9 @@ init('turnAi','turning');init('millAi','milling');
       ? "<div class='ai2-block' style='border-color:#168fff'><b>⚙️ Technologický postup a 3D model sú pripravené.</b><br><span class='cnc-v4-muted'>Po kontrole technológom môžeš pokračovať na vytvorenie testovacieho CNC programu.</span><br><button type='button' class='cnc-v4-btn' style='margin-top:10px' onclick=\"cncOpen('cnc-program');cncUseLastAnalysis();\">🤖 VYTVORIŤ CNC PROGRAM Z TEJTO ANALÝZY</button></div>"
       : "<div class='ai2-block' style='border-color:#8e7120'><b>⚠️ Technologický postup je pripravený, CNC program je zablokovaný.</b><br><span class='cnc-v4-muted'>Nahraj skutočný 3D model STEP, IGES, STL, Parasolid, OBJ alebo 3MF. DXF/DWG sú iba doplnkové 2D dáta.</span></div>";
     html += block('Čítanie výkresu','<p>'+esc(data.drawing_read || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>');
+    html += block('Kontrolná mapa prvkov a rozmerov',
+      drawingFeatures.length ? drawingFeatures.map(f=>'<div class="ai2-op"><b>'+esc(f.feature_scope)+' · '+esc(f.feature)+'</b><small><b>Rozmer:</b> '+esc(f.value||'NIE JE ČITATEĽNÉ')+' · <b>Poloha:</b> '+esc(f.location||'NEJASNÁ')+'</small><small><b>Zdroj vo výkrese:</b> '+esc(f.source||'NEUVEDENÝ')+'</small></div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
+    );
     html += block('Upnutie a dátumy',
       '<p><b>Upnutie:</b> '+esc(setup.clamping || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'+
       '<p><b>Dátum:</b> '+esc(setup.datum || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'+
@@ -1487,6 +1504,7 @@ init('turnAi','turning');init('millAi','milling');
     );
 
     html += block('Kritické rozmery na kontrolu', listHtml(critical));
+    html += block('Preverené katalógy a zdroje nástrojov', listHtml(toolSources));
     html += block('Upozornenia a riziká', listHtml(warnings));
     html += block('Poznámky', listHtml(notes));
 
@@ -1519,7 +1537,7 @@ init('turnAi','turning');init('millAi','milling');
       if(cadName)cadName.textContent=meta?meta.name:'STEP/STP, IGES/IGS, STL, Parasolid X_T/X_B, OBJ, 3MF, DXF alebo DWG';
       if(cadStatus){
         if(!meta){cadStatus.className='cad-upload-note';cadStatus.textContent='Technologický postup je možný iba z výkresu. CNC program sa odomkne až po nahraní skutočného 3D modelu.';}
-        else if(prefix!=='turnAi'){cadStatus.className='cad-file-warn';cadStatus.textContent='⚠️ Geometrické dráhy V26 sú zatiaľ pripravené pre sústruženie. Frézovanie doplníme v nasledujúcej fáze.';}
+        else if(prefix!=='turnAi'){cadStatus.className='cad-file-warn';cadStatus.textContent='⚠️ Geometrické dráhy V27 sú zatiaľ pripravené pre sústruženie. Frézovanie doplníme v nasledujúcej fáze.';}
         else if(meta.is3D){
           cadStatus.className='cad-upload-note';cadStatus.textContent='⏳ Spracúvam skutočnú geometriu modelu…';
           try{
@@ -1630,6 +1648,7 @@ init('turnAi','turning');init('millAi','milling');
           type:operation,
           operation:operation,
           material:cncGetMaterial(prefix),
+          materialCondition:document.getElementById(prefix+'MaterialCondition')?.value.trim()||'',
           stock:getStockValue(),
           machine:document.getElementById(prefix+'Machine').value.trim(),
           control:document.getElementById(prefix+'Control')?.value.trim() || '',
@@ -2096,7 +2115,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V26 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V27 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

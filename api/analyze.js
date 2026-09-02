@@ -163,7 +163,7 @@ ZÁSADNÉ PRAVIDLÁ:
 30. Katalógové označenie musí byť úplné a objednateľné: ISO rozmer plátku + geometria/lámač + konkrétna trieda výrobcu. Samotné označenie typu CNMG, DNMG alebo "P25" nestačí.
 31. Pri každom plátku over, že presne pasuje do uvedeného držiaka a že jeho rezná geometria, polomer špičky, šírka zápichu a trieda zodpovedajú konkrétnej operácii. Ak presný údaj z výkresu alebo tvrdosť chýba, navrhni bezpečný štartovací variant a jasne uveď, čo musí technológ potvrdiť.`;
 }
-export default async function handler(req,res){
+async function handler(req,res){
  try{
   if(req.method!=="POST"){res.setHeader("Allow","POST");return fail(res,405,"Použi POST požiadavku.");}
   const apiKey=key(); if(!apiKey)return fail(res,500,"OPENAI_API_KEY nie je nastavený vo Verceli.");
@@ -193,3 +193,5 @@ export default async function handler(req,res){
   return res.status(200).json({success:true,analyzed:true,file:name,operation:b.type||b.operation||"Sústruženie",machine:b.machine||"",control:b.control||"",material:effectiveMaterial,materialCondition:b.materialCondition||"",materialSource,materialConfidence:manualMaterial?"POTVRDENÉ TECHNOLÓGOM":confidence,stock:b.stock||plan.stock||"",toolPreferences:{preferred:b.preferredToolManufacturer||"",alternatives:Array.isArray(b.alternativeToolManufacturers)?b.alternativeToolManufacturers:[]},...plan});
  }catch(e){console.error(e);return fail(res,500,"Chyba servera pri AI analýze.",e?.message||String(e));}
 }
+
+module.exports = handler;

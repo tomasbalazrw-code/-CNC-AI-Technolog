@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V29 -->
+<!-- CNC AI Technolog V30 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -370,7 +370,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V29</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V30</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -1416,6 +1416,7 @@ init('turnAi','turning');init('millAi','milling');
 
   function render(prefix, data){
     const setup=data.setup || {};
+    const setups=Array.isArray(data.setups)?data.setups:[];
     const ops=Array.isArray(data.operations)?data.operations:[];
     const tools=Array.isArray(data.tools)?data.tools:[];
     const parameters=Array.isArray(data.parameters)?data.parameters:[];
@@ -1445,6 +1446,15 @@ init('turnAi','turning');init('millAi','milling');
       '<p><b>Opory:</b> '+esc(setup.supports || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'+
       '<p><b>Riziká:</b> '+esc(setup.risks || 'NIE JE UVEDENÉ/ČITATEĽNÉ')+'</p>'
     );
+    if(setups.length){
+      html += block('Postup po jednotlivých upnutiach',setups.map(s=>
+        '<div class="ai2-op"><b>UPNUTIE '+esc(s.setup_no)+' · '+esc(s.name)+'</b>'+
+        '<small><b>Upnutie:</b> '+esc(s.clamping)+' · <b>Čeľuste:</b> '+esc(s.jaw_type)+'</small>'+
+        '<small><b>Vyloženie:</b> '+esc(s.stickout)+' · <b>Nulový bod:</b> '+esc(s.datum)+' · <b>Posun/prídavok:</b> '+esc(s.datum_shift)+'</small>'+
+        '<small><b>Obrábaná dĺžka:</b> '+esc(s.machining_length)+' · <b>Referencia pre preupnutie:</b> '+esc(s.reclamping_reference)+'</small>'+
+        '<small><b>Riziká:</b> '+esc(s.risks)+'</small></div>'
+      ).join(''));
+    }
 
     if(prefix==='millAi'){
       html += '<div class="ai2-setup">'+
@@ -1470,7 +1480,7 @@ init('turnAi','turning');init('millAi','milling');
     }
 
     html += block('Technologický postup',
-      ops.length ? ops.map(o=>'<div class="ai2-op"><b>'+esc(o.order)+'. '+esc(o.name)+'</b><small>'+esc(o.description)+'</small>'+(o.machining_scope?'<small><b>Oblasť obrábania:</b> '+esc(o.machining_scope)+'</small>':'')+'</div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
+      ops.length ? ops.map(o=>'<div class="ai2-op"><b>'+esc(o.order)+'. UPNUTIE '+esc(o.setup_no)+' · '+esc(o.name)+'</b><small>'+esc(o.description)+'</small>'+(o.machining_scope?'<small><b>Oblasť:</b> '+esc(o.machining_scope)+' · <b>Nástroj:</b> '+esc(o.tool_id)+'</small>':'')+'<small><b>Cieľové rozmery:</b> '+esc(o.target_dimensions||'NEUVEDENÉ')+' · <b>Zostávajúci prídavok:</b> '+esc(o.stock_allowance||'NEUVEDENÝ')+'</small><small><b>Použitie nástroja:</b> '+esc(o.tool_reuse||'NEUVEDENÉ')+'</small></div>').join('') : '<p>NIE JE UVEDENÉ/ČITATEĽNÉ</p>'
     );
 
     html += block('Konkrétne nástroje, plátky a štartovacie parametre',
@@ -1543,7 +1553,7 @@ init('turnAi','turning');init('millAi','milling');
       if(cadName)cadName.textContent=meta?meta.name:'STEP/STP, IGES/IGS, STL, Parasolid X_T/X_B, OBJ, 3MF, DXF alebo DWG';
       if(cadStatus){
         if(!meta){cadStatus.className='cad-upload-note';cadStatus.textContent='Technologický postup je možný iba z výkresu. CNC program sa odomkne až po nahraní skutočného 3D modelu.';}
-        else if(prefix!=='turnAi'){cadStatus.className='cad-file-warn';cadStatus.textContent='⚠️ Geometrické dráhy V29 sú zatiaľ pripravené pre sústruženie. Frézovanie doplníme v nasledujúcej fáze.';}
+        else if(prefix!=='turnAi'){cadStatus.className='cad-file-warn';cadStatus.textContent='⚠️ Geometrické dráhy V30 sú zatiaľ pripravené pre sústruženie. Frézovanie doplníme v nasledujúcej fáze.';}
         else if(meta.is3D){
           cadStatus.className='cad-upload-note';cadStatus.textContent='⏳ Spracúvam skutočnú geometriu modelu…';
           try{
@@ -2121,7 +2131,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V29 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V30 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

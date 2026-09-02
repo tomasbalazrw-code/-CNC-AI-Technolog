@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V18 -->
+<!-- CNC AI Technolog V19 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -364,7 +364,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V18</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V19</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -582,20 +582,6 @@ li{margin:6px 0;line-height:1.45}
       <div class="brand-pref-note">AI najprv preverí hlavného výrobcu. Ak nemá technologicky vhodné riešenie, použije náhradných výrobcov v zadanom poradí.</div>
     </div>
 
-    <div class="tooling-db" data-tooling-prefix="turnAi" data-tooling-process="turning">
-      <div class="tooling-head"><div class="tooling-title">🔩 Databáza držiakov pre revolver</div><span class="tooling-badge">ŠTANDARDNÉ UPnutia</span></div>
-      <div class="tooling-grid">
-        <div><label>Upnutie / rozhranie</label><select id="turnAiTurretInterface"><option value="">Vyber rozhranie…</option></select></div>
-        <div><label>Typ držiaka</label><select id="turnAiHolderType" disabled><option value="">Najprv rozhranie…</option></select></div>
-        <div><label>Veľkosť / stopka</label><select id="turnAiHolderSize" disabled><option value="">Vyber typ držiaka…</option></select></div>
-        <div><label>Orientácia</label><select id="turnAiHolderOrientation"><option value="Radiálny / vonkajší" >Radiálny / vonkajší</option><option value="Axiálny / čelný">Axiálny / čelný</option><option value="Vnútorný / vyvrtávací">Vnútorný / vyvrtávací</option><option value="Poháňaný radiálny">Poháňaný radiálny</option><option value="Poháňaný axiálny">Poháňaný axiálny</option></select></div>
-      </div>
-      <div class="tooling-summary" id="turnAiToolingSummary">Držiak zatiaľ nie je vybraný.</div>
-      <div class="tooling-tags"><span class="tooling-tag">VDI DIN 69880</span><span class="tooling-tag">BMT</span><span class="tooling-tag">CAPTO</span><span class="tooling-tag">HSK-T</span><span class="tooling-tag">ER / Weldon</span></div>
-      <div class="tooling-note">Databáza je zámerne zameraná na bežné štandardné statické, vyvrtávacie, axiálne, radiálne a poháňané držiaky. Presné rozhranie revolvera musí Technológ potvrdiť podľa konkrétneho stroja.</div>
-      <input id="turnAiTooling" type="hidden" value="">
-    </div>
-
     <div class="field">
       <label>Technický výkres</label>
       <div class="drop" id="turnAiDrop">
@@ -676,20 +662,6 @@ li{margin:6px 0;line-height:1.45}
      <label>2. náhradný výrobca<select id="millAiToolBrandAlt2" data-brand-role="alternative"></select></label>
     </div>
     <div class="brand-pref-note">AI najprv preverí hlavného výrobcu. Ak nemá technologicky vhodné riešenie, použije náhradných výrobcov v zadanom poradí.</div>
-   </div>
-
-   <div class="tooling-db" data-tooling-prefix="millAi" data-tooling-process="milling">
-    <div class="tooling-head"><div class="tooling-title">🛠️ Databáza frézovacích a otvorových nástrojov</div><span class="tooling-badge">NAJČASTEJŠIE NÁSTROJE</span></div>
-    <div class="tooling-grid">
-      <div><label>Kategória</label><select id="millAiToolCategory"><option value="">Vyber kategóriu…</option></select></div>
-      <div><label>Typ nástroja</label><select id="millAiToolType" disabled><option value="">Najprv kategória…</option></select></div>
-      <div><label>Veľkosť / priemer</label><select id="millAiToolSize" disabled><option value="">Vyber typ nástroja…</option></select></div>
-      <div><label>Upnutie nástroja</label><select id="millAiToolInterface"><option value="">Vyber upnutie…</option><option>HSK-A63</option><option>HSK-A100</option><option>BT30</option><option>BT40</option><option>BT50</option><option>CAT40</option><option>CAT50</option><option>SK40</option><option>SK50</option><option>DIN 69871 / ISO 7388-1</option><option>ER klieština</option><option>Weldon</option><option>Shrink Fit</option><option>Hydraulické skľučovadlo</option><option>Capto C5/C6</option></select></div>
-    </div>
-    <div class="tooling-summary" id="millAiToolingSummary">Nástroj zatiaľ nie je vybraný.</div>
-    <div class="tooling-tags"><span class="tooling-tag">VHM frézy</span><span class="tooling-tag">Vrtáky</span><span class="tooling-tag">Čelné frézy</span><span class="tooling-tag">Rohové frézy</span><span class="tooling-tag">Výstružníky</span><span class="tooling-tag">Závitníky</span><span class="tooling-tag">Vyvrtávanie</span></div>
-    <div class="tooling-note">Výber slúži ako technologická databáza. AI môže navrhnúť konkrétnu geometriu, materiál nástroja a rezné parametre podľa materiálu, výkresu a stroja.</div>
-    <input id="millAiTooling" type="hidden" value="">
    </div>
 
    <div class="ai2-field">
@@ -1948,7 +1920,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V18 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V19 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

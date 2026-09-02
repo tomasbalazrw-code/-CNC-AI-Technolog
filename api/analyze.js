@@ -19,10 +19,10 @@ const SCHEMA={
    order:{type:"integer"},name:{type:"string"},description:{type:"string"},setup:{type:"string"},features:{type:"string"},tool_id:{type:"string"},parameters:{type:"string"}
   },required:["order","name","description","setup","features","tool_id","parameters"]}},
   tools:{type:"array",items:{type:"object",additionalProperties:false,properties:{
-   operation:{type:"string"},manufacturer:{type:"string"},holder_or_body:{type:"string"},holder_or_body_code:{type:"string"},
+   tool_id:{type:"string"},tool_type:{type:"string"},quantity:{type:"integer"},operation:{type:"string"},manufacturer:{type:"string"},holder_or_body:{type:"string"},holder_or_body_code:{type:"string"},
    insert_or_tool:{type:"string"},insert_or_tool_code:{type:"string"},grade:{type:"string"},geometry:{type:"string"},
    compatibility:{type:"string"},reason:{type:"string"},verification_status:{type:"string"}
-  },required:["operation","manufacturer","holder_or_body","holder_or_body_code","insert_or_tool","insert_or_tool_code","grade","geometry","compatibility","reason","verification_status"]}},
+  },required:["tool_id","tool_type","quantity","operation","manufacturer","holder_or_body","holder_or_body_code","insert_or_tool","insert_or_tool_code","grade","geometry","compatibility","reason","verification_status"]}},
   parameters:{type:"array",items:{type:"object",additionalProperties:false,properties:{
    operation:{type:"string"},vc:{type:"string"},rpm:{type:"string"},feed:{type:"string"},fz:{type:"string"},ap:{type:"string"},ae:{type:"string"},coolant:{type:"string"},note:{type:"string"}
   },required:["operation","vc","rpm","feed","fz","ap","ae","coolant","note"]}},
@@ -90,7 +90,12 @@ ZÁSADNÉ PRAVIDLÁ:
 13. Výstup musí byť použiteľný ako vstup pre samostatný generátor CNC programu.
 14. Ak je údaj z výkresu nečitateľný, uveď "NIE JE ČITATEĽNÉ" namiesto dohadu.
 15. Ak je zadaný preferovaný výrobca nástrojov, najprv hľadaj vhodné a overiteľné riešenie od neho. Ak ho nemá alebo katalógový kód nevieš overiť, použi náhradných výrobcov v zadanom poradí. Preferencia nesmie zhoršiť bezpečnosť, kompatibilitu ani technologickú vhodnosť. Každú odchýlku od preferencie stručne vysvetli.
-16. Každý navrhnutý držiak musí byť kompatibilný so zadaným rozhraním a rozmerom upínania. Pri frézovaní rešpektuj rozhranie vretena aj zvolený spôsob upnutia nástroja. Pri sústružení rešpektuj kvadrát, priemer tyče, Capto, VDI alebo BMT. Potrebný adaptér alebo redukciu uveď ako samostatnú položku.`;
+16. Každý navrhnutý držiak musí byť kompatibilný so zadaným rozhraním a rozmerom upínania. Pri frézovaní rešpektuj rozhranie vretena aj zvolený spôsob upnutia nástroja. Pri sústružení rešpektuj kvadrát, priemer tyče, Capto, VDI alebo BMT. Potrebný adaptér alebo redukciu uveď ako samostatnú položku.
+17. Vytvor ÚPLNÝ zoznam nástrojov pre všetky skutočne potrebné operácie výkresu: podľa potreby čelný a pozdĺžny nôž, hrubovací a dokončovací nôž, vnútorný nôž, zapichovací nôž a plátok, závitový nôž a plátok, strediaci vrták, vrták, výstružník, závitník, čelná fréza, stopková fréza, zrážač hrán a ďalšie. Nevynechaj nástroj len preto, že operácia pôsobí samozrejmo.
+18. Každý nástroj musí mať jedinečné tool_id (napríklad T01, T02). Pole tool_id v každej operácii musí presne odkazovať na tool_id nástroja v zozname tools. Ak jedna operácia potrebuje dva nástroje, rozdeľ ju na dve konkrétne operácie.
+19. tool_type pomenuj jednoznačne, napríklad "Sústružnícky nôž – vonkajšie hrubovanie", "VBD vrták", "VHM špirálový vrták" alebo "Stopková fréza". quantity je počet rovnakých kusov potrebných v zostave.
+20. Pri monolitnom vrtáku alebo fréze uveď do insert_or_tool celý nástroj a do holder_or_body vhodné upínacie puzdro alebo držiak. Ak nástroj nepoužíva VBD, v geometrii jasne napíš "MONOLITNÝ – BEZ VBD". Pri nástroji s VBD musí byť samostatne uvedené teleso/držiak aj kompatibilný plátok.
+21. Preferovaného výrobcu použi pre každú kategóriu, ktorú reálne ponúka. Ak musíš použiť náhradného výrobcu, uveď dôvod pri konkrétnom nástroji. Názov výrobcu bez konkrétneho typu nástroja, držiaka a plátku nie je dostatočný výstup.`;
 }
 export default async function handler(req,res){
  try{
@@ -115,6 +120,6 @@ export default async function handler(req,res){
   const txt=await r.text(); if(!r.ok)return fail(res,502,"OpenAI analýza zlyhala.",txt);
   const d=JSON.parse(txt); const out=outputText(d); if(!out)return fail(res,502,"OpenAI nevrátilo výsledok analýzy.",txt.slice(0,4000));
   let plan; try{plan=JSON.parse(out)}catch(e){return fail(res,502,"OpenAI vrátilo neplatný formát analýzy.",out.slice(0,4000));}
-  return res.status(200).json({success:true,analyzed:true,file:name,operation:b.type||b.operation||"Sústruženie",machine:b.machine||"",control:b.control||"",material:b.material||plan.material||"",stock:b.stock||plan.stock||"",...plan});
+  return res.status(200).json({success:true,analyzed:true,file:name,operation:b.type||b.operation||"Sústruženie",machine:b.machine||"",control:b.control||"",material:b.material||plan.material||"",stock:b.stock||plan.stock||"",toolPreferences:{preferred:b.preferredToolManufacturer||"",alternatives:Array.isArray(b.alternativeToolManufacturers)?b.alternativeToolManufacturers:[]},...plan});
  }catch(e){console.error(e);return fail(res,500,"Chyba servera pri AI analýze.",e?.message||String(e));}
 }

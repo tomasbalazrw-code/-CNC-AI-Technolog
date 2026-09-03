@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V31 -->
+<!-- CNC AI Technolog V32 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -370,7 +370,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V31</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V32</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -773,19 +773,9 @@ li{margin:6px 0;line-height:1.45}
    
 <div class="auto-tool" id="millAutoTool">
   <h3>🤖 Automatický výber frézovacieho nástroja</h3>
-  <div class="muted">AI vyberie typ frézy, telo a plátok podľa materiálu, geometrie súčiastky, operácie a stroja. Ručná voľba je iba voliteľný override.</div>
+  <div class="muted">AI automaticky vyberie typ frézy, teleso, plátok alebo VHM nástroj podľa materiálu, geometrie súčiastky, operácie, stroja a preferovaných výrobcov.</div>
   <div class="auto-reco" id="millAutoReco"><span class="auto-badge">AI VÝBER: čaká na analýzu výkresu</span></div>
-  <div class="auto-choice">
-    <label><b>Ručná zmena (voliteľné)</b></label>
-    <select id="millManualOverride"><option value="">Použiť automatický výber AI</option></select>
-  </div>
 </div>
-
-<div class="stdins" id="millStandardInserts"><h3>🧩 Štandardné frézovacie plátky</h3>
-<div class="stdins-grid"><select id="millInsertFamily"><option value="">Vyber typ plátku…</option></select><select id="millInsertSize" disabled><option value="">Vyber rozmer…</option></select></div>
-<div class="compat-box"><label for="millInsertBody">Kompatibilné telo frézy</label><select id="millInsertBody" disabled><option value="">Najprv vyber plátok…</option></select><div id="millCompatMsg" class="compat-warn">Po výbere plátku sa zobrazia kompatibilné typy.</div></div>
-<div class="stdins-card" id="millInsertInfo">Vyber typ plátku. AI ho použije ako preferenciu.</div>
-<div class="stdins-note">Bežné frézovacie rodiny; konkrétna kompatibilita musí sedieť s telom frézy.</div></div>
 <button class="ai2-btn" id="millAiAnalyzeBtn" type="button">🤖 SPUSTIŤ AI ANALÝZU</button>
    <div class="ai2-status" id="millAiStatus"></div>
 
@@ -1681,12 +1671,12 @@ init('turnAi','turning');init('millAi','milling');
           preferredToolManufacturer:document.getElementById(prefix+'ToolBrandPrimary')?.value||'',
           alternativeToolManufacturers:[document.getElementById(prefix+'ToolBrandAlt1')?.value||'',document.getElementById(prefix+'ToolBrandAlt2')?.value||''].filter(Boolean),
           requirements:document.getElementById(prefix+'Requirements').value.trim(),
-          selectedInsertFamily: prefix==='turnAi' ? (document.getElementById('turnInsertFamily')?.value||'') : (document.getElementById('millInsertFamily')?.value||''),
-          selectedInsertSize: prefix==='turnAi' ? (document.getElementById('turnInsertSize')?.value||'') : (document.getElementById('millInsertSize')?.value||''),
-          selectedInsertBody: prefix==='turnAi' ? (document.getElementById('turnInsertBody')?.value||'') : (document.getElementById('millInsertBody')?.value||''),
+          selectedInsertFamily: prefix==='turnAi' ? (document.getElementById('turnInsertFamily')?.value||'') : '',
+          selectedInsertSize: prefix==='turnAi' ? (document.getElementById('turnInsertSize')?.value||'') : '',
+          selectedInsertBody: prefix==='turnAi' ? (document.getElementById('turnInsertBody')?.value||'') : '',
           autoToolSelection: true,
           cadGeometry:selectedCadGeometry,
-          manualToolOverride: prefix==='turnAi' ? (document.getElementById('turnManualOverride')?.value||'') : (document.getElementById('millManualOverride')?.value||''),
+          manualToolOverride: prefix==='turnAi' ? (document.getElementById('turnManualOverride')?.value||'') : '',
           fileName:selectedFile.name,
           fileData:fileData
         };
@@ -2131,7 +2121,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V31 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V32 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

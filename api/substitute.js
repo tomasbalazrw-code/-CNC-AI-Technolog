@@ -8,8 +8,8 @@ const SCHEMA={
   original_designation:{type:"string"},original_manufacturer:{type:"string"},original_type:{type:"string"},identification_confidence:{type:"string"},
   target_manufacturer:{type:"string"},
   alternatives:{type:"array",items:{type:"object",additionalProperties:false,properties:{
-   order_code:{type:"string"},description:{type:"string"},geometry_and_size:{type:"string"},grade:{type:"string"},match_level:{type:"string"},compatibility:{type:"string"},differences:{type:"string"},recommended_use:{type:"string"},verification_status:{type:"string"}
-  },required:["order_code","description","geometry_and_size","grade","match_level","compatibility","differences","recommended_use","verification_status"]}},
+   order_code:{type:"string"},description:{type:"string"},geometry_and_size:{type:"string"},grade:{type:"string"},match_level:{type:"string"},compatibility:{type:"string"},differences:{type:"string"},recommended_use:{type:"string"},recommended_parameters:{type:"string"},parameter_comparison:{type:"string"},verification_status:{type:"string"}
+  },required:["order_code","description","geometry_and_size","grade","match_level","compatibility","differences","recommended_use","recommended_parameters","parameter_comparison","verification_status"]}},
   sources:{type:"array",items:{type:"string"}},warnings:{type:"array",items:{type:"string"}}
  },
  required:["original_designation","original_manufacturer","original_type","identification_confidence","target_manufacturer","alternatives","sources","warnings"]
@@ -21,6 +21,7 @@ function outputText(d){if(typeof d.output_text==="string"&&d.output_text.trim())
 
 function prompt(b){
  const isMasam=/\bMASAM\b/i.test(String(b.targetManufacturer||""));
+ const p=b.cuttingParameters&&typeof b.cuttingParameters==="object"?b.cuttingParameters:{};
  const masamRules=isMasam?`
 
 POVINNÉ PRAVIDLÁ PRE MASAM:
@@ -41,6 +42,12 @@ VSTUP:
 - Požadovaný výrobca náhrady: ${b.targetManufacturer}
 - Obrábaný materiál: ${b.material||"NEUVEDENÝ"}
 - Použitie/operácia: ${b.operation||"NEUVEDENÁ"}
+- Používaná rezná rýchlosť vc: ${p.vc?`${p.vc} m/min`:"NEUVEDENÁ"}
+- Používané otáčky n: ${p.rpm?`${p.rpm} ot/min`:"NEUVEDENÉ"}
+- Používaný posuv f: ${p.feed?`${p.feed} ${p.feedUnit||"mm/ot"}`:"NEUVEDENÝ"}
+- Používaná hĺbka rezu ap: ${p.ap?`${p.ap} mm`:"NEUVEDENÁ"}
+- Používaná šírka záberu ae: ${p.ae?`${p.ae} mm`:"NEUVEDENÁ"}
+- Chladenie/poznámka: ${p.cooling||"NEUVEDENÉ"}
 
 POVINNÝ POSTUP:
 1. Z označenia a fotografie identifikuj výrobcu, typ nástroja, ISO tvar, uhol chrbta, toleranciu, veľkosť, hrúbku, rádius/šírku, lámač triesky a triedu. Nečitateľné údaje nehádaj.
@@ -54,7 +61,9 @@ POVINNÝ POSTUP:
 9. verification_status musí povedať OVERENÉ V KATALÓGU alebo NEOVERENÉ. Nevymýšľaj kódy ani zdroje.
 10. Vráť najviac tri reálne možnosti zoradené od najlepšej. Ak presnú položku nenájdeš, alternatives nechaj prázdne a do warnings napíš, ktoré údaje chýbajú.
 11. Do sources zapíš názov výrobcu, katalógu alebo oficiálnej stránky a čo bolo overené; nevymýšľaj URL.
-12. Fotografia môže zobrazovať obal, laserové označenie alebo samotnú geometriu. Text na fotografii čítaj opatrne a identification_confidence uveď VYSOKÁ, STREDNÁ, NÍZKA alebo ŽIADNA.`;}
+12. Zadané rezné parametre ber ako reálne odskúšané podmienky pôvodného nástroja. Použi ich pri výbere geometrie, lámača triesky, triedy a povlaku náhrady; neuprednostni katalógovú položku, ktorá ich zjavne nezvládne.
+13. Do recommended_parameters uveď bezpečné štartovacie vc, posuv, ap a podľa potreby ae pre náhradu. Do parameter_comparison stručne napíš, ktoré používateľove hodnoty možno ponechať a ktoré treba zmeniť. Ak chýba materiál alebo operácia, uveď NEPOTVRDENÉ a nevymýšľaj presné hodnoty.
+14. Fotografia môže zobrazovať obal, laserové označenie alebo samotnú geometriu. Text na fotografii čítaj opatrne a identification_confidence uveď VYSOKÁ, STREDNÁ, NÍZKA alebo ŽIADNA.`;}
 
 async function handler(req,res){
  try{

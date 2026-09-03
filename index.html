@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V37 -->
+<!-- CNC AI Technolog V38 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -375,7 +375,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V37</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V38</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -921,7 +921,7 @@ async function cncFindSubstitute(){
     var sources=Array.isArray(data.sources)?data.sources:[],warnings=Array.isArray(data.warnings)?data.warnings:[];
     result.innerHTML='<h3 style="margin-top:0">Pôvodný nástroj</h3><b>Rozpoznané označenie:</b> '+cncEscHtml(data.original_designation||'NEPOTVRDENÉ')+'<br><b>Výrobca:</b> '+cncEscHtml(data.original_manufacturer||'NEURČENÝ')+'<br><b>Typ:</b> '+cncEscHtml(data.original_type||'NEURČENÝ')+'<br><b>Rozpoznanie:</b> '+cncEscHtml(data.identification_confidence||'NEUVEDENÉ')+
       '<h3>Odporúčaná náhrada – '+cncEscHtml(data.target_manufacturer||target)+'</h3>'+
-      (alternatives.length?alternatives.map(function(a,i){var companion=a.companion_tool||{};return '<div class="ai2-tool"><b>'+(i===0?'HLAVNÁ NÁHRADA':'ALTERNATÍVA '+(i+1))+'</b><br><b>Objednávacie označenie plátku/nástroja:</b> '+cncEscHtml(a.order_code)+'<br><b>Opis:</b> '+cncEscHtml(a.description)+'<br><b>Geometria a rozmer:</b> '+cncEscHtml(a.geometry_and_size)+'<br><b>Trieda:</b> '+cncEscHtml(a.grade)+(companion.required?'<div class="auto-reco"><b>Kompatibilné teleso alebo držiak</b><br><b>Objednávacie označenie:</b> '+cncEscHtml(companion.order_code||'NENAŠLO SA')+'<br><b>Typ:</b> '+cncEscHtml(companion.type)+'<br><b>Priemer/rozmer:</b> '+cncEscHtml(companion.diameter_or_size)+'<br><b>Upínanie:</b> '+cncEscHtml(companion.machine_interface)+'<br><b>Lôžka a rozhranie plátku:</b> '+cncEscHtml(companion.insert_interface)+'<br><b>Počet plátkov:</b> '+cncEscHtml(companion.number_of_seats)+'<br><b>Overenie zostavy:</b> '+cncEscHtml(companion.compatibility_verification)+'</div>':'')+'<br><b>Zhoda:</b> '+cncEscHtml(a.match_level)+'<br><b>Kompatibilita:</b> '+cncEscHtml(a.compatibility)+'<br><b>Rozdiely:</b> '+cncEscHtml(a.differences)+'<br><b>Použitie:</b> '+cncEscHtml(a.recommended_use)+'<br><b>Odporúčané štartovacie parametre:</b> '+cncEscHtml(a.recommended_parameters||'NEPOTVRDENÉ')+'<br><b>Porovnanie s používanými parametrami:</b> '+cncEscHtml(a.parameter_comparison||'NEUVEDENÉ')+'<br><b>Overenie:</b> '+cncEscHtml(a.verification_status)+'</div>';}).join(''):'<p>Presná náhrada nebola nájdená.</p>')+
+      (alternatives.length?alternatives.map(function(a,i){var companion=a.companion_tool||{};return '<div class="ai2-tool"><b>'+(i===0?'HLAVNÁ NÁHRADA':'ALTERNATÍVA '+(i+1))+'</b><br><b>Úloha plátku:</b> '+cncEscHtml(a.application_role||'NEUVEDENÁ')+'<br><b>Objednávacie označenie plátku/nástroja:</b> '+cncEscHtml(a.order_code)+'<br><b>Opis:</b> '+cncEscHtml(a.description)+'<br><b>Geometria a rozmer:</b> '+cncEscHtml(a.geometry_and_size)+'<br><b>Trieda:</b> '+cncEscHtml(a.grade)+(companion.required?'<div class="auto-reco"><b>Kompatibilné teleso alebo držiak</b><br><b>Objednávacie označenie:</b> '+cncEscHtml(companion.order_code||'NENAŠLO SA')+'<br><b>Typ:</b> '+cncEscHtml(companion.type)+'<br><b>Priemer/rozmer:</b> '+cncEscHtml(companion.diameter_or_size)+'<br><b>Upínanie:</b> '+cncEscHtml(companion.machine_interface)+'<br><b>Lôžka a rozhranie plátku:</b> '+cncEscHtml(companion.insert_interface)+'<br><b>Počet plátkov:</b> '+cncEscHtml(companion.number_of_seats)+'<br><b>Overenie zostavy:</b> '+cncEscHtml(companion.compatibility_verification)+'</div>':'')+'<br><b>Zhoda:</b> '+cncEscHtml(a.match_level)+'<br><b>Kompatibilita:</b> '+cncEscHtml(a.compatibility)+'<br><b>Rozdiely:</b> '+cncEscHtml(a.differences)+'<br><b>Použitie:</b> '+cncEscHtml(a.recommended_use)+'<br><b>Odporúčané štartovacie parametre:</b> '+cncEscHtml(a.recommended_parameters||'NEPOTVRDENÉ')+'<br><b>Porovnanie s používanými parametrami:</b> '+cncEscHtml(a.parameter_comparison||'NEUVEDENÉ')+'<br><b>Overenie:</b> '+cncEscHtml(a.verification_status)+'</div>';}).join(''):'<p>Presná náhrada nebola nájdená.</p>')+
       (warnings.length?'<h3>Upozornenia</h3><ul>'+warnings.map(function(x){return '<li>'+cncEscHtml(x)+'</li>'}).join('')+'</ul>':'')+
       (sources.length?'<h3>Preverené zdroje</h3><ul>'+sources.map(function(x){return '<li>'+cncEscHtml(x)+'</li>'}).join('')+'</ul>':'');
     result.style.display='block';status.innerHTML='✅ Porovnanie bolo dokončené.';
@@ -2206,7 +2206,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V37 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V38 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

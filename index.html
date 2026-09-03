@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V33 -->
+<!-- CNC AI Technolog V34 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -338,6 +338,10 @@ li{margin:6px 0;line-height:1.45}
 .auto-choice select{width:100%;box-sizing:border-box;padding:11px;border-radius:10px;border:1px solid #31536e;background:#0b1824;color:#fff}
 .auto-badge{display:inline-block;padding:5px 8px;border-radius:8px;background:#173c25;color:#91efa2;font-size:12px;font-weight:800}
 @media(max-width:600px){.auto-reco-grid{grid-template-columns:1fr}}
+.substitute-photo-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 8px}
+.substitute-photo-button{display:flex!important;align-items:center;justify-content:center;min-height:44px;margin:0!important;padding:9px 10px;border:1px solid #31536e;border-radius:10px;background:#102536;color:#fff;font-weight:800;cursor:pointer;text-align:center}
+.substitute-photo-button input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+@media(max-width:600px){.substitute-photo-actions{grid-template-columns:1fr}.substitute-photo-button{min-height:42px}}
 </style>
 </head>
 <body>
@@ -370,7 +374,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V33</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V34</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -433,7 +437,15 @@ li{margin:6px 0;line-height:1.45}
    <label style="margin-top:14px">Označenie pôvodného nástroja alebo plátku
     <input id="substituteCode" class="cnc-v4-input" placeholder="napr. DNMG 150608NMX AC8025P">
    </label>
-   <label class="cnc-v4-drop" style="margin-top:12px"><input id="substitutePhoto" type="file" accept="image/*" capture="environment" onchange="cncSubstitutePhotoName()"><b>📷 Odfotiť alebo vybrať fotografiu</b><div id="substitutePhotoName" class="cnc-v4-muted">Fotografia obalu alebo označenia – voliteľné</div></label>
+   <div class="cnc-v4-drop" style="margin-top:12px">
+    <b>📷 Fotografia nástroja alebo označenia</b>
+    <div class="substitute-photo-actions">
+     <label class="substitute-photo-button">📷 Odfotiť<input id="substituteCamera" type="file" accept="image/*" capture="environment" onchange="cncSelectSubstitutePhoto(this)"></label>
+     <label class="substitute-photo-button">🖼 Galéria<input id="substituteGallery" type="file" accept="image/*" onchange="cncSelectSubstitutePhoto(this)"></label>
+     <label class="substitute-photo-button">📁 Súbor<input id="substituteFile" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" onchange="cncSelectSubstitutePhoto(this)"></label>
+    </div>
+    <div id="substitutePhotoName" class="cnc-v4-muted">JPG, PNG alebo WEBP – voliteľné</div>
+   </div>
    <div class="grid2">
     <label>Požadovaný dodávateľ
      <select id="substituteTarget" class="cnc-v4-input">
@@ -835,10 +847,15 @@ function cncOpen(id){
 function cncClose(){
   document.querySelectorAll('.cnc-v4-panel').forEach(function(p){p.classList.remove('show')});
 }
-function cncSubstitutePhotoName(){
-  var f=document.getElementById('substitutePhoto')?.files?.[0];
+var CNC_SUBSTITUTE_PHOTO=null;
+function cncSelectSubstitutePhoto(input){
+  var f=input?.files?.[0]||null;
+  if(f){
+    CNC_SUBSTITUTE_PHOTO=f;
+    ['substituteCamera','substituteGallery','substituteFile'].forEach(function(id){var el=document.getElementById(id);if(el&&el!==input)el.value='';});
+  }
   var n=document.getElementById('substitutePhotoName');
-  if(n)n.textContent=f?f.name:'JPG, PNG alebo WEBP – voliteľné';
+  if(n)n.textContent=CNC_SUBSTITUTE_PHOTO?CNC_SUBSTITUTE_PHOTO.name:'JPG, PNG alebo WEBP – voliteľné';
 }
 function cncReadAsDataUrl(file){return new Promise(function(resolve,reject){var r=new FileReader();r.onload=function(){resolve(r.result)};r.onerror=function(){reject(new Error('Fotografiu sa nepodarilo načítať.'))};r.readAsDataURL(file);});}
 async function cncPrepareSubstitutePhoto(file){
@@ -857,7 +874,7 @@ async function cncPrepareSubstitutePhoto(file){
 function cncEscHtml(v){return String(v??'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]});}
 async function cncFindSubstitute(){
   var code=document.getElementById('substituteCode')?.value.trim()||'';
-  var photo=document.getElementById('substitutePhoto')?.files?.[0]||null;
+  var photo=CNC_SUBSTITUTE_PHOTO;
   var target=document.getElementById('substituteTarget')?.value||'';
   var status=document.getElementById('substituteStatus'),result=document.getElementById('substituteResult'),btn=document.getElementById('substituteBtn');
   if(!code&&!photo){status.style.display='block';status.innerHTML='❌ Zadaj označenie alebo vyber fotografiu.';return;}
@@ -2158,7 +2175,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V33 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V34 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

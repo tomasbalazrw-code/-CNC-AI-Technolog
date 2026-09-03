@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V34 -->
+<!-- CNC AI Technolog V35 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -341,7 +341,8 @@ li{margin:6px 0;line-height:1.45}
 .substitute-photo-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 8px}
 .substitute-photo-button{display:flex!important;align-items:center;justify-content:center;min-height:44px;margin:0!important;padding:9px 10px;border:1px solid #31536e;border-radius:10px;background:#102536;color:#fff;font-weight:800;cursor:pointer;text-align:center}
 .substitute-photo-button input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
-@media(max-width:600px){.substitute-photo-actions{grid-template-columns:1fr}.substitute-photo-button{min-height:42px}}
+.substitute-params-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+@media(max-width:600px){.substitute-photo-actions,.substitute-params-grid{grid-template-columns:1fr}.substitute-photo-button{min-height:42px}}
 </style>
 </head>
 <body>
@@ -374,7 +375,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V34</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V35</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -455,6 +456,19 @@ li{margin:6px 0;line-height:1.45}
     <label>Obrábaný materiál – voliteľné<input id="substituteMaterial" class="cnc-v4-input" placeholder="napr. 42CrMo4 Q, C45, Inconel 718"></label>
    </div>
    <label>Použitie – voliteľné<input id="substituteOperation" class="cnc-v4-input" placeholder="napr. vonkajšie hrubovanie, dokončenie, zapichovanie"></label>
+   <div class="auto-tool">
+    <h3>Rezné parametre pôvodného nástroja – voliteľné</h3>
+    <div class="cnc-v4-muted">Zadaj parametre, pri ktorých ti pôvodný plátok alebo nástroj funguje. AI podľa nich vyberie vhodnejšiu náhradu.</div>
+    <div class="substitute-params-grid">
+     <label>Rezná rýchlosť vc (m/min)<input id="substituteVc" class="cnc-v4-input" type="number" min="0" step="any" inputmode="decimal" placeholder="napr. 180"></label>
+     <label>Otáčky n (ot/min)<input id="substituteRpm" class="cnc-v4-input" type="number" min="0" step="any" inputmode="decimal" placeholder="napr. 1450"></label>
+     <label>Posuv f<input id="substituteFeed" class="cnc-v4-input" type="number" min="0" step="any" inputmode="decimal" placeholder="napr. 0,22"></label>
+     <label>Jednotka posuvu<select id="substituteFeedUnit" class="cnc-v4-input"><option>mm/ot</option><option>mm/zub</option><option>mm/min</option></select></label>
+     <label>Hĺbka rezu ap (mm)<input id="substituteAp" class="cnc-v4-input" type="number" min="0" step="any" inputmode="decimal" placeholder="napr. 2,0"></label>
+     <label>Šírka záberu ae (mm)<input id="substituteAe" class="cnc-v4-input" type="number" min="0" step="any" inputmode="decimal" placeholder="pri frézovaní"></label>
+    </div>
+    <label>Chladenie / poznámka<input id="substituteCooling" class="cnc-v4-input" placeholder="napr. emulzia 8 %, vnútorné chladenie"></label>
+   </div>
    <button class="cnc-v4-btn" id="substituteBtn" onclick="cncFindSubstitute()">🤖 NÁJSŤ NÁHRADU</button>
    <div id="substituteStatus" class="cnc-v4-result" style="display:none"></div>
    <div id="substituteResult" class="cnc-v4-result" style="display:none"></div>
@@ -883,14 +897,14 @@ async function cncFindSubstitute(){
   btn.disabled=true;result.style.display='none';status.style.display='block';status.innerHTML='<span class="spinner"></span> AI identifikuje pôvodný nástroj a preveruje katalóg '+cncEscHtml(target)+'…';
   try{
     var photoData=photo?await cncPrepareSubstitutePhoto(photo):'';
-    var response=await fetch('/api/substitute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code,photoData:photoData,photoName:photo?.name||'',targetManufacturer:target,material:document.getElementById('substituteMaterial')?.value.trim()||'',operation:document.getElementById('substituteOperation')?.value.trim()||''})});
+    var response=await fetch('/api/substitute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code,photoData:photoData,photoName:photo?.name||'',targetManufacturer:target,material:document.getElementById('substituteMaterial')?.value.trim()||'',operation:document.getElementById('substituteOperation')?.value.trim()||'',cuttingParameters:{vc:document.getElementById('substituteVc')?.value||'',rpm:document.getElementById('substituteRpm')?.value||'',feed:document.getElementById('substituteFeed')?.value||'',feedUnit:document.getElementById('substituteFeedUnit')?.value||'mm/ot',ap:document.getElementById('substituteAp')?.value||'',ae:document.getElementById('substituteAe')?.value||'',cooling:document.getElementById('substituteCooling')?.value.trim()||''}})});
     var data=null;try{data=await response.json()}catch(_){}
     if(!response.ok||!data||data.success!==true)throw new Error(data?.error||('Server odpovedal HTTP '+response.status)+(data?.details?' – '+data.details:''));
     var alternatives=Array.isArray(data.alternatives)?data.alternatives:[];
     var sources=Array.isArray(data.sources)?data.sources:[],warnings=Array.isArray(data.warnings)?data.warnings:[];
     result.innerHTML='<h3 style="margin-top:0">Pôvodný nástroj</h3><b>Rozpoznané označenie:</b> '+cncEscHtml(data.original_designation||'NEPOTVRDENÉ')+'<br><b>Výrobca:</b> '+cncEscHtml(data.original_manufacturer||'NEURČENÝ')+'<br><b>Typ:</b> '+cncEscHtml(data.original_type||'NEURČENÝ')+'<br><b>Rozpoznanie:</b> '+cncEscHtml(data.identification_confidence||'NEUVEDENÉ')+
       '<h3>Odporúčaná náhrada – '+cncEscHtml(data.target_manufacturer||target)+'</h3>'+
-      (alternatives.length?alternatives.map(function(a,i){return '<div class="ai2-tool"><b>'+(i===0?'HLAVNÁ NÁHRADA':'ALTERNATÍVA '+(i+1))+'</b><br><b>Objednávacie označenie:</b> '+cncEscHtml(a.order_code)+'<br><b>Opis:</b> '+cncEscHtml(a.description)+'<br><b>Geometria a rozmer:</b> '+cncEscHtml(a.geometry_and_size)+'<br><b>Trieda:</b> '+cncEscHtml(a.grade)+'<br><b>Zhoda:</b> '+cncEscHtml(a.match_level)+'<br><b>Kompatibilita:</b> '+cncEscHtml(a.compatibility)+'<br><b>Rozdiely:</b> '+cncEscHtml(a.differences)+'<br><b>Použitie:</b> '+cncEscHtml(a.recommended_use)+'<br><b>Overenie:</b> '+cncEscHtml(a.verification_status)+'</div>';}).join(''):'<p>Presná náhrada nebola nájdená.</p>')+
+      (alternatives.length?alternatives.map(function(a,i){return '<div class="ai2-tool"><b>'+(i===0?'HLAVNÁ NÁHRADA':'ALTERNATÍVA '+(i+1))+'</b><br><b>Objednávacie označenie:</b> '+cncEscHtml(a.order_code)+'<br><b>Opis:</b> '+cncEscHtml(a.description)+'<br><b>Geometria a rozmer:</b> '+cncEscHtml(a.geometry_and_size)+'<br><b>Trieda:</b> '+cncEscHtml(a.grade)+'<br><b>Zhoda:</b> '+cncEscHtml(a.match_level)+'<br><b>Kompatibilita:</b> '+cncEscHtml(a.compatibility)+'<br><b>Rozdiely:</b> '+cncEscHtml(a.differences)+'<br><b>Použitie:</b> '+cncEscHtml(a.recommended_use)+'<br><b>Odporúčané štartovacie parametre:</b> '+cncEscHtml(a.recommended_parameters||'NEPOTVRDENÉ')+'<br><b>Porovnanie s používanými parametrami:</b> '+cncEscHtml(a.parameter_comparison||'NEUVEDENÉ')+'<br><b>Overenie:</b> '+cncEscHtml(a.verification_status)+'</div>';}).join(''):'<p>Presná náhrada nebola nájdená.</p>')+
       (warnings.length?'<h3>Upozornenia</h3><ul>'+warnings.map(function(x){return '<li>'+cncEscHtml(x)+'</li>'}).join('')+'</ul>':'')+
       (sources.length?'<h3>Preverené zdroje</h3><ul>'+sources.map(function(x){return '<li>'+cncEscHtml(x)+'</li>'}).join('')+'</ul>':'');
     result.style.display='block';status.innerHTML='✅ Porovnanie bolo dokončené.';
@@ -2175,7 +2189,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V34 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V35 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

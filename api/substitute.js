@@ -42,6 +42,7 @@ VSTUP:
 - Zadané označenie: ${b.code||"NEUVEDENÉ – PREČÍTAJ Z FOTOGRAFIE"}
 - Typ zvolený používateľom: ${b.toolType||"auto"}
 - Požadovaný priemer frézovacieho/vŕtacieho telesa: ${b.bodyDiameter?`${b.bodyDiameter} mm`:"NEUVEDENÝ"}
+- Požadovaný počet zubov/lôžok frézy: ${b.toothCount||"NEUVEDENÝ"}
 - Požadovaný rozmer alebo upínanie držiaka: ${b.holderInterface||"NEUVEDENÉ"}
 - Požadovaný výrobca náhrady: ${b.targetManufacturer}
 - Obrábaný materiál: ${b.material||"NEUVEDENÝ"}
@@ -57,7 +58,7 @@ POVINNÝ POSTUP:
 1. Z označenia a fotografie identifikuj výrobcu, typ nástroja, ISO tvar, uhol chrbta, toleranciu, veľkosť, hrúbku, rádius/šírku, lámač triesky a triedu. Nečitateľné údaje nehádaj.
 2. Najprv over pôvodné označenie v dôveryhodnom alebo oficiálnom katalógu pôvodného výrobcu.
 3. Potom prehľadaj oficiálnu stránku a katalógy výrobcu ${b.targetManufacturer}.${masamRules}
-4. Náhrada musí zhodovať rozmery a upnutie. Pri VBD over ISO tvar, veľkosť, hrúbku, otvor, geometriu a polomer/šírku. Pri monolitnom nástroji over priemer, stopku, reznú dĺžku, celkovú dĺžku, počet zubov a povlak. Pri telese/držiaku over rozhranie a kompatibilné plátky.
+4. Pri ISO sústružníckej VBD over ISO tvar, veľkosť, hrúbku, otvor, geometriu a polomer/šírku. Pri monolitnom nástroji over priemer, stopku, reznú dĺžku, celkovú dĺžku, počet zubov a povlak. Pri telese/držiaku over rozhranie a kompatibilné plátky. Toto pravidlo rozmerovej zhody plátku NEAPLIKUJ na frézovací plátok, keďže pri frézovaní sa vyberá nový kompletný systém teleso + plátok.
 5. Triedu a lámač vyber podľa zadaného materiálu a operácie. Ak materiál alebo použitie chýbajú, môžeš určiť rozmerovú náhradu, ale triedu označ ako NEPOTVRDENÚ a vysvetli, čo treba doplniť.
 6. order_code musí byť úplné objednávacie označenie. Samotné DNMG, CCMT, vrták D10 alebo P25 nie je objednávací kód.
 7. match_level použi presne: PRIAMA NÁHRADA, ROZMEROVO ZHODNÁ – INÁ APLIKÁCIA, PRIBLIŽNÁ NÁHRADA alebo NENAŠLA SA.
@@ -68,13 +69,15 @@ POVINNÝ POSTUP:
 12. Zadané rezné parametre ber ako reálne odskúšané podmienky pôvodného nástroja. Použi ich pri výbere geometrie, lámača triesky, triedy a povlaku náhrady; neuprednostni katalógovú položku, ktorá ich zjavne nezvládne.
 13. Do recommended_parameters uveď bezpečné štartovacie vc, posuv, ap a podľa potreby ae pre náhradu. Do parameter_comparison stručne napíš, ktoré používateľove hodnoty možno ponechať a ktoré treba zmeniť. Ak chýba materiál alebo operácia, uveď NEPOTVRDENÉ a nevymýšľaj presné hodnoty.
 14. Najprv správne urči druh nástroja. Ak používateľ zvolil konkrétny typ, rešpektuj ho; hodnota auto znamená, že ho musíš určiť z označenia, fotografie a operácie.
-15. Frézovacie a vŕtacie plátky často nie sú zameniteľné medzi výrobcami. Pri milling_insert alebo drilling_insert preto vždy navrhni kompletnú dvojicu: presné objednávacie označenie plátku a presné objednávacie označenie kompatibilného telesa požadovaného priemeru. V companion_tool nastav required=true.
-16. Pri grooving_insert, ak nejde o univerzálny ISO plátok, vždy navrhni plátok spolu s presným kompatibilným držiakom, kazetou alebo planžetou. Rešpektuj zadaný prierez a upínanie držiaka. V companion_tool nastav required=true.
-17. Pri turning_iso môže byť companion_tool.required=false; ostatné polia companion_tool vyplň textom NEVYŽADUJE SA. Ak však náhrada nepasuje do pôvodného držiaka, navrhni aj nový držiak a nastav required=true.
-18. Kompatibilitu dvojice over v tom istom oficiálnom katalógu výrobcu: rozhranie/lôžko plátku, veľkosť, pravé alebo ľavé vyhotovenie, počet lôžok, priemer telesa a strojové upínanie. Nestačí, že majú plátok a teleso podobný názov.
-19. Ak požadovaný priemer telesa chýba pri frézovaní alebo vŕtaní, neoznač konkrétne teleso ako priamu náhradu. Vypíš najbližšiu overenú zostavu iba ako NEPOTVRDENÚ a upozorni, že treba doplniť priemer.
-20. order_code plátku aj companion_tool.order_code musia byť úplné katalógové označenia. Ak sa kompatibilná zostava nedá overiť, kód nevymýšľaj a použi NENAŠLO SA.
-21. Fotografia môže zobrazovať obal, laserové označenie alebo samotnú geometriu. Text na fotografii čítaj opatrne a identification_confidence uveď VYSOKÁ, STREDNÁ, NÍZKA alebo ŽIADNA.`;}
+15. Pri milling_insert nehľadaj rozmerovo rovnaký frézovací plátok ako pôvodný. Ide o náhradu CELÉHO FRÉZOVACIEHO SYSTÉMU. Najprv vyber od požadovaného výrobcu frézovacie teleso podľa požadovaného priemeru, zadaného počtu zubov/lôžok, operácie, ap, ae a upínania. Až potom vyber presne kompatibilný plátok do tohto telesa; jeho geometriu, lámač a triedu zvoľ podľa obrábaného materiálu, operácie a rezných parametrov. Pôvodné označenie použi iba na pochopenie aplikácie, nie ako povinný rozmer nového plátku. V order_code uveď plátok a v companion_tool.order_code teleso; companion_tool.required=true.
+16. Ak technológ zadal počet zubov, musí mať navrhnuté teleso presne tento katalógový počet lôžok. Ak taká kombinácia priemeru a počtu zubov u výrobcu neexistuje, ponúkni najbližšiu reálnu možnosť, označ ju ako PRIBLIŽNÁ NÁHRADA a presne vysvetli rozdiel. Počet lôžok vždy uveď v companion_tool.number_of_seats.
+17. Pri drilling_insert vždy navrhni kompletnú dvojicu: presné objednávacie označenie plátku a presné objednávacie označenie kompatibilného vŕtacieho telesa požadovaného priemeru. V companion_tool nastav required=true.
+18. Pri grooving_insert, ak nejde o univerzálny ISO plátok, vždy navrhni plátok spolu s presným kompatibilným držiakom, kazetou alebo planžetou. Rešpektuj zadaný prierez a upínanie držiaka. V companion_tool nastav required=true.
+19. Pri turning_iso môže byť companion_tool.required=false; ostatné polia companion_tool vyplň textom NEVYŽADUJE SA. Ak však náhrada nepasuje do pôvodného držiaka, navrhni aj nový držiak a nastav required=true.
+20. Kompatibilitu dvojice over v tom istom oficiálnom katalógu výrobcu: rozhranie/lôžko plátku, veľkosť, pravé alebo ľavé vyhotovenie, počet lôžok, priemer telesa a strojové upínanie. Nestačí, že majú plátok a teleso podobný názov.
+21. Ak požadovaný priemer telesa chýba pri frézovaní alebo vŕtaní, neoznač konkrétne teleso ako priamu náhradu. Vypíš najbližšiu overenú zostavu iba ako NEPOTVRDENÚ a upozorni, že treba doplniť priemer.
+22. order_code plátku aj companion_tool.order_code musia byť úplné katalógové označenia. Ak sa kompatibilná zostava nedá overiť, kód nevymýšľaj a použi NENAŠLO SA.
+23. Fotografia môže zobrazovať obal, laserové označenie alebo samotnú geometriu. Text na fotografii čítaj opatrne a identification_confidence uveď VYSOKÁ, STREDNÁ, NÍZKA alebo ŽIADNA.`;}
 
 async function handler(req,res){
  try{

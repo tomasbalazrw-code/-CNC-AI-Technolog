@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V36 -->
+<!-- CNC AI Technolog V37 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -375,7 +375,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V36</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V37</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -446,6 +446,7 @@ li{margin:6px 0;line-height:1.45}
     </label>
     <label id="substituteDiameterWrap">Požadovaný priemer telesa (mm)<input id="substituteBodyDiameter" class="cnc-v4-input" type="number" min="0" step="any" inputmode="decimal" placeholder="napr. 63 alebo 25"></label>
    </div>
+   <label id="substituteTeethWrap">Požadovaný počet zubov/lôžok telesa – voliteľné<input id="substituteToothCount" class="cnc-v4-input" type="number" min="1" step="1" inputmode="numeric" placeholder="napr. 5"></label>
    <label id="substituteHolderWrap">Rozmer alebo upínanie držiaka – voliteľné<input id="substituteHolderInterface" class="cnc-v4-input" placeholder="napr. 20×20, planžeta 32 mm, Capto C6"></label>
    <div class="cnc-v4-drop" style="margin-top:12px">
     <b>📷 Fotografia nástroja alebo označenia</b>
@@ -873,8 +874,9 @@ function cncClose(){
 var CNC_SUBSTITUTE_PHOTO=null;
 function cncSubstituteTypeChanged(){
   var type=document.getElementById('substituteToolType')?.value||'auto';
-  var d=document.getElementById('substituteDiameterWrap'),h=document.getElementById('substituteHolderWrap');
+  var d=document.getElementById('substituteDiameterWrap'),teeth=document.getElementById('substituteTeethWrap'),h=document.getElementById('substituteHolderWrap');
   if(d)d.style.display=(type==='turning_iso'||type==='grooving_insert')?'none':'block';
+  if(teeth)teeth.style.display=(type==='milling_insert')?'block':'none';
   if(h)h.style.display=(type==='milling_insert'||type==='drilling_insert')?'none':'block';
 }
 function cncSelectSubstitutePhoto(input){
@@ -912,7 +914,7 @@ async function cncFindSubstitute(){
   btn.disabled=true;result.style.display='none';status.style.display='block';status.innerHTML='<span class="spinner"></span> AI identifikuje pôvodný nástroj a preveruje katalóg '+cncEscHtml(target)+'…';
   try{
     var photoData=photo?await cncPrepareSubstitutePhoto(photo):'';
-    var response=await fetch('/api/substitute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code,photoData:photoData,photoName:photo?.name||'',toolType:document.getElementById('substituteToolType')?.value||'auto',bodyDiameter:document.getElementById('substituteBodyDiameter')?.value||'',holderInterface:document.getElementById('substituteHolderInterface')?.value.trim()||'',targetManufacturer:target,material:document.getElementById('substituteMaterial')?.value.trim()||'',operation:document.getElementById('substituteOperation')?.value.trim()||'',cuttingParameters:{vc:document.getElementById('substituteVc')?.value||'',rpm:document.getElementById('substituteRpm')?.value||'',feed:document.getElementById('substituteFeed')?.value||'',feedUnit:document.getElementById('substituteFeedUnit')?.value||'mm/ot',ap:document.getElementById('substituteAp')?.value||'',ae:document.getElementById('substituteAe')?.value||'',cooling:document.getElementById('substituteCooling')?.value.trim()||''}})});
+    var response=await fetch('/api/substitute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code,photoData:photoData,photoName:photo?.name||'',toolType:document.getElementById('substituteToolType')?.value||'auto',bodyDiameter:document.getElementById('substituteBodyDiameter')?.value||'',toothCount:document.getElementById('substituteToothCount')?.value||'',holderInterface:document.getElementById('substituteHolderInterface')?.value.trim()||'',targetManufacturer:target,material:document.getElementById('substituteMaterial')?.value.trim()||'',operation:document.getElementById('substituteOperation')?.value.trim()||'',cuttingParameters:{vc:document.getElementById('substituteVc')?.value||'',rpm:document.getElementById('substituteRpm')?.value||'',feed:document.getElementById('substituteFeed')?.value||'',feedUnit:document.getElementById('substituteFeedUnit')?.value||'mm/ot',ap:document.getElementById('substituteAp')?.value||'',ae:document.getElementById('substituteAe')?.value||'',cooling:document.getElementById('substituteCooling')?.value.trim()||''}})});
     var data=null;try{data=await response.json()}catch(_){}
     if(!response.ok||!data||data.success!==true)throw new Error(data?.error||('Server odpovedal HTTP '+response.status)+(data?.details?' – '+data.details:''));
     var alternatives=Array.isArray(data.alternatives)?data.alternatives:[];
@@ -2204,7 +2206,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V36 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V37 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

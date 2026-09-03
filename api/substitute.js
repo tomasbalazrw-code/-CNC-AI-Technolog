@@ -8,9 +8,9 @@ const SCHEMA={
   original_designation:{type:"string"},original_manufacturer:{type:"string"},original_type:{type:"string"},identification_confidence:{type:"string"},
   target_manufacturer:{type:"string"},
   alternatives:{type:"array",items:{type:"object",additionalProperties:false,properties:{
-   order_code:{type:"string"},description:{type:"string"},geometry_and_size:{type:"string"},grade:{type:"string"},match_level:{type:"string"},compatibility:{type:"string"},differences:{type:"string"},recommended_use:{type:"string"},recommended_parameters:{type:"string"},parameter_comparison:{type:"string"},verification_status:{type:"string"},
+   order_code:{type:"string"},application_role:{type:"string"},description:{type:"string"},geometry_and_size:{type:"string"},grade:{type:"string"},match_level:{type:"string"},compatibility:{type:"string"},differences:{type:"string"},recommended_use:{type:"string"},recommended_parameters:{type:"string"},parameter_comparison:{type:"string"},verification_status:{type:"string"},
    companion_tool:{type:"object",additionalProperties:false,properties:{required:{type:"boolean"},type:{type:"string"},order_code:{type:"string"},diameter_or_size:{type:"string"},machine_interface:{type:"string"},insert_interface:{type:"string"},number_of_seats:{type:"string"},compatibility_verification:{type:"string"}},required:["required","type","order_code","diameter_or_size","machine_interface","insert_interface","number_of_seats","compatibility_verification"]}
-  },required:["order_code","description","geometry_and_size","grade","match_level","compatibility","differences","recommended_use","recommended_parameters","parameter_comparison","verification_status","companion_tool"]}},
+  },required:["order_code","application_role","description","geometry_and_size","grade","match_level","compatibility","differences","recommended_use","recommended_parameters","parameter_comparison","verification_status","companion_tool"]}},
   sources:{type:"array",items:{type:"string"}},warnings:{type:"array",items:{type:"string"}}
  },
  required:["original_designation","original_manufacturer","original_type","identification_confidence","target_manufacturer","alternatives","sources","warnings"]
@@ -64,7 +64,7 @@ POVINNÝ POSTUP:
 7. match_level použi presne: PRIAMA NÁHRADA, ROZMEROVO ZHODNÁ – INÁ APLIKÁCIA, PRIBLIŽNÁ NÁHRADA alebo NENAŠLA SA.
 8. PRIAMA NÁHRADA je povolená iba pri zhodnej funkcii, rozmeroch a kompatibilite s držiakom. Rozdielnu geometriu, rádius, šírku, povlak alebo triedu vždy uveď.
 9. verification_status musí povedať OVERENÉ V KATALÓGU alebo NEOVERENÉ. Nevymýšľaj kódy ani zdroje.
-10. Vráť najviac tri reálne možnosti zoradené od najlepšej. Ak presnú položku nenájdeš, alternatives nechaj prázdne a do warnings napíš, ktoré údaje chýbajú.
+10. Pri sústružníckych plátkoch vráť 3 až 5 reálnych, katalógovo overených možností, ak ich výrobca pre daný materiál a operáciu ponúka. Pri ostatných nástrojoch vráť najviac tri možnosti. Vždy ich zoraď od najvhodnejšej. Ak presnú položku nenájdeš, alternatives nechaj prázdne a do warnings napíš, ktoré údaje chýbajú.
 11. Do sources zapíš názov výrobcu, katalógu alebo oficiálnej stránky a čo bolo overené; nevymýšľaj URL.
 12. Zadané rezné parametre ber ako reálne odskúšané podmienky pôvodného nástroja. Použi ich pri výbere geometrie, lámača triesky, triedy a povlaku náhrady; neuprednostni katalógovú položku, ktorá ich zjavne nezvládne.
 13. Do recommended_parameters uveď bezpečné štartovacie vc, posuv, ap a podľa potreby ae pre náhradu. Do parameter_comparison stručne napíš, ktoré používateľove hodnoty možno ponechať a ktoré treba zmeniť. Ak chýba materiál alebo operácia, uveď NEPOTVRDENÉ a nevymýšľaj presné hodnoty.
@@ -77,7 +77,11 @@ POVINNÝ POSTUP:
 20. Kompatibilitu dvojice over v tom istom oficiálnom katalógu výrobcu: rozhranie/lôžko plátku, veľkosť, pravé alebo ľavé vyhotovenie, počet lôžok, priemer telesa a strojové upínanie. Nestačí, že majú plátok a teleso podobný názov.
 21. Ak požadovaný priemer telesa chýba pri frézovaní alebo vŕtaní, neoznač konkrétne teleso ako priamu náhradu. Vypíš najbližšiu overenú zostavu iba ako NEPOTVRDENÚ a upozorni, že treba doplniť priemer.
 22. order_code plátku aj companion_tool.order_code musia byť úplné katalógové označenia. Ak sa kompatibilná zostava nedá overiť, kód nevymýšľaj a použi NENAŠLO SA.
-23. Fotografia môže zobrazovať obal, laserové označenie alebo samotnú geometriu. Text na fotografii čítaj opatrne a identification_confidence uveď VYSOKÁ, STREDNÁ, NÍZKA alebo ŽIADNA.`;}
+23. Pri turning_iso nehľadaj iba jednu rozmerovú kópiu pôvodného plátku. Zachovaj ISO tvar, veľkosť, hrúbku, otvor, uhol chrbta a polomer špičky potrebné pre existujúci držiak a program, ale v rámci tohto rozmeru vyhľadaj viac vhodných kombinácií geometrie/lámača triesky, substrátu, povlaku a triedy od požadovaného výrobcu podľa materiálu, operácie, ap, posuvu, vc, stability a chladenia.
+24. Ak je operácia zadaná, všetky alternatívy musia byť pre ňu reálne použiteľné; zoraď ich na hlavnú voľbu a ďalšie vhodné varianty, napríklad pre stabilné podmienky, prerušovaný rez alebo inú bezpečnú oblasť použitia. Ak operácia zadaná nie je, pokús sa ponúknuť varianty HRUBOVANIE, STREDNÉ OBRÁBANIE a DOKONČOVANIE. Do application_role napíš presnú úlohu každej alternatívy.
+25. Alternatívy sa nesmú líšiť iba obchodným názvom. Pri každej vysvetli, prečo je jej lámač a trieda vhodná pre zadaný materiál a čím sa odlišuje od ostatných. Ak výrobca nemá 3 overené možnosti, vráť iba tie, ktoré si našiel; nič nedopĺňaj odhadom.
+26. Ak obrábaný materiál chýba, môžeš nájsť rozmerovo kompatibilné plátky, ale nesmieš tvrdiť, že je vybraná adekvátna trieda. Označ triedu a parametre ako NEPOTVRDENÉ a vyžiadaj materiál v warnings.
+27. Fotografia môže zobrazovať obal, laserové označenie alebo samotnú geometriu. Text na fotografii čítaj opatrne a identification_confidence uveď VYSOKÁ, STREDNÁ, NÍZKA alebo ŽIADNA.`;}
 
 async function handler(req,res){
  try{

@@ -19,7 +19,22 @@ function fail(res,status,error,details=""){return res.status(status).json({succe
 function key(){return String(process.env.OPENAI_API_KEY||process.env.OPENAI_KEY||"").trim().replace(/^["']|["']$/g,"");}
 function outputText(d){if(typeof d.output_text==="string"&&d.output_text.trim())return d.output_text;return (d.output||[]).flatMap(x=>x.content||[]).map(x=>x.text||"").join("\n");}
 
-function prompt(b){return `Si senior aplikačný technik pre obrábacie nástroje. Identifikuj pôvodný nástroj alebo vymeniteľnú reznú doštičku a nájdi kompatibilnú náhradu výhradne od požadovaného výrobcu.
+function prompt(b){
+ const isMasam=/\bMASAM\b/i.test(String(b.targetManufacturer||""));
+ const masamRules=isMasam?`
+
+POVINNÉ PRAVIDLÁ PRE MASAM:
+- Hľadaj najprv výhradne na oficiálnej doméne masam.sk.
+- Povinne otvor a prever aktuálnu stránku Produktové katalógy 2026: https://masam.sk/sluzby/produktove-katalogy-2026/
+- Prever rozcestník produktov: https://masam.sk/produkty/
+- Pre vymeniteľné plátky a ich telesá prever: https://masam.sk/produkty/rezne-nastroje-s-vymenitelnymi-platkami/
+- Podľa aplikácie otvor príslušnú podsekciu MASAM: sústruženie, frézovanie alebo výroba otvorov. Pre sústruženie použi aj https://masam.sk/produkty/rezne-nastroje-s-vymenitelnymi-platkami/sustruzenie/
+- Urob aj doménové vyhľadávanie presného označenia a jeho normalizovaných častí vo forme site:masam.sk.
+- Za NENAŠLA SA môžeš označiť výsledok až po preverení stránky katalógov 2026, produktovej kategórie a doménového vyhľadávania.
+- MASAM vyrába aj špeciálne nástroje. Ak katalóg neobsahuje štandardnú priamu náhradu, jasne rozlíš „nenájdená štandardná katalógová položka“ od možnosti zákazkovej výroby. Nevymýšľaj objednávací kód.
+- Do sources uveď presnú oficiálnu stránku alebo katalóg MASAM, ktorý si skutočne preveril.
+`:"";
+ return `Si senior aplikačný technik pre obrábacie nástroje. Identifikuj pôvodný nástroj alebo vymeniteľnú reznú doštičku a nájdi kompatibilnú náhradu výhradne od požadovaného výrobcu.
 
 VSTUP:
 - Zadané označenie: ${b.code||"NEUVEDENÉ – PREČÍTAJ Z FOTOGRAFIE"}
@@ -30,7 +45,7 @@ VSTUP:
 POVINNÝ POSTUP:
 1. Z označenia a fotografie identifikuj výrobcu, typ nástroja, ISO tvar, uhol chrbta, toleranciu, veľkosť, hrúbku, rádius/šírku, lámač triesky a triedu. Nečitateľné údaje nehádaj.
 2. Najprv over pôvodné označenie v dôveryhodnom alebo oficiálnom katalógu pôvodného výrobcu.
-3. Potom prehľadaj oficiálnu stránku a katalógy výrobcu ${b.targetManufacturer}. Pri MASAM prever jeho oficiálnu stránku a dostupné katalógy.
+3. Potom prehľadaj oficiálnu stránku a katalógy výrobcu ${b.targetManufacturer}.${masamRules}
 4. Náhrada musí zhodovať rozmery a upnutie. Pri VBD over ISO tvar, veľkosť, hrúbku, otvor, geometriu a polomer/šírku. Pri monolitnom nástroji over priemer, stopku, reznú dĺžku, celkovú dĺžku, počet zubov a povlak. Pri telese/držiaku over rozhranie a kompatibilné plátky.
 5. Triedu a lámač vyber podľa zadaného materiálu a operácie. Ak materiál alebo použitie chýbajú, môžeš určiť rozmerovú náhradu, ale triedu označ ako NEPOTVRDENÚ a vysvetli, čo treba doplniť.
 6. order_code musí byť úplné objednávacie označenie. Samotné DNMG, CCMT, vrták D10 alebo P25 nie je objednávací kód.

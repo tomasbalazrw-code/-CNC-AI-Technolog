@@ -8,8 +8,9 @@ const SCHEMA={
   original_designation:{type:"string"},original_manufacturer:{type:"string"},original_type:{type:"string"},identification_confidence:{type:"string"},
   target_manufacturer:{type:"string"},
   alternatives:{type:"array",items:{type:"object",additionalProperties:false,properties:{
-   order_code:{type:"string"},description:{type:"string"},geometry_and_size:{type:"string"},grade:{type:"string"},match_level:{type:"string"},compatibility:{type:"string"},differences:{type:"string"},recommended_use:{type:"string"},recommended_parameters:{type:"string"},parameter_comparison:{type:"string"},verification_status:{type:"string"}
-  },required:["order_code","description","geometry_and_size","grade","match_level","compatibility","differences","recommended_use","recommended_parameters","parameter_comparison","verification_status"]}},
+   order_code:{type:"string"},description:{type:"string"},geometry_and_size:{type:"string"},grade:{type:"string"},match_level:{type:"string"},compatibility:{type:"string"},differences:{type:"string"},recommended_use:{type:"string"},recommended_parameters:{type:"string"},parameter_comparison:{type:"string"},verification_status:{type:"string"},
+   companion_tool:{type:"object",additionalProperties:false,properties:{required:{type:"boolean"},type:{type:"string"},order_code:{type:"string"},diameter_or_size:{type:"string"},machine_interface:{type:"string"},insert_interface:{type:"string"},number_of_seats:{type:"string"},compatibility_verification:{type:"string"}},required:["required","type","order_code","diameter_or_size","machine_interface","insert_interface","number_of_seats","compatibility_verification"]}
+  },required:["order_code","description","geometry_and_size","grade","match_level","compatibility","differences","recommended_use","recommended_parameters","parameter_comparison","verification_status","companion_tool"]}},
   sources:{type:"array",items:{type:"string"}},warnings:{type:"array",items:{type:"string"}}
  },
  required:["original_designation","original_manufacturer","original_type","identification_confidence","target_manufacturer","alternatives","sources","warnings"]
@@ -29,7 +30,7 @@ POVINNÉ PRAVIDLÁ PRE MASAM:
 - Povinne otvor a prever aktuálnu stránku Produktové katalógy 2026: https://masam.sk/sluzby/produktove-katalogy-2026/
 - Prever rozcestník produktov: https://masam.sk/produkty/
 - Pre vymeniteľné plátky a ich telesá prever: https://masam.sk/produkty/rezne-nastroje-s-vymenitelnymi-platkami/
-- Podľa aplikácie otvor príslušnú podsekciu MASAM: sústruženie, frézovanie alebo výroba otvorov. Pre sústruženie použi aj https://masam.sk/produkty/rezne-nastroje-s-vymenitelnymi-platkami/sustruzenie/
+- Podľa aplikácie otvor príslušnú podsekciu MASAM: sústruženie, frézovanie alebo výroba otvorov. Použi https://masam.sk/produkty/rezne-nastroje-s-vymenitelnymi-platkami/sustruzenie/ , https://masam.sk/produkty/rezne-nastroje-s-vymenitelnymi-platkami/frezovanie/ a https://masam.sk/produkty/rezne-nastroje-s-vymenitelnymi-platkami/vyroba-otvorov/ podľa typu nástroja.
 - Urob aj doménové vyhľadávanie presného označenia a jeho normalizovaných častí vo forme site:masam.sk.
 - Za NENAŠLA SA môžeš označiť výsledok až po preverení stránky katalógov 2026, produktovej kategórie a doménového vyhľadávania.
 - MASAM vyrába aj špeciálne nástroje. Ak katalóg neobsahuje štandardnú priamu náhradu, jasne rozlíš „nenájdená štandardná katalógová položka“ od možnosti zákazkovej výroby. Nevymýšľaj objednávací kód.
@@ -39,6 +40,9 @@ POVINNÉ PRAVIDLÁ PRE MASAM:
 
 VSTUP:
 - Zadané označenie: ${b.code||"NEUVEDENÉ – PREČÍTAJ Z FOTOGRAFIE"}
+- Typ zvolený používateľom: ${b.toolType||"auto"}
+- Požadovaný priemer frézovacieho/vŕtacieho telesa: ${b.bodyDiameter?`${b.bodyDiameter} mm`:"NEUVEDENÝ"}
+- Požadovaný rozmer alebo upínanie držiaka: ${b.holderInterface||"NEUVEDENÉ"}
 - Požadovaný výrobca náhrady: ${b.targetManufacturer}
 - Obrábaný materiál: ${b.material||"NEUVEDENÝ"}
 - Použitie/operácia: ${b.operation||"NEUVEDENÁ"}
@@ -63,7 +67,14 @@ POVINNÝ POSTUP:
 11. Do sources zapíš názov výrobcu, katalógu alebo oficiálnej stránky a čo bolo overené; nevymýšľaj URL.
 12. Zadané rezné parametre ber ako reálne odskúšané podmienky pôvodného nástroja. Použi ich pri výbere geometrie, lámača triesky, triedy a povlaku náhrady; neuprednostni katalógovú položku, ktorá ich zjavne nezvládne.
 13. Do recommended_parameters uveď bezpečné štartovacie vc, posuv, ap a podľa potreby ae pre náhradu. Do parameter_comparison stručne napíš, ktoré používateľove hodnoty možno ponechať a ktoré treba zmeniť. Ak chýba materiál alebo operácia, uveď NEPOTVRDENÉ a nevymýšľaj presné hodnoty.
-14. Fotografia môže zobrazovať obal, laserové označenie alebo samotnú geometriu. Text na fotografii čítaj opatrne a identification_confidence uveď VYSOKÁ, STREDNÁ, NÍZKA alebo ŽIADNA.`;}
+14. Najprv správne urči druh nástroja. Ak používateľ zvolil konkrétny typ, rešpektuj ho; hodnota auto znamená, že ho musíš určiť z označenia, fotografie a operácie.
+15. Frézovacie a vŕtacie plátky často nie sú zameniteľné medzi výrobcami. Pri milling_insert alebo drilling_insert preto vždy navrhni kompletnú dvojicu: presné objednávacie označenie plátku a presné objednávacie označenie kompatibilného telesa požadovaného priemeru. V companion_tool nastav required=true.
+16. Pri grooving_insert, ak nejde o univerzálny ISO plátok, vždy navrhni plátok spolu s presným kompatibilným držiakom, kazetou alebo planžetou. Rešpektuj zadaný prierez a upínanie držiaka. V companion_tool nastav required=true.
+17. Pri turning_iso môže byť companion_tool.required=false; ostatné polia companion_tool vyplň textom NEVYŽADUJE SA. Ak však náhrada nepasuje do pôvodného držiaka, navrhni aj nový držiak a nastav required=true.
+18. Kompatibilitu dvojice over v tom istom oficiálnom katalógu výrobcu: rozhranie/lôžko plátku, veľkosť, pravé alebo ľavé vyhotovenie, počet lôžok, priemer telesa a strojové upínanie. Nestačí, že majú plátok a teleso podobný názov.
+19. Ak požadovaný priemer telesa chýba pri frézovaní alebo vŕtaní, neoznač konkrétne teleso ako priamu náhradu. Vypíš najbližšiu overenú zostavu iba ako NEPOTVRDENÚ a upozorni, že treba doplniť priemer.
+20. order_code plátku aj companion_tool.order_code musia byť úplné katalógové označenia. Ak sa kompatibilná zostava nedá overiť, kód nevymýšľaj a použi NENAŠLO SA.
+21. Fotografia môže zobrazovať obal, laserové označenie alebo samotnú geometriu. Text na fotografii čítaj opatrne a identification_confidence uveď VYSOKÁ, STREDNÁ, NÍZKA alebo ŽIADNA.`;}
 
 async function handler(req,res){
  try{

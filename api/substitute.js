@@ -22,6 +22,8 @@ function outputText(d){if(typeof d.output_text==="string"&&d.output_text.trim())
 
 function prompt(b){
  const isMasam=/\bMASAM\b/i.test(String(b.targetManufacturer||""));
+ const isDistributor=/Hoffmann|TGS|GRUMANT/i.test(String(b.targetManufacturer||""));
+ const isVhm=/^solid_carbide_/.test(String(b.toolType||""));
  const p=b.cuttingParameters&&typeof b.cuttingParameters==="object"?b.cuttingParameters:{};
  const masamRules=isMasam?`
 
@@ -36,6 +38,22 @@ POVINNÉ PRAVIDLÁ PRE MASAM:
 - MASAM vyrába aj špeciálne nástroje. Ak katalóg neobsahuje štandardnú priamu náhradu, jasne rozlíš „nenájdená štandardná katalógová položka“ od možnosti zákazkovej výroby. Nevymýšľaj objednávací kód.
 - Do sources uveď presnú oficiálnu stránku alebo katalóg MASAM, ktorý si skutočne preveril.
 `:"";
+ const distributorRules=isDistributor?`
+
+POVINNÉ PRAVIDLÁ PRE DODÁVATEĽA:
+- ${b.targetManufacturer} môže byť distribútor alebo obchodná skupina, nie výrobca nástroja. Prehľadaj jeho oficiálny web, online katalóg a zoznam zastupovaných značiek.
+- Výsledok musí byť reálne dostupná katalógová položka zo sortimentu tohto dodávateľa. V order_code uveď kód výrobcu a v opise pomenuj skutočného výrobcu.
+- Pri Hoffmann Group uprednostni vlastnú značku GARANT, ak má vhodnú overenú položku. Pri TGS a GRUMANT vyber vhodnú položku z nimi dodávaných značiek; dodávateľa nezamieňaj za výrobcu.
+- Do sources uveď preverovaný oficiálny katalóg dodávateľa aj oficiálny katalóg skutočného výrobcu. Ak dostupnosť u dodávateľa nevieš overiť, výsledok označ NEOVERENÉ.
+`:"";
+ const vhmRules=isVhm?`
+
+POVINNÉ PRAVIDLÁ PRE VHM MONOLITNÝ NÁSTROJ:
+- Ide o monolitný tvrdokovový nástroj, nie o vymeniteľnú doštičku. Nenavrhuj teleso ani držiak; companion_tool.required=false a ostatné polia companion_tool vyplň NEVYŽADUJE SA.
+- Funkčné rozmery over samostatne: priemer D, rezná dĺžka Lc, celková dĺžka L, priemer stopky Ds, počet britov a zadané detaily. Pri vrtáku over aj dĺžkový pomer, uhol hrotu a vnútorné chladenie; pri fréze rádius/fazetu a typ čela; pri výstružníku toleranciu; pri závitovom nástroji závit, stúpanie a vyhotovenie.
+- Materiál, tvrdosť, operáciu, stabilitu a chladenie použi na výber geometrie, počtu britov, substrátu a povlaku. Nehľadaj iba kópiu obchodného názvu pôvodného nástroja.
+- Vráť najviac tri overené alternatívy od najvhodnejšej. Ak chýbajú rozmery nevyhnutné na zameniteľnosť, môžeš ponúknuť vhodnú rodinu nástrojov, ale nesmieš ju označiť PRIAMA NÁHRADA a v warnings presne vypíš chýbajúce údaje.
+`:"";
  return `Si senior aplikačný technik pre obrábacie nástroje. Identifikuj pôvodný nástroj alebo vymeniteľnú reznú doštičku a nájdi kompatibilnú náhradu výhradne od požadovaného výrobcu.
 
 VSTUP:
@@ -44,6 +62,11 @@ VSTUP:
 - Požadovaný priemer frézovacieho/vŕtacieho telesa: ${b.bodyDiameter?`${b.bodyDiameter} mm`:"NEUVEDENÝ"}
 - Požadovaný počet zubov/lôžok frézy: ${b.toothCount||"NEUVEDENÝ"}
 - Požadovaný rozmer alebo upínanie držiaka: ${b.holderInterface||"NEUVEDENÉ"}
+- Rezná dĺžka VHM Lc: ${b.cuttingLength?`${b.cuttingLength} mm`:"NEUVEDENÁ"}
+- Celková dĺžka VHM L: ${b.overallLength?`${b.overallLength} mm`:"NEUVEDENÁ"}
+- Priemer stopky VHM Ds: ${b.shankDiameter?`${b.shankDiameter} mm`:"NEUVEDENÝ"}
+- Počet britov VHM: ${b.fluteCount||"NEUVEDENÝ"}
+- Ďalšie požiadavky VHM: ${b.vhmDetails||"NEUVEDENÉ"}
 - Požadovaný výrobca náhrady: ${b.targetManufacturer}
 - Obrábaný materiál: ${b.material||"NEUVEDENÝ"}
 - Použitie/operácia: ${b.operation||"NEUVEDENÁ"}
@@ -57,7 +80,7 @@ VSTUP:
 POVINNÝ POSTUP:
 1. Z označenia a fotografie identifikuj výrobcu, typ nástroja, ISO tvar, uhol chrbta, toleranciu, veľkosť, hrúbku, rádius/šírku, lámač triesky a triedu. Nečitateľné údaje nehádaj.
 2. Najprv over pôvodné označenie v dôveryhodnom alebo oficiálnom katalógu pôvodného výrobcu.
-3. Potom prehľadaj oficiálnu stránku a katalógy výrobcu ${b.targetManufacturer}.${masamRules}
+3. Potom prehľadaj oficiálnu stránku a katalógy výrobcu alebo dodávateľa ${b.targetManufacturer}.${masamRules}${distributorRules}${vhmRules}
 4. Pri ISO sústružníckej VBD over ISO tvar, veľkosť, hrúbku, otvor, geometriu a polomer/šírku. Pri monolitnom nástroji over priemer, stopku, reznú dĺžku, celkovú dĺžku, počet zubov a povlak. Pri telese/držiaku over rozhranie a kompatibilné plátky. Toto pravidlo rozmerovej zhody plátku NEAPLIKUJ na frézovací plátok, keďže pri frézovaní sa vyberá nový kompletný systém teleso + plátok.
 5. Triedu a lámač vyber podľa zadaného materiálu a operácie. Ak materiál alebo použitie chýbajú, môžeš určiť rozmerovú náhradu, ale triedu označ ako NEPOTVRDENÚ a vysvetli, čo treba doplniť.
 6. order_code musí byť úplné objednávacie označenie. Samotné DNMG, CCMT, vrták D10 alebo P25 nie je objednávací kód.

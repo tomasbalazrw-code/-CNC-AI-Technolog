@@ -7,7 +7,10 @@ const SCHEMA={type:"object",additionalProperties:false,properties:{
 function fail(res,status,error,details=""){return res.status(status).json({success:false,error,details});}
 function prompt(p){
  const plan=p.plan||{};
+ const languageNames={en:'English',sk:'Slovak',cs:'Czech',de:'German',pl:'Polish',hu:'Hungarian'};
+ const outputLanguage=languageNames[String(p.language||'en')]||'English';
  return `Si senior CNC programátor a technológ. Vytvor TESTOVACÍ CNC PROGRAM z presného technologického plánu nižšie.
+JAZYK SPRIEVODNÉHO TEXTU A KOMENTÁROV: ${outputLanguage}. CNC príkazy, adresy, jednotky a katalógové označenia neprekladaj.
 RIADENIE: ${p.control||plan.control||"FANUC/ISO"}
 NULOVÝ BOD: ${p.zero||"G54"}
 STROJ: ${p.machine||plan.machine||"NEUVEDENÝ"}
@@ -32,7 +35,7 @@ async function handler(req,res){
  if(req.method!=="POST"){res.setHeader("Allow","POST");return fail(res,405,"Použi POST požiadavku.");}
  if(!process.env.OPENAI_API_KEY)return fail(res,500,"OPENAI_API_KEY nie je nastavený vo Verceli.");
  try{
-  const p=typeof req.body==="string"?JSON.parse(req.body):(req.body||{});
+  const p=typeof req.body==="string"?JSON.parse(req.body):(req.body||{});p.language=String(req.headers['x-cnc-language']||p.language||'en');
   if(!p.plan)return fail(res,400,"Chýba technologický plán.");
   if(!p.plan.cadModel||p.plan.cadModel.is3D!==true)return fail(res,400,"Na vytvorenie CNC programu je povinný 3D model STEP, IGES, STL, Parasolid, OBJ alebo 3MF.");
   const expectedMode=String(p.plan.operation||"").toLowerCase().includes("fréz")?"milling-mesh":"turning-envelope";

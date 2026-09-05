@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V47 -->
+<!-- CNC AI Technolog V48 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -336,6 +336,8 @@ li{margin:6px 0;line-height:1.45}
 .cnc-language-picker:before{content:'LANG';font-size:9px;font-weight:900;letter-spacing:1px;color:#48b6ff;writing-mode:vertical-rl;transform:rotate(180deg)}
 .cnc-language-picker select{border:1px solid #31536e;outline:0;background:#102536;color:#fff;font-weight:800;font-size:12px;width:46px;min-height:38px;border-radius:9px;padding:4px 2px}
 .cnc-language-picker.cnc-translating:after{content:'';width:15px;height:15px;border:2px solid #31536e;border-top-color:#48b6ff;border-radius:50%;animation:cncLangSpin .7s linear infinite}
+#turnAiFile,#turnAiCadFile,#millAiFile,#millAiCadFile,#cncFile,#substituteCamera,#substituteGallery,#substituteFile{display:none!important}
+.dropBtn,.ai2-drop-btn,.substitute-photo-button,.cnc-v4-drop{cursor:pointer;-webkit-tap-highlight-color:transparent}
 @keyframes cncLangSpin{to{transform:rotate(360deg)}}
 @media(max-width:600px){.cnc-language-picker{padding:8px 5px 8px 7px}.cnc-language-picker span{display:none}.cnc-language-picker select{width:42px;font-size:11px}}
 </style>
@@ -389,7 +391,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V47</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V48</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -2283,7 +2285,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V47 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V48 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

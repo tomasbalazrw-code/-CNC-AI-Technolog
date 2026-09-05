@@ -127,10 +127,12 @@
   if(global.CNC_I18N_EXTRA)Object.keys(global.CNC_I18N_EXTRA).forEach(function(k){rows[k]=global.CNC_I18N_EXTRA[k];});
   var dict={};
   LANGS.forEach(function(l,i){dict[l]={};Object.keys(rows).forEach(function(k){dict[l][k]=rows[k][i]||rows[k][0];});});
-  var originalText=new WeakMap(),originalAttrs=new WeakMap(),busy=false;
+  var originalText=new WeakMap(),originalAttrs=new WeakMap(),busy=false,translationRun=0;
+  var remoteCache={};try{remoteCache=JSON.parse(localStorage.getItem('cncRemoteTranslationsV47')||'{}')||{};}catch(_){remoteCache={};}
   function lang(){return localStorage.getItem('cncLanguage')||'en';}
   function translateString(source,l){
     var s=String(source||''),trim=s.trim(),translated=dict[l][trim];if(!translated&&l!=='sk')translated=dict.en[trim];if(translated)return s.replace(trim,translated);
+    if(remoteCache[l]&&remoteCache[l][trim])return s.replace(trim,remoteCache[l][trim]);
     if(l==='sk'||!trim)return s;
     var out=s;Object.keys(dict[l]).sort(function(a,b){return b.length-a.length;}).forEach(function(k){if(k.length<4||out.indexOf(k)<0)return;out=out.split(k).join(dict[l][k]||dict.en[k]||k);});return out;
   }
@@ -141,7 +143,16 @@
     Array.from(node.childNodes||[]).forEach(function(n){translateNode(n,l);});
   }
   function apply(l){if(!LANGS.includes(l))l='en';busy=true;document.documentElement.lang=l;translateNode(document.body,l);var s=document.getElementById('cncLanguage');if(s)s.value=l;busy=false;document.dispatchEvent(new CustomEvent('cnc-language-change',{detail:{language:l}}));}
-  global.cncSetLanguage=function(l){localStorage.setItem('cncLanguage',LANGS.includes(l)?l:'en');apply(lang());};
+  function naturalText(s){s=String(s||'').trim();if(!s||s.length<2||/^[/_.+×Ø\d\s%:;,()[\]–—-]+$/.test(s))return false;if(/^(PDF|DXF|DWG|JPG|PNG|WEBP|STEP|STP|IGES|IGS|STL|OBJ|3MF|BT\d+|SK\d+|CAT\d+|HSK-[AE]\d+|Capto C\d+|[GMTFSXYZ]\d+(\.\d+)?)$/i.test(s))return false;if(/^[A-Z0-9+_.\-/ ]+$/.test(s)&&!s.includes(' '))return false;return true;}
+  function entries(){var out=[];function walk(node){if(node.nodeType===3){if(node.parentElement&&node.parentElement.closest('.cnc-language-picker,script,style'))return;if(!originalText.has(node))originalText.set(node,node.nodeValue);var source=String(originalText.get(node)||'').trim();if(naturalText(source))out.push({node:node,source:source});return;}if(node.nodeType!==1)return;['placeholder','title','aria-label'].forEach(function(a){if(!node.hasAttribute(a)||node.closest('.cnc-language-picker'))return;var bag=originalAttrs.get(node)||{};if(!(a in bag))bag[a]=node.getAttribute(a);originalAttrs.set(node,bag);var source=String(bag[a]||'').trim();if(naturalText(source))out.push({node:node,attr:a,source:source});});Array.from(node.childNodes||[]).forEach(walk);}walk(document.body);return out;}
+  async function completeTranslation(l){
+    if(l==='sk')return;var run=++translationRun,picker=document.querySelector('.cnc-language-picker');if(picker)picker.classList.add('cnc-translating');
+    try{var list=entries(),missing=[];remoteCache[l]=remoteCache[l]||{};list.forEach(function(e){if(!remoteCache[l][e.source]&&!missing.includes(e.source))missing.push(e.source);});
+      for(var i=0;i<missing.length;i+=30){if(run!==translationRun)return;var chunk=missing.slice(i,i+30),response=await nativeFetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({targetLanguage:l,strings:chunk})});var data=await response.json();if(!response.ok||!data.success||!Array.isArray(data.translations))throw new Error(data.error||'Translation failed');chunk.forEach(function(s,j){if(data.translations[j])remoteCache[l][s]=data.translations[j];});}
+      var cacheKeys=Object.keys(remoteCache[l]);if(cacheKeys.length>900)cacheKeys.slice(0,cacheKeys.length-900).forEach(function(k){delete remoteCache[l][k];});try{localStorage.setItem('cncRemoteTranslationsV47',JSON.stringify(remoteCache));}catch(_){}if(run===translationRun)apply(l);
+    }catch(error){console.error('Complete translation:',error);}finally{if(run===translationRun&&picker)picker.classList.remove('cnc-translating');}
+  }
+  global.cncSetLanguage=function(l){localStorage.setItem('cncLanguage',LANGS.includes(l)?l:'en');apply(lang());completeTranslation(lang());};
   global.cncGetLanguage=function(){return lang();};
   global.cncTranslate=function(s,l){return translateString(s,l||lang());};
   var nativeFetch=global.fetch;
@@ -152,6 +163,6 @@
     }
     return nativeFetch.call(this,input,init);
   };
-  function init(){apply(lang());new MutationObserver(function(ms){if(busy)return;busy=true;ms.forEach(function(m){m.addedNodes.forEach(function(n){translateNode(n,lang());});});busy=false;}).observe(document.body,{childList:true,subtree:true});}
+  var refreshTimer=null;function init(){apply(lang());completeTranslation(lang());new MutationObserver(function(ms){if(busy)return;busy=true;var added=false;ms.forEach(function(m){m.addedNodes.forEach(function(n){translateNode(n,lang());added=true;});});busy=false;if(added&&lang()!=='sk'){clearTimeout(refreshTimer);refreshTimer=setTimeout(function(){completeTranslation(lang());},250);}}).observe(document.body,{childList:true,subtree:true});}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })(window);

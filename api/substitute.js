@@ -22,6 +22,8 @@ function key(){return String(process.env.OPENAI_API_KEY||process.env.OPENAI_KEY|
 function outputText(d){if(typeof d.output_text==="string"&&d.output_text.trim())return d.output_text;return (d.output||[]).flatMap(x=>x.content||[]).map(x=>x.text||"").join("\n");}
 
 function prompt(b){
+ const languageNames={en:'English',sk:'Slovak',cs:'Czech',de:'German',pl:'Polish',hu:'Hungarian'};
+ const outputLanguage=languageNames[String(b.language||'en')]||'English';
  const suppliers=Array.isArray(b.targetManufacturers)?b.targetManufacturers.map(x=>String(x).trim()).filter(Boolean):[String(b.targetManufacturer||"").trim()].filter(Boolean);
  const targetLabel=suppliers.join(", ");
  const isMasam=/\bMASAM\b/i.test(targetLabel);
@@ -58,6 +60,8 @@ POVINNÉ PRAVIDLÁ PRE VHM MONOLITNÝ NÁSTROJ:
 - Vráť najviac tri overené alternatívy od najvhodnejšej. Ak chýbajú rozmery nevyhnutné na zameniteľnosť, môžeš ponúknuť vhodnú rodinu nástrojov, ale nesmieš ju označiť PRIAMA NÁHRADA a v warnings presne vypíš chýbajúce údaje.
 `:"";
  return `Si senior aplikačný technik pre obrábacie nástroje. Identifikuj pôvodný nástroj alebo vymeniteľnú reznú doštičku a porovnaj kompatibilné náhrady od všetkých zvolených dodávateľov.
+
+JAZYK VÝSTUPU: Všetky vysvetľujúce texty v JSON napíš v jazyku ${outputLanguage}. Katalógové kódy, názvy výrobcov, normy, jednotky a CNC označenia neprekladaj.
 
 VSTUP:
 - Zadané označenie: ${b.code||"NEUVEDENÉ – PREČÍTAJ Z FOTOGRAFIE"}
@@ -121,7 +125,7 @@ async function handler(req,res){
  try{
   if(req.method!=="POST"){res.setHeader("Allow","POST");return fail(res,405,"Použi POST požiadavku.");}
   const apiKey=key();if(!apiKey)return fail(res,500,"OPENAI_API_KEY nie je nastavený vo Verceli.");
-  const b=typeof req.body==="string"?JSON.parse(req.body):(req.body||{});
+  const b=typeof req.body==="string"?JSON.parse(req.body):(req.body||{});b.language=String(req.headers['x-cnc-language']||b.language||'en');
   if(!String(b.code||"").trim()&&!String(b.photoData||"").trim())return fail(res,400,"Zadaj označenie alebo fotografiu nástroja.");
   const targets=Array.isArray(b.targetManufacturers)?b.targetManufacturers.map(x=>String(x).trim()).filter(Boolean):[String(b.targetManufacturer||"").trim()].filter(Boolean);
   if(!targets.length)return fail(res,400,"Vyber aspoň jedného dodávateľa náhrady.");

@@ -124,11 +124,16 @@
     ,'Položka':['Item','Položka','Položka','Position','Pozycja','Tétel']
     ,'CNC AI TECHNOLÓG – POROVNANIE NÁHRAD NÁSTROJA':['CNC AI TECHNOLOGIST – TOOL REPLACEMENT COMPARISON','CNC AI TECHNOLÓG – POROVNANIE NÁHRAD NÁSTROJA','CNC AI TECHNOLOG – POROVNÁNÍ NÁHRAD NÁSTROJE','CNC KI-TECHNOLOGE – WERKZEUGERSATZVERGLEICH','TECHNOLOG CNC AI – PORÓWNANIE ZAMIENNIKÓW','CNC AI TECHNOLÓGUS – SZERSZÁMHELYETTESÍTÉSEK']
   };
+  if(global.CNC_I18N_EXTRA)Object.keys(global.CNC_I18N_EXTRA).forEach(function(k){rows[k]=global.CNC_I18N_EXTRA[k];});
   var dict={};
   LANGS.forEach(function(l,i){dict[l]={};Object.keys(rows).forEach(function(k){dict[l][k]=rows[k][i]||rows[k][0];});});
   var originalText=new WeakMap(),originalAttrs=new WeakMap(),busy=false;
   function lang(){return localStorage.getItem('cncLanguage')||'en';}
-  function translateString(source,l){var s=String(source||''),trim=s.trim(),translated=dict[l][trim];if(!translated&&l!=='sk')translated=dict.en[trim];if(!translated)return s;return s.replace(trim,translated);}
+  function translateString(source,l){
+    var s=String(source||''),trim=s.trim(),translated=dict[l][trim];if(!translated&&l!=='sk')translated=dict.en[trim];if(translated)return s.replace(trim,translated);
+    if(l==='sk'||!trim)return s;
+    var out=s;Object.keys(dict[l]).sort(function(a,b){return b.length-a.length;}).forEach(function(k){if(k.length<4||out.indexOf(k)<0)return;out=out.split(k).join(dict[l][k]||dict.en[k]||k);});return out;
+  }
   function translateNode(node,l){
     if(node.nodeType===3){if(!originalText.has(node))originalText.set(node,node.nodeValue);node.nodeValue=translateString(originalText.get(node),l);return;}
     if(node.nodeType!==1||node.closest&&node.closest('script,style'))return;

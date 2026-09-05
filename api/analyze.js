@@ -113,9 +113,13 @@ Povinné pravidlá:
 11. Stav, tepelné spracovanie a tvrdosť zapíš do material_condition_detected iba vtedy, keď sú priamo uvedené. Inak nechaj prázdny reťazec.`;
 }
 function prompt(b,name,inspection){
+ const languageNames={en:'English',sk:'Slovak',cs:'Czech',de:'German',pl:'Polish',hu:'Hungarian'};
+ const outputLanguage=languageNames[String(b.language||'en')]||'English';
  const turn=String(b.type||b.operation||"").toLowerCase().includes("sústru");
  return `Si SENIOR CNC technológ a zároveň odborník na obrábacie nástroje.
 Pracuj s priloženým technickým výkresom ${name}.
+
+JAZYK VÝSTUPU: Všetky vysvetľujúce texty v JSON napíš v jazyku ${outputLanguage}. Katalógové kódy, materiálové normy, jednotky a CNC označenia neprekladaj.
 
 VSTUP:
 - Proces: ${b.type||b.operation||"Sústruženie"}
@@ -191,7 +195,7 @@ async function handler(req,res){
  try{
   if(req.method!=="POST"){res.setHeader("Allow","POST");return fail(res,405,"Použi POST požiadavku.");}
   const apiKey=key(); if(!apiKey)return fail(res,500,"OPENAI_API_KEY nie je nastavený vo Verceli.");
-  const b=typeof req.body==="string"?JSON.parse(req.body):(req.body||{});
+  const b=typeof req.body==="string"?JSON.parse(req.body):(req.body||{});b.language=String(req.headers['x-cnc-language']||b.language||'en');
   const name=b.fileName||"drawing.pdf"; const fd=b.fileData||b.data; if(!fd)return fail(res,400,"Výkres nebol odoslaný.");
   const {mime,base64}=parseDataUrl(fd,name);
   let inputFile;

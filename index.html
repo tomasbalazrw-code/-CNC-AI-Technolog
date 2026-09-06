@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V53 -->
+<!-- CNC AI Technolog V54 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -366,6 +366,35 @@ li{margin:6px 0;line-height:1.45}
 .substitute-photo-button input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .substitute-params-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
 @media(max-width:600px){.substitute-photo-actions,.substitute-params-grid{grid-template-columns:1fr}.substitute-photo-button{min-height:42px}}
+/* V54 – kompaktne mobilné rozhranie a vždy dostupné tlačidlo Späť */
+@media(max-width:600px){
+  .cnc-v4-inner{padding:calc(14px + env(safe-area-inset-top)) 10px calc(82px + env(safe-area-inset-bottom))}
+  .cnc-v4-top{position:sticky;top:env(safe-area-inset-top);z-index:30;margin:0 -2px 10px;padding:6px 2px;background:rgba(7,11,18,.96);backdrop-filter:blur(12px);font-size:14px}
+  .cnc-v4-back{min-height:40px;padding:8px 11px;border-radius:10px;font-size:13px;touch-action:manipulation}
+  .cnc-v4-card{border-radius:15px;padding:12px;margin:8px 0}
+  .cnc-v4-card h2{font-size:19px}.cnc-v4-card h3{font-size:15px}
+  .cnc-v4-muted,.ai2-note,.notice,.brand-pref-note,.clamping-note,.tooling-note{font-size:11px}
+  input[type=text],input[type=email],input[type=password],input[type=number],select,textarea,
+  .cnc-v4-input,.cnc-v4-select,.machine-db select,.tooling-db select,.tooling-db input,
+  .brand-pref select,.clamping-db select{min-height:42px;padding:10px 11px;font-size:14px;border-radius:11px}
+  textarea{min-height:84px}
+  .field,.ai2-field{margin-bottom:10px}
+  .machine-db,.tooling-db,.brand-pref,.clamping-db,.cad-upload,.auto-tool,.stdins{margin-top:10px;padding:11px;border-radius:13px}
+  .machine-db .db-row,.ai2-grid,.clamping-grid,.brand-pref-grid{gap:7px}
+  .machine-db .db-title,.tooling-title,.brand-pref-title,.clamping-title{font-size:14px}
+  .cnc-v4-btn,.ai2-btn,.primary{min-height:44px;padding:11px 12px;font-size:14px;margin-top:9px}
+  .cnc-v4-drop,.ai2-drop{padding:15px 10px}.ai2-drop-btn,.dropBtn{padding:9px 12px;font-size:13px}
+  .ai2-setup{padding:11px}.ai2-diagram{max-height:190px;overflow:hidden}
+  .ai2-preview img,.preview img{max-height:220px}
+  .clamp-options{max-height:175px;padding:7px}.clamp-check{padding:6px;font-size:12px!important}
+  .resultBlock,.ai2-block{padding:10px 0}.op,.tool,.auto-reco{padding:9px;margin-top:7px}
+  .substitute-table{font-size:11px}.substitute-table th,.substitute-table td{padding:7px}
+  .cnc-language-picker{transform:translateY(-50%) scale(.88);transform-origin:right center}
+}
+@media (display-mode: standalone) and (max-width:600px){
+  .cnc-v4-inner{padding-top:max(62px,calc(14px + env(safe-area-inset-top)))}
+  .cnc-v4-top{top:env(safe-area-inset-top)}
+}
 </style>
 </head>
 <body>
@@ -400,7 +429,7 @@ li{margin:6px 0;line-height:1.45}
   <header class="hero">
     <div class="heroContent">
       <img class="hero-logo" src="/assets/cnc-ai-icon-192.png" alt="CNC AI Technológ">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V53</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V54</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -2327,7 +2356,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V53 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V54 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

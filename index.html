@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V52 -->
+<!-- CNC AI Technolog V53 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#071529">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="CNC AI">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon-64.png">
@@ -29,7 +29,7 @@ body{
  padding-bottom:105px;
 }
 .hero{
-  position:relative;height:285px;overflow:hidden;
+  position:relative;height:calc(270px + env(safe-area-inset-top));overflow:hidden;
   background:
   linear-gradient(90deg,rgba(3,6,10,.98) 0%,rgba(3,6,10,.80) 37%,rgba(3,6,10,.08) 100%),
   linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.7)),
@@ -38,10 +38,10 @@ body{
   border-bottom:1px solid #172230;
 }
 .hero:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#05080d 0%,transparent 45%)}
-.heroContent{position:relative;z-index:2;padding:35px 22px}
-.hero-logo{width:76px;height:76px;display:block;margin:0 0 14px;border-radius:22px;object-fit:cover;box-shadow:0 12px 34px rgba(22,168,255,.28)}
-.brand{font-weight:900;letter-spacing:-2px;font-size:50px;line-height:.85}
-.brand span{display:block;font-size:28px;letter-spacing:-1px;margin-top:7px;color:#eaf3ff}
+.heroContent{position:relative;z-index:2;padding:calc(18px + env(safe-area-inset-top)) 22px 22px}
+.hero-logo{width:64px;height:64px;display:block;margin:0 0 12px;border-radius:19px;object-fit:cover;box-shadow:0 12px 34px rgba(22,168,255,.28)}
+.brand{font-weight:900;letter-spacing:-2px;font-size:44px;line-height:.88}
+.brand span{display:block;font-size:25px;letter-spacing:-1px;margin-top:7px;color:#eaf3ff}
 .badge{
  display:inline-flex;margin-left:7px;vertical-align:middle;transform:translateY(-5px);
  border:1px solid #1b9dff;border-radius:9px;padding:4px 9px;font-size:15px;color:#49baff;
@@ -113,11 +113,11 @@ body{
 
 /* ===== V16 – úvodná prihlasovacia obrazovka ===== */
 body.auth-locked{overflow:hidden}
-.auth-screen{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;padding:24px 18px calc(24px + env(safe-area-inset-bottom));background:radial-gradient(circle at 78% 12%,rgba(22,168,255,.22),transparent 28%),linear-gradient(180deg,#05080d,#07111b)}
+.auth-screen{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;padding:calc(14px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom));background:radial-gradient(circle at 78% 12%,rgba(22,168,255,.22),transparent 28%),linear-gradient(180deg,#05080d,#07111b);overflow-y:auto}
 .auth-screen.hidden{display:none!important}
 .auth-wrap{width:min(100%,410px)}
 .auth-brand{text-align:center;margin-bottom:25px}
-.auth-logo{width:96px;height:96px;margin:0 auto 15px;border-radius:27px;display:block;object-fit:cover;box-shadow:0 14px 36px rgba(22,168,255,.28)}
+.auth-logo{width:82px;height:82px;margin:0 auto 12px;border-radius:23px;display:block;object-fit:cover;box-shadow:0 14px 36px rgba(22,168,255,.28)}
 .auth-brand h1{font-size:29px;line-height:1.05;margin:0;letter-spacing:-.8px}.auth-brand h1 span{color:#38b4ff}.auth-brand p{margin:9px 0 0;color:#92a3b5;font-size:14px}
 .auth-card{padding:22px;border:1px solid #23374a;border-radius:24px;background:rgba(11,19,29,.94);box-shadow:0 24px 70px rgba(0,0,0,.42)}
 .auth-title{font-size:22px;font-weight:900;margin-bottom:5px}.auth-subtitle{font-size:14px;color:#91a3b5;margin-bottom:20px}
@@ -129,7 +129,7 @@ body.auth-locked{overflow:hidden}
 .auth-submit{width:100%;min-height:52px;border:0;border-radius:14px;background:linear-gradient(180deg,#20adff,#087fe8);color:#fff;font-size:16px;font-weight:900;box-shadow:0 10px 26px rgba(8,127,232,.26)}.auth-submit:active{transform:translateY(1px)}
 .auth-message{display:none;margin:14px 0 0;padding:11px 12px;border-radius:11px;font-size:13px;line-height:1.4}.auth-message.error{display:block;background:#2a1115;border:1px solid #6e2931;color:#ffb3bc}.auth-message.ok{display:block;background:#0f2a1a;border:1px solid #28613c;color:#a8edbb}
 .auth-terms{text-align:center;color:#718294;font-size:11px;line-height:1.45;margin:16px 12px 0}
-.auth-account{position:absolute;z-index:4;right:15px;top:18px;border:1px solid #2b4a62;border-radius:999px;background:rgba(6,15,23,.82);color:#dce8f2;padding:8px 11px;font-size:12px;font-weight:800;backdrop-filter:blur(12px)}
+.auth-account{position:absolute;z-index:4;right:12px;top:calc(10px + env(safe-area-inset-top));border:1px solid #2b4a62;border-radius:999px;background:rgba(6,15,23,.82);color:#dce8f2;padding:7px 9px;font-size:11px;font-weight:800;backdrop-filter:blur(12px)}
 body.auth-locked .app,body.auth-locked .bottom{visibility:hidden}
 
 .programCard{
@@ -400,7 +400,7 @@ li{margin:6px 0;line-height:1.45}
   <header class="hero">
     <div class="heroContent">
       <img class="hero-logo" src="/assets/cnc-ai-icon-192.png" alt="CNC AI Technológ">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V52</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V53</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -2327,7 +2327,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V52 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V53 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

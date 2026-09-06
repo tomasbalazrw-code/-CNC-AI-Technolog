@@ -145,21 +145,29 @@
   function apply(l){if(!LANGS.includes(l))l='en';busy=true;document.documentElement.lang=l;translateNode(document.body,l);var s=document.getElementById('cncLanguage');if(s)s.value=l;busy=false;document.dispatchEvent(new CustomEvent('cnc-language-change',{detail:{language:l}}));}
   function naturalText(s){s=String(s||'').trim();if(!s||s.length<2||/^[/_.+×Ø\d\s%:;,()[\]–—-]+$/.test(s))return false;if(/^(PDF|DXF|DWG|JPG|PNG|WEBP|STEP|STP|IGES|IGS|STL|OBJ|3MF|BT\d+|SK\d+|CAT\d+|HSK-[AE]\d+|Capto C\d+|[GMTFSXYZ]\d+(\.\d+)?)$/i.test(s))return false;if(/^[A-Z0-9+_.\-/ ]+$/.test(s)&&!s.includes(' '))return false;return true;}
   function entries(){var out=[];function walk(node){if(node.nodeType===3){if(node.parentElement&&node.parentElement.closest('.cnc-language-picker,script,style'))return;if(!originalText.has(node))originalText.set(node,node.nodeValue);var source=String(originalText.get(node)||'').trim();if(naturalText(source))out.push({node:node,source:source});return;}if(node.nodeType!==1)return;['placeholder','title','aria-label'].forEach(function(a){if(!node.hasAttribute(a)||node.closest('.cnc-language-picker'))return;var bag=originalAttrs.get(node)||{};if(!(a in bag))bag[a]=node.getAttribute(a);originalAttrs.set(node,bag);var source=String(bag[a]||'').trim();if(naturalText(source))out.push({node:node,attr:a,source:source});});Array.from(node.childNodes||[]).forEach(walk);}walk(document.body);return out;}
+  async function translateBatch(strings,l){
+    l=LANGS.includes(l)?l:lang();remoteCache[l]=remoteCache[l]||{};
+    var missing=[];strings.forEach(function(source){var s=String(source||'').trim();if(!naturalText(s)||dict[l][s]||remoteCache[l][s]||missing.includes(s))return;missing.push(s);});
+    var chunks=[];for(var i=0;i<missing.length;i+=60)chunks.push(missing.slice(i,i+60));
+    var next=0,workers=[];async function worker(){while(next<chunks.length){var chunk=chunks[next++],response=await nativeFetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({targetLanguage:l,strings:chunk})}),data=await response.json();if(!response.ok||!data.success||!Array.isArray(data.translations))throw new Error(data.error||'Translation failed');chunk.forEach(function(s,j){if(data.translations[j])remoteCache[l][s]=data.translations[j];});}}
+    for(var w=0;w<Math.min(3,chunks.length);w++)workers.push(worker());await Promise.all(workers);
+    var cacheKeys=Object.keys(remoteCache[l]);if(cacheKeys.length>1200)cacheKeys.slice(0,cacheKeys.length-1200).forEach(function(k){delete remoteCache[l][k];});try{localStorage.setItem('cncRemoteTranslationsV47',JSON.stringify(remoteCache));}catch(_){}
+    return strings.map(function(s){return translateString(s,l);});
+  }
   async function completeTranslation(l){
     var run=++translationRun,picker=document.querySelector('.cnc-language-picker');if(picker)picker.classList.add('cnc-translating');
-    try{var list=entries(),missing=[];remoteCache[l]=remoteCache[l]||{};
+    try{var list=entries();
       /* The static application is authored in Slovak, but an analysis can be
          generated in any active language.  When returning to SK translate only
          generated result areas; the rest already has an exact local dictionary. */
       if(l==='sk')list=list.filter(function(e){return e.node&&e.node.parentElement&&e.node.parentElement.closest('#turnAiResult,#millAiResult,#cncResult,#substituteResult');});
-      list.forEach(function(e){if(dict[l][e.source])return;if(!remoteCache[l][e.source]&&!missing.includes(e.source))missing.push(e.source);});
-      for(var i=0;i<missing.length;i+=30){if(run!==translationRun)return;var chunk=missing.slice(i,i+30),response=await nativeFetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({targetLanguage:l,strings:chunk})});var data=await response.json();if(!response.ok||!data.success||!Array.isArray(data.translations))throw new Error(data.error||'Translation failed');chunk.forEach(function(s,j){if(data.translations[j])remoteCache[l][s]=data.translations[j];});}
-      var cacheKeys=Object.keys(remoteCache[l]);if(cacheKeys.length>900)cacheKeys.slice(0,cacheKeys.length-900).forEach(function(k){delete remoteCache[l][k];});try{localStorage.setItem('cncRemoteTranslationsV47',JSON.stringify(remoteCache));}catch(_){}if(run===translationRun)apply(l);
+      await translateBatch(list.map(function(e){return e.source;}),l);if(run===translationRun)apply(l);
     }catch(error){console.error('Complete translation:',error);}finally{if(run===translationRun&&picker)picker.classList.remove('cnc-translating');}
   }
   global.cncSetLanguage=function(l){localStorage.setItem('cncLanguage',LANGS.includes(l)?l:'en');apply(lang());completeTranslation(lang());};
   global.cncGetLanguage=function(){return lang();};
   global.cncTranslate=function(s,l){return translateString(s,l||lang());};
+  global.cncTranslateBatch=function(strings,l){return translateBatch(Array.isArray(strings)?strings:[],l||lang());};
   var nativeFetch=global.fetch;
   if(nativeFetch)global.fetch=function(input,init){
     var url=typeof input==='string'?input:(input&&input.url)||'';

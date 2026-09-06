@@ -1,9 +1,16 @@
-<!-- CNC AI Technolog V51 -->
+<!-- CNC AI Technolog V52 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#071529">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CNC AI">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon-64.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
 <title>CNC AI Technológ</title>
 <style>
 :root{
@@ -32,6 +39,7 @@ body{
 }
 .hero:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#05080d 0%,transparent 45%)}
 .heroContent{position:relative;z-index:2;padding:35px 22px}
+.hero-logo{width:76px;height:76px;display:block;margin:0 0 14px;border-radius:22px;object-fit:cover;box-shadow:0 12px 34px rgba(22,168,255,.28)}
 .brand{font-weight:900;letter-spacing:-2px;font-size:50px;line-height:.85}
 .brand span{display:block;font-size:28px;letter-spacing:-1px;margin-top:7px;color:#eaf3ff}
 .badge{
@@ -109,7 +117,7 @@ body.auth-locked{overflow:hidden}
 .auth-screen.hidden{display:none!important}
 .auth-wrap{width:min(100%,410px)}
 .auth-brand{text-align:center;margin-bottom:25px}
-.auth-logo{width:68px;height:68px;margin:0 auto 15px;border-radius:21px;display:grid;place-items:center;background:linear-gradient(145deg,#159eff,#075fca);box-shadow:0 14px 36px rgba(22,168,255,.28);font-size:25px;font-weight:950;letter-spacing:-1px}
+.auth-logo{width:96px;height:96px;margin:0 auto 15px;border-radius:27px;display:block;object-fit:cover;box-shadow:0 14px 36px rgba(22,168,255,.28)}
 .auth-brand h1{font-size:29px;line-height:1.05;margin:0;letter-spacing:-.8px}.auth-brand h1 span{color:#38b4ff}.auth-brand p{margin:9px 0 0;color:#92a3b5;font-size:14px}
 .auth-card{padding:22px;border:1px solid #23374a;border-radius:24px;background:rgba(11,19,29,.94);box-shadow:0 24px 70px rgba(0,0,0,.42)}
 .auth-title{font-size:22px;font-weight:900;margin-bottom:5px}.auth-subtitle{font-size:14px;color:#91a3b5;margin-bottom:20px}
@@ -365,7 +373,7 @@ li{margin:6px 0;line-height:1.45}
 <section id="authScreen" class="auth-screen" aria-label="Prihlásenie">
   <div class="auth-wrap">
     <div class="auth-brand">
-      <div class="auth-logo">CNC</div>
+      <img class="auth-logo" src="/assets/cnc-ai-icon-192.png" alt="CNC AI Technológ">
       <h1>CNC <span>AI TECHNOLÓG</span></h1>
       <p>Prihláste sa a pokračujte vo svojej práci.</p>
     </div>
@@ -391,7 +399,8 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V51</b></span></div>
+      <img class="hero-logo" src="/assets/cnc-ai-icon-192.png" alt="CNC AI Technológ">
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V52</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -2318,7 +2327,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V51 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V52 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

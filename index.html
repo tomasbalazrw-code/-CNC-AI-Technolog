@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V49 -->
+<!-- CNC AI Technolog V50 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -391,7 +391,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V49</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V50</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -1582,6 +1582,11 @@ init('turnAi','turning');init('millAi','milling');
       if(!response.ok||!data.success||!Array.isArray(data.translations))throw new Error(data.error||'Preklad exportu zlyhal.');
       chunk.forEach((slot,j)=>{slot.parent[slot.key]=data.translations[j]||slot.value;});
     }
+    const exportLabels=['CNC AI TECHNOLÓG – TECHNOLOGICKÁ ANALÝZA','Vygenerované','Výkres','Typ obrábania','Materiál','Stav a tvrdosť materiálu','Polotovar','Stroj','CNC riadenie','Čítanie výkresu','Upnutie','Nulový bod','Opory','Riziká','SÚHRN','UPNUTIA','TECHNOLOGICKÝ POSTUP','NÁSTROJE A REZNÉ PARAMETRE','KONTROLA A POZNÁMKY','Položka','Hodnota','Č.','Názov','Čeľuste','Vyloženie','Posun / prídavok','Obrábaná dĺžka','Referencia pre preupnutie','Poradie','Operácia','Opis','Oblasť','Nástroj','Cieľové rozmery','Prídavok','Opakované použitie','ID','Typ nástroja','Počet','Výrobca','Držiak / teleso','Kód držiaka / telesa','Plátok / vrták / fréza','Presný kód nástroja','Trieda','Geometria','Kompatibilita','Otáčky','Posuv','Chladenie','Dôvod výberu','Overenie katalógu','Sekcia','Obsah','Kritické rozmery','Prvky výkresu','Preverené katalógy','Upozornenia','Poznámky'];
+    const labelResponse=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({targetLanguage:target,strings:exportLabels})});
+    const labelData=await labelResponse.json();
+    if(!labelResponse.ok||!labelData.success||!Array.isArray(labelData.translations))throw new Error(labelData.error||'Preklad názvov tabuľky zlyhal.');
+    copy._exportTranslations={};exportLabels.forEach((label,i)=>{copy._exportTranslations[label]=labelData.translations[i]||label;});
     return copy;
   }
 
@@ -1593,7 +1598,8 @@ init('turnAi','turning');init('millAi','milling');
     try{
       const translated=await translatedPlanForExport(plan),blob=window.cncBuildAnalysisXlsx(translated),url=URL.createObjectURL(blob),a=document.createElement('a');
       const file=String(translated.file||prefix).replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/gi,'_').slice(0,55)||prefix;
-      a.href=url;a.download='CNC_AI_technologicky_postup_'+file+'.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+      const language=window.cncGetLanguage?window.cncGetLanguage():'en',filePrefix={en:'CNC_AI_process_plan',sk:'CNC_AI_technologicky_postup',cs:'CNC_AI_technologicky_postup',de:'CNC_AI_Arbeitsplan',pl:'CNC_AI_plan_technologiczny',hu:'CNC_AI_technologiai_terv'}[language]||'CNC_AI_process_plan';
+      a.href=url;a.download=filePrefix+'_'+file+'.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
     }catch(error){alert(error.message||'Export sa nepodaril.');}
     finally{if(btn){btn.disabled=false;btn.textContent=old;}}
   };
@@ -1610,7 +1616,7 @@ init('turnAi','turning');init('millAi','milling');
     const warnings=Array.isArray(data.warnings)?data.warnings:[];
     const notes=Array.isArray(data.notes)?data.notes:[];
 
-    let html='';
+    let html='<button type="button" class="substitute-download" data-analysis-export="'+prefix+'" onclick="cncDownloadAnalysisTable(\''+prefix+'\')">⬇ Stiahnuť profesionálny technologický postup (Excel)</button>';
     html += cncHas3DModel(data)
       ? "<div class='ai2-block' style='border-color:#168fff'><b>⚙️ Technologický postup a 3D model sú pripravené.</b><br><span class='cnc-v4-muted'>Výsledok skontroluj podľa výkresu, upnutia a možností konkrétneho stroja.</span></div>"
       : "<div class='ai2-block' style='border-color:#8e7120'><b>⚠️ Technologický postup je pripravený, CNC program je zablokovaný.</b><br><span class='cnc-v4-muted'>Nahraj skutočný 3D model STEP, IGES, STL, Parasolid, OBJ alebo 3MF. DXF/DWG sú iba doplnkové 2D dáta.</span></div>";
@@ -1707,7 +1713,6 @@ init('turnAi','turning');init('millAi','milling');
     html += block('Preverené katalógy a zdroje nástrojov', listHtml(toolSources));
     html += block('Upozornenia a riziká', listHtml(warnings));
     html += block('Poznámky', listHtml(notes));
-    html += '<button type="button" class="substitute-download" data-analysis-export="'+prefix+'" onclick="cncDownloadAnalysisTable(\''+prefix+'\')">⬇ Stiahnuť profesionálny technologický postup (Excel)</button>';
 
     document.getElementById(prefix+'Result').innerHTML=html;
     if(window.CNCV7AutoTool) CNCV7AutoTool.render(prefix,data);
@@ -2316,7 +2321,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V49 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V50 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

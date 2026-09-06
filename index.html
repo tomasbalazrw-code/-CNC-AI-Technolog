@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V50 -->
+<!-- CNC AI Technolog V51 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -391,7 +391,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V50</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V51</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -1571,22 +1571,19 @@ init('turnAi','turning');init('millAi','milling');
 
   async function translatedPlanForExport(plan){
     const target=window.cncGetLanguage?window.cncGetLanguage():'en';
+    if(!plan.__cncExportCache)Object.defineProperty(plan,'__cncExportCache',{value:{},enumerable:false,writable:true});
+    if(plan.__cncExportCache[target])return JSON.parse(JSON.stringify(plan.__cncExportCache[target]));
     const copy=JSON.parse(JSON.stringify(plan||{})),slots=[];
     (function walk(value,parent,key){
       if(typeof value==='string' && value.trim() && !/^data:/i.test(value)) slots.push({parent,key,value});
       else if(value && typeof value==='object') Object.keys(value).forEach(k=>walk(value[k],value,k));
     })(copy,null,null);
-    for(let i=0;i<slots.length;i+=60){
-      const chunk=slots.slice(i,i+60),response=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({targetLanguage:target,strings:chunk.map(x=>x.value)})});
-      const data=await response.json();
-      if(!response.ok||!data.success||!Array.isArray(data.translations))throw new Error(data.error||'Preklad exportu zlyhal.');
-      chunk.forEach((slot,j)=>{slot.parent[slot.key]=data.translations[j]||slot.value;});
-    }
     const exportLabels=['CNC AI TECHNOLÓG – TECHNOLOGICKÁ ANALÝZA','Vygenerované','Výkres','Typ obrábania','Materiál','Stav a tvrdosť materiálu','Polotovar','Stroj','CNC riadenie','Čítanie výkresu','Upnutie','Nulový bod','Opory','Riziká','SÚHRN','UPNUTIA','TECHNOLOGICKÝ POSTUP','NÁSTROJE A REZNÉ PARAMETRE','KONTROLA A POZNÁMKY','Položka','Hodnota','Č.','Názov','Čeľuste','Vyloženie','Posun / prídavok','Obrábaná dĺžka','Referencia pre preupnutie','Poradie','Operácia','Opis','Oblasť','Nástroj','Cieľové rozmery','Prídavok','Opakované použitie','ID','Typ nástroja','Počet','Výrobca','Držiak / teleso','Kód držiaka / telesa','Plátok / vrták / fréza','Presný kód nástroja','Trieda','Geometria','Kompatibilita','Otáčky','Posuv','Chladenie','Dôvod výberu','Overenie katalógu','Sekcia','Obsah','Kritické rozmery','Prvky výkresu','Preverené katalógy','Upozornenia','Poznámky'];
-    const labelResponse=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({targetLanguage:target,strings:exportLabels})});
-    const labelData=await labelResponse.json();
-    if(!labelResponse.ok||!labelData.success||!Array.isArray(labelData.translations))throw new Error(labelData.error||'Preklad názvov tabuľky zlyhal.');
-    copy._exportTranslations={};exportLabels.forEach((label,i)=>{copy._exportTranslations[label]=labelData.translations[i]||label;});
+    if(typeof window.cncTranslateBatch!=='function')throw new Error('Prekladová pamäť nie je pripravená. Obnov aplikáciu.');
+    const sources=slots.map(x=>x.value).concat(exportLabels),translations=await window.cncTranslateBatch(sources,target);
+    slots.forEach((slot,j)=>{slot.parent[slot.key]=translations[j]||slot.value;});
+    copy._exportTranslations={};exportLabels.forEach((label,i)=>{copy._exportTranslations[label]=translations[slots.length+i]||label;});
+    plan.__cncExportCache[target]=copy;
     return copy;
   }
 
@@ -2321,7 +2318,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V50 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V51 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

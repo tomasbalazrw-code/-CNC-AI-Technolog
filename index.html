@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V48 -->
+<!-- CNC AI Technolog V49 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -391,7 +391,7 @@ li{margin:6px 0;line-height:1.45}
   <button type="button" class="auth-account" onclick="cncLogout()" title="Odhlásiť sa"><span id="authAccountLabel">Účet</span> · Odhlásiť</button>
   <header class="hero">
     <div class="heroContent">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V48</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V49</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -898,6 +898,7 @@ li{margin:6px 0;line-height:1.45}
 </div>
 
 <script src="/xlsx-export.js"></script>
+<script src="/analysis-xlsx.js"></script>
 <script id="cnc-v4-js">
 function cncOpen(id){
   document.querySelectorAll('.cnc-v4-panel').forEach(function(p){p.classList.remove('show')});
@@ -1568,6 +1569,35 @@ init('turnAi','turning');init('millAi','milling');
     return '<div class="ai2-block"><h3>'+esc(title)+'</h3>'+body+'</div>';
   }
 
+  async function translatedPlanForExport(plan){
+    const target=window.cncGetLanguage?window.cncGetLanguage():'en';
+    const copy=JSON.parse(JSON.stringify(plan||{})),slots=[];
+    (function walk(value,parent,key){
+      if(typeof value==='string' && value.trim() && !/^data:/i.test(value)) slots.push({parent,key,value});
+      else if(value && typeof value==='object') Object.keys(value).forEach(k=>walk(value[k],value,k));
+    })(copy,null,null);
+    for(let i=0;i<slots.length;i+=60){
+      const chunk=slots.slice(i,i+60),response=await fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({targetLanguage:target,strings:chunk.map(x=>x.value)})});
+      const data=await response.json();
+      if(!response.ok||!data.success||!Array.isArray(data.translations))throw new Error(data.error||'Preklad exportu zlyhal.');
+      chunk.forEach((slot,j)=>{slot.parent[slot.key]=data.translations[j]||slot.value;});
+    }
+    return copy;
+  }
+
+  window.cncDownloadAnalysisTable=async function(prefix){
+    const plan=window.CNC_LAST_PLAN,btn=document.querySelector('[data-analysis-export="'+prefix+'"]');
+    if(!plan||window.CNC_LAST_PREFIX!==prefix){alert('Najprv dokonči AI analýzu.');return;}
+    if(typeof window.cncBuildAnalysisXlsx!=='function'){alert('Export XLSX sa nepodarilo načítať. Obnov aplikáciu.');return;}
+    const old=btn?btn.textContent:'';if(btn){btn.disabled=true;btn.textContent='⏳ Pripravujem tabuľku…';}
+    try{
+      const translated=await translatedPlanForExport(plan),blob=window.cncBuildAnalysisXlsx(translated),url=URL.createObjectURL(blob),a=document.createElement('a');
+      const file=String(translated.file||prefix).replace(/\.[^.]+$/,'').replace(/[^a-z0-9_-]+/gi,'_').slice(0,55)||prefix;
+      a.href=url;a.download='CNC_AI_technologicky_postup_'+file+'.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
+    }catch(error){alert(error.message||'Export sa nepodaril.');}
+    finally{if(btn){btn.disabled=false;btn.textContent=old;}}
+  };
+
   function render(prefix, data){
     const setup=data.setup || {};
     const setups=Array.isArray(data.setups)?data.setups:[];
@@ -1677,6 +1707,7 @@ init('turnAi','turning');init('millAi','milling');
     html += block('Preverené katalógy a zdroje nástrojov', listHtml(toolSources));
     html += block('Upozornenia a riziká', listHtml(warnings));
     html += block('Poznámky', listHtml(notes));
+    html += '<button type="button" class="substitute-download" data-analysis-export="'+prefix+'" onclick="cncDownloadAnalysisTable(\''+prefix+'\')">⬇ Stiahnuť profesionálny technologický postup (Excel)</button>';
 
     document.getElementById(prefix+'Result').innerHTML=html;
     if(window.CNCV7AutoTool) CNCV7AutoTool.render(prefix,data);
@@ -2285,7 +2316,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V48 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V49 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

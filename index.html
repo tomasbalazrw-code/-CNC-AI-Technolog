@@ -1,4 +1,4 @@
-<!-- CNC AI Technolog V54 -->
+<!-- CNC AI Technolog V55 -->
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -429,7 +429,7 @@ li{margin:6px 0;line-height:1.45}
   <header class="hero">
     <div class="heroContent">
       <img class="hero-logo" src="/assets/cnc-ai-icon-192.png" alt="CNC AI Technológ">
-      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V54</b></span></div>
+      <div class="brand">CNC <span>AI TECHNOLÓG <b class="badge">V55</b></span></div>
       <div class="tag">Od výkresu k hotovej technológii</div>
       <div class="status"><i class="dot"></i> AI Technology Assistant <span style="color:#75d65a">ONLINE</span></div>
     </div>
@@ -1450,16 +1450,18 @@ cncInitToolBrands();
 cncInitMaterials();
 cncInitClampingChecks();
 document.addEventListener('click',function(e){
-  var el=e.target.closest('button,a,.nav,.small,.card,.ai');
+  var el=e.target.closest('.bottom .nav');
   if(!el)return;
-  var tx=(el.innerText||el.textContent||'').trim().toUpperCase();
-  if(tx.includes('ANALÝZA')){e.preventDefault();cncOpen('cnc-analysis')}
-  else if(tx.includes('NOVÁ ZÁKAZKA')||tx==='NOVÁ'){e.preventDefault();cncOpen('cnc-job')}
-  else if(tx.includes('KALKULAČKA')){e.preventDefault();cncOpen('cnc-calc')}
-  else if(tx.includes('PROFIL')){e.preventDefault();cncOpen('cnc-profile')}
-  else if(tx.includes('NÁSTROJE')){e.preventDefault();cncOpen('cnc-tools')}
-  else if(tx.includes('MOJE ZÁKAZKY')){e.preventDefault();cncOpen('cnc-jobs');cncLoadJobs()}
-  else if(tx.includes('NASTAVENIA')){e.preventDefault();cncOpen('cnc-settings');cncLoadSettings()}
+  e.preventDefault();
+  var items=Array.from(document.querySelectorAll('.bottom .nav'));
+  var index=items.indexOf(el);
+  items.forEach(function(item){item.classList.remove('active')});
+  el.classList.add('active');
+  if(index===0){cncClose();window.scrollTo({top:0,behavior:'smooth'});}
+  else if(index===1)cncOpen('cnc-analysis');
+  else if(index===2)cncOpen('cnc-job');
+  else if(index===3)cncOpen('cnc-calc');
+  else if(index===4)cncOpen('cnc-profile');
 });
 </script>
 
@@ -2356,7 +2358,7 @@ initMachineDatabase('millAi','milling');
       });
       var sessionResult=await window.cncSupabase.auth.getSession();
       if(sessionResult.data.session){showApp(sessionResult.data.session.user);await cloudPull()}else showLogin();
-    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V54 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
+    }catch(error){showLogin();authMessage('Online účty sa nepodarilo načítať. Po nasadení V55 skontrolujte prepojenie Supabase vo Verceli.','error');console.error(error)}
   }
   init();
 })();

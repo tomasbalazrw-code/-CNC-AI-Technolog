@@ -8,10 +8,10 @@ const SCHEMA={
   original_designation:{type:"string"},original_manufacturer:{type:"string"},original_type:{type:"string"},identification_confidence:{type:"string"},
   target_manufacturer:{type:"string"},
   alternatives:{type:"array",items:{type:"object",additionalProperties:false,properties:{
-   supplier:{type:"string"},manufacturer:{type:"string"},order_code:{type:"string"},application_role:{type:"string"},description:{type:"string"},geometry_and_size:{type:"string"},grade:{type:"string"},match_level:{type:"string"},compatibility:{type:"string"},differences:{type:"string"},recommended_use:{type:"string"},recommended_parameters:{type:"string"},parameter_comparison:{type:"string"},verification_status:{type:"string"},
+   supplier:{type:"string"},manufacturer:{type:"string"},order_code:{type:"string"},application_role:{type:"string"},description:{type:"string"},geometry_and_size:{type:"string"},cutting_edge_count:{type:"string"},grade:{type:"string"},match_level:{type:"string"},compatibility:{type:"string"},differences:{type:"string"},recommended_use:{type:"string"},recommended_parameters:{type:"string"},parameter_comparison:{type:"string"},verification_status:{type:"string"},
    starting_parameters:{type:"object",additionalProperties:false,properties:{vc:{type:"string"},rpm:{type:"string"},feed_value:{type:"string"},feed_unit:{type:"string"},ap:{type:"string"},ae:{type:"string"},coolant:{type:"string"},strategy:{type:"string"},calculation_basis:{type:"string"}},required:["vc","rpm","feed_value","feed_unit","ap","ae","coolant","strategy","calculation_basis"]},
    companion_tool:{type:"object",additionalProperties:false,properties:{required:{type:"boolean"},type:{type:"string"},order_code:{type:"string"},diameter_or_size:{type:"string"},machine_interface:{type:"string"},insert_interface:{type:"string"},number_of_seats:{type:"string"},compatibility_verification:{type:"string"}},required:["required","type","order_code","diameter_or_size","machine_interface","insert_interface","number_of_seats","compatibility_verification"]}
-  },required:["supplier","manufacturer","order_code","application_role","description","geometry_and_size","grade","match_level","compatibility","differences","recommended_use","recommended_parameters","parameter_comparison","verification_status","starting_parameters","companion_tool"]}},
+  },required:["supplier","manufacturer","order_code","application_role","description","geometry_and_size","cutting_edge_count","grade","match_level","compatibility","differences","recommended_use","recommended_parameters","parameter_comparison","verification_status","starting_parameters","companion_tool"]}},
   sources:{type:"array",items:{type:"string"}},warnings:{type:"array",items:{type:"string"}}
  },
  required:["original_designation","original_manufacturer","original_type","identification_confidence","target_manufacturer","alternatives","sources","warnings"]
@@ -101,7 +101,7 @@ POVINNÝ POSTUP:
 13. Do recommended_parameters uveď bezpečné štartovacie vc, posuv, ap a podľa potreby ae pre náhradu. Do parameter_comparison stručne napíš, ktoré používateľove hodnoty možno ponechať a ktoré treba zmeniť. Ak chýba materiál alebo operácia, uveď NEPOTVRDENÉ a nevymýšľaj presné hodnoty.
 14. Najprv správne urči druh nástroja. Ak používateľ zvolil konkrétny typ, rešpektuj ho; hodnota auto znamená, že ho musíš určiť z označenia, fotografie a operácie.
 15. Pri milling_insert nehľadaj rozmerovo rovnaký frézovací plátok ako pôvodný. Ide o náhradu CELÉHO FRÉZOVACIEHO SYSTÉMU. Najprv vyber od požadovaného výrobcu frézovacie teleso podľa požadovaného priemeru, zadaného počtu zubov/lôžok, operácie, ap, ae a upínania. Až potom vyber presne kompatibilný plátok do tohto telesa; jeho geometriu, lámač a triedu zvoľ podľa obrábaného materiálu, operácie a rezných parametrov. Pôvodné označenie použi iba na pochopenie aplikácie, nie ako povinný rozmer nového plátku. V order_code uveď plátok a v companion_tool.order_code teleso; companion_tool.required=true.
-16. Ak technológ zadal počet zubov, musí mať navrhnuté teleso presne tento katalógový počet lôžok. Ak taká kombinácia priemeru a počtu zubov u výrobcu neexistuje, ponúkni najbližšiu reálnu možnosť, označ ju ako PRIBLIŽNÁ NÁHRADA a presne vysvetli rozdiel. Počet lôžok vždy uveď v companion_tool.number_of_seats.
+16. POČET ZUBOV/BRITOV JE TVRDÁ PODMIENKA, NIE ODPORÚČANIE. Ak technológ zadal počet zubov alebo britov, alternatíva musí mať PRESNE rovnaký katalógový počet. Napríklad požiadavka 4 znamená výhradne 4 zuby/britov; 3, 5 ani 6 nikdy neponúkaj ani ako približnú náhradu. Pri milling_insert uveď presný počet lôžok v companion_tool.number_of_seats. Pri monolitnom nástroji uveď presný počet britov v cutting_edge_count. Ak požadovaná kombinácia priemeru, počtu zubov a aplikácie u dodávateľa neexistuje alebo ju nemožno katalógovo overiť, od tohto dodávateľa nevytvor alternatívu a v warnings ho uveď ako BEZ PRESNEJ NÁHRADY.
 17. Pri drilling_insert vždy navrhni kompletnú dvojicu: presné objednávacie označenie plátku a presné objednávacie označenie kompatibilného vŕtacieho telesa požadovaného priemeru. V companion_tool nastav required=true.
 18. Pri grooving_insert, ak nejde o univerzálny ISO plátok, vždy navrhni plátok spolu s presným kompatibilným držiakom, kazetou alebo planžetou. Rešpektuj zadaný prierez a upínanie držiaka. V companion_tool nastav required=true.
 19. Pri turning_iso môže byť companion_tool.required=false; ostatné polia companion_tool vyplň textom NEVYŽADUJE SA. Ak však náhrada nepasuje do pôvodného držiaka, navrhni aj nový držiak a nastav required=true.
@@ -113,13 +113,41 @@ POVINNÝ POSTUP:
 25. Alternatívy sa nesmú líšiť iba obchodným názvom. Pri každej vysvetli, prečo je jej lámač a trieda vhodná pre zadaný materiál a čím sa odlišuje od ostatných. Ak výrobca nemá 3 overené možnosti, vráť iba tie, ktoré si našiel; nič nedopĺňaj odhadom.
 26. Ak obrábaný materiál chýba, môžeš nájsť rozmerovo kompatibilné plátky, ale nesmieš tvrdiť, že je vybraná adekvátna trieda. Označ triedu a parametre ako NEPOTVRDENÉ a vyžiadaj materiál v warnings.
 27. Fotografia môže zobrazovať obal, laserové označenie alebo samotnú geometriu. Text na fotografii čítaj opatrne a identification_confidence uveď VYSOKÁ, STREDNÁ, NÍZKA alebo ŽIADNA.
-28. Vyhodnoť všetkých zvolených dodávateľov, nie iba prvého. Ak je zvolených viac dodávateľov, nájdi najviac dve overené možnosti od každého a najviac osem možností celkovo. Ak dodávateľ vhodnú položku nemá, uveď ho vo warnings aj s dôvodom. Výsledky zoraď naprieč značkami od technicky najvhodnejšej možnosti.
+28. Vyhodnoť všetkých zvolených dodávateľov, nie iba prvého. Ak je zvolených viac dodávateľov, nájdi najviac dve overené možnosti od každého a najviac osem možností celkovo. Ak dodávateľ nemá položku spĺňajúcu VŠETKY tvrdé podmienky (najmä presný priemer, presný počet zubov/britov, typ operácie a kompatibilitu), nevkladaj od neho žiadnu alternatívu; uveď ho vo warnings aj s konkrétnym dôvodom. Výsledky zoraď naprieč značkami od technicky najvhodnejšej možnosti.
 29. V každej alternatíve vyplň supplier presným názvom zvoleného dodávateľa a manufacturer skutočným výrobcom nástroja. Pri priamom výrobcovi môžu byť oba údaje rovnaké. target_manufacturer vyplň zoznamom všetkých preverovaných dodávateľov: ${targetLabel}.
 30. Neuprednostni automaticky prvého dodávateľa zo zoznamu. Porovnaj vhodnosť pre materiál a operáciu, rozmerovú kompatibilitu, overiteľnosť katalógového kódu a odporúčané rezné podmienky.
 31. Pre KAŽDÚ alternatívu povinne vyplň starting_parameters: vc v m/min, rpm v ot/min, feed_value, feed_unit, ap v mm, ae v mm, coolant, strategy a calculation_basis. Použi bezpečné štartovacie hodnoty alebo rozumné úzke rozsahy pre konkrétny nástroj, materiál, tvrdosť, operáciu a štýl obrábania.
 32. Posuv vyjadri správnou jednotkou: pri sústružení a vŕtaní spravidla mm/ot, pri frézovaní mm/zub; ak je technicky vhodnejšia iná jednotka, vysvetli ju. ap a ae nikdy nezamieňaj. Pri operácii, kde ae nedáva zmysel, uveď NEUPLATŇUJE SA a dôvod.
 33. Otáčky vypočítaj z odporúčaného vc a známeho pracovného priemeru nástroja alebo obrobku. Ak potrebný priemer nie je zadaný ani spoľahlivo identifikovaný, do rpm uveď VYPOČÍTAŤ PO DOPLNENÍ PRIEMERU; nevymýšľaj číslo. Do calculation_basis uveď použitý priemer a vzťah n = 1000 × vc / (π × D), prípadne jasne označ chýbajúci vstup.
-34. Aktuálne parametre používateľa ber ako odskúšaný referenčný bod, nie ako automaticky správne hodnoty pre nový nástroj. V parameter_comparison jasne uveď, čo ponechať a čo zmeniť. Pri neúplnom materiáli, tvrdosti alebo operácii označ parametre ako orientačné a vypíš chýbajúci údaj vo warnings.`;}
+34. Aktuálne parametre používateľa ber ako odskúšaný referenčný bod, nie ako automaticky správne hodnoty pre nový nástroj. V parameter_comparison jasne uveď, čo ponechať a čo zmeniť. Pri neúplnom materiáli, tvrdosti alebo operácii označ parametre ako orientačné a vypíš chýbajúci údaj vo warnings.
+35. cutting_edge_count vždy vyplň katalógovým počtom zubov/britov alternatívy iba ako celé číslo. Ak sa pri danom type používa companion_tool.number_of_seats, obe hodnoty musia byť zhodné. Ak počet nie je použiteľný, vyplň NEUPLATŇUJE SA; ak je vyžadovaný a nebol overený, alternatívu vôbec nevracaj.`;}
+
+function integerCount(value){
+ const m=String(value??"").match(/\d+/);
+ return m?Number(m[0]):null;
+}
+function sameSupplier(a,b){return String(a||"").trim().localeCompare(String(b||"").trim(),undefined,{sensitivity:"base"})===0;}
+function enforceExactCounts(data,b,targets){
+ const toolType=String(b.toolType||"");
+ const requested=integerCount(toolType==="milling_insert"?b.toothCount:(/^solid_carbide_/.test(toolType)?b.fluteCount:(b.toothCount||b.fluteCount)));
+ const alternatives=Array.isArray(data.alternatives)?data.alternatives:[];
+ const rejected=[];
+ data.alternatives=alternatives.filter(a=>{
+  if(!requested)return true;
+  const reported=integerCount(toolType==="milling_insert"?a?.companion_tool?.number_of_seats:a?.cutting_edge_count);
+  if(reported===requested)return true;
+  rejected.push(`${a?.supplier||"Neurčený dodávateľ"}: požadovaných ${requested}, navrhnutých ${reported??"neoverený počet"}`);
+  return false;
+ });
+ const available=targets.filter(t=>data.alternatives.some(a=>sameSupplier(a.supplier,t)));
+ const unavailable=targets.filter(t=>!available.some(a=>sameSupplier(a,t)));
+ data.available_suppliers=available;
+ data.unavailable_suppliers=unavailable;
+ data.warnings=Array.isArray(data.warnings)?data.warnings:[];
+ rejected.forEach(x=>data.warnings.push(`Vyradená nezhodná alternatíva – ${x}.`));
+ unavailable.forEach(t=>data.warnings.push(`${t}: presná náhrada spĺňajúca všetky zadané podmienky nebola nájdená.`));
+ return data;
+}
 
 async function handler(req,res){
  try{
@@ -141,6 +169,7 @@ async function handler(req,res){
   const raw=await response.text();if(!response.ok)return fail(res,502,"AI vyhľadanie náhrady zlyhalo.",raw.slice(0,3000));
   const out=outputText(JSON.parse(raw));if(!out)return fail(res,502,"AI nevrátila výsledok náhrady.");
   let data;try{data=JSON.parse(out)}catch(_){return fail(res,502,"AI vrátila neplatný formát výsledku.",out.slice(0,1500));}
+  data=enforceExactCounts(data,b,targets);
   return res.status(200).json({success:true,...data});
  }catch(error){console.error(error);return fail(res,500,"Chyba servera pri hľadaní náhrady.",error?.message||String(error));}
 }

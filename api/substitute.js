@@ -8,10 +8,10 @@ const SCHEMA={
   original_designation:{type:"string"},original_manufacturer:{type:"string"},original_type:{type:"string"},identification_confidence:{type:"string"},
   target_manufacturer:{type:"string"},
   alternatives:{type:"array",items:{type:"object",additionalProperties:false,properties:{
-   supplier:{type:"string"},manufacturer:{type:"string"},order_code:{type:"string"},application_role:{type:"string"},description:{type:"string"},geometry_and_size:{type:"string"},cutting_edge_count:{type:"string"},grade:{type:"string"},match_level:{type:"string"},compatibility:{type:"string"},differences:{type:"string"},recommended_use:{type:"string"},recommended_parameters:{type:"string"},parameter_comparison:{type:"string"},verification_status:{type:"string"},
+   supplier:{type:"string"},manufacturer:{type:"string"},order_code:{type:"string"},application_role:{type:"string"},description:{type:"string"},geometry_and_size:{type:"string"},cutting_edge_count:{type:"string"},grade:{type:"string"},product_status:{type:"string",enum:["CURRENT","PHASE_OUT","DISCONTINUED","STOCK_ONLY","UNKNOWN"]},successor_of:{type:"string"},lifecycle_verification:{type:"string"},match_level:{type:"string"},compatibility:{type:"string"},differences:{type:"string"},recommended_use:{type:"string"},recommended_parameters:{type:"string"},parameter_comparison:{type:"string"},verification_status:{type:"string"},
    starting_parameters:{type:"object",additionalProperties:false,properties:{vc:{type:"string"},rpm:{type:"string"},feed_value:{type:"string"},feed_unit:{type:"string"},ap:{type:"string"},ae:{type:"string"},coolant:{type:"string"},strategy:{type:"string"},calculation_basis:{type:"string"}},required:["vc","rpm","feed_value","feed_unit","ap","ae","coolant","strategy","calculation_basis"]},
    companion_tool:{type:"object",additionalProperties:false,properties:{required:{type:"boolean"},type:{type:"string"},order_code:{type:"string"},diameter_or_size:{type:"string"},machine_interface:{type:"string"},insert_interface:{type:"string"},number_of_seats:{type:"string"},compatibility_verification:{type:"string"}},required:["required","type","order_code","diameter_or_size","machine_interface","insert_interface","number_of_seats","compatibility_verification"]}
-  },required:["supplier","manufacturer","order_code","application_role","description","geometry_and_size","cutting_edge_count","grade","match_level","compatibility","differences","recommended_use","recommended_parameters","parameter_comparison","verification_status","starting_parameters","companion_tool"]}},
+  },required:["supplier","manufacturer","order_code","application_role","description","geometry_and_size","cutting_edge_count","grade","product_status","successor_of","lifecycle_verification","match_level","compatibility","differences","recommended_use","recommended_parameters","parameter_comparison","verification_status","starting_parameters","companion_tool"]}},
   sources:{type:"array",items:{type:"string"}},warnings:{type:"array",items:{type:"string"}}
  },
  required:["original_designation","original_manufacturer","original_type","identification_confidence","target_manufacturer","alternatives","sources","warnings"]
@@ -120,7 +120,11 @@ POVINNÝ POSTUP:
 32. Posuv vyjadri správnou jednotkou: pri sústružení a vŕtaní spravidla mm/ot, pri frézovaní mm/zub; ak je technicky vhodnejšia iná jednotka, vysvetli ju. ap a ae nikdy nezamieňaj. Pri operácii, kde ae nedáva zmysel, uveď NEUPLATŇUJE SA a dôvod.
 33. Otáčky vypočítaj z odporúčaného vc a známeho pracovného priemeru nástroja alebo obrobku. Ak potrebný priemer nie je zadaný ani spoľahlivo identifikovaný, do rpm uveď VYPOČÍTAŤ PO DOPLNENÍ PRIEMERU; nevymýšľaj číslo. Do calculation_basis uveď použitý priemer a vzťah n = 1000 × vc / (π × D), prípadne jasne označ chýbajúci vstup.
 34. Aktuálne parametre používateľa ber ako odskúšaný referenčný bod, nie ako automaticky správne hodnoty pre nový nástroj. V parameter_comparison jasne uveď, čo ponechať a čo zmeniť. Pri neúplnom materiáli, tvrdosti alebo operácii označ parametre ako orientačné a vypíš chýbajúci údaj vo warnings.
-35. cutting_edge_count vždy vyplň katalógovým počtom zubov/britov alternatívy iba ako celé číslo. Ak sa pri danom type používa companion_tool.number_of_seats, obe hodnoty musia byť zhodné. Ak počet nie je použiteľný, vyplň NEUPLATŇUJE SA; ak je vyžadovaný a nebol overený, alternatívu vôbec nevracaj.`;}
+35. cutting_edge_count vždy vyplň katalógovým počtom zubov/britov alternatívy iba ako celé číslo. Ak sa pri danom type používa companion_tool.number_of_seats, obe hodnoty musia byť zhodné. Ak počet nie je použiteľný, vyplň NEUPLATŇUJE SA; ak je vyžadovaný a nebol overený, alternatívu vôbec nevracaj.
+36. POVINNE prever životný cyklus každej katalógovej položky v aktuálnom oficiálnom katalógu, produktovej stránke, oznámení o ukončení výroby alebo tabuľke nástupcov výrobcu. product_status vyplň iba jednou hodnotou: CURRENT = aktuálne vyrábaný produkt; PHASE_OUT = výbehový produkt; DISCONTINUED = ukončená výroba; STOCK_ONLY = iba dopredaj skladových zásob; UNKNOWN = stav sa nepodarilo overiť.
+37. Do alternatives smieš zaradiť IBA produkt so stavom CURRENT. Produkt PHASE_OUT, DISCONTINUED, STOCK_ONLY ani UNKNOWN nikdy neodporúčaj na nový nákup, ani keď je ešte skladom. Ak nájdeš taký produkt, vyhľadaj výrobcom oficiálne odporúčaného nástupcu a do alternatívy vlož až tento aktuálny nástupnícky produkt. V successor_of uveď presný kód výbehového produktu, ktorý nahrádza; ak nejde o nástupcu, uveď NEUPLATŇUJE SA.
+38. Oficiálny nástupca nie je automaticky vhodná náhrada. Znova ho prever podľa všetkých tvrdých podmienok: presný priemer, presný počet zubov/britov, rozhranie, kompatibilita plátku a telesa, obrábaný materiál, operácia a upínanie. Ak ich nespĺňa, nevkladaj ho do alternatives a dodávateľa označ ako bez presnej aktuálne vyrábanej náhrady.
+39. lifecycle_verification musí obsahovať konkrétny oficiálny zdroj a informáciu, podľa ktorej bol potvrdený stav CURRENT alebo oficiálny prechod zo starého kódu na nový. Skladová dostupnosť sama osebe nie je dôkaz, že sa produkt stále vyrába. Nevymýšľaj nástupcu ani stav produktu.`;}
 
 function integerCount(value){
  const m=String(value??"").match(/\d+/);
@@ -133,6 +137,10 @@ function enforceExactCounts(data,b,targets){
  const alternatives=Array.isArray(data.alternatives)?data.alternatives:[];
  const rejected=[];
  data.alternatives=alternatives.filter(a=>{
+  if(String(a?.product_status||"").toUpperCase()!=="CURRENT"){
+   rejected.push(`${a?.supplier||"Neurčený dodávateľ"}: položka ${a?.order_code||"bez kódu"} nie je potvrdená ako aktuálne vyrábaná (${a?.product_status||"UNKNOWN"})`);
+   return false;
+  }
   if(!requested)return true;
   const reported=integerCount(toolType==="milling_insert"?a?.companion_tool?.number_of_seats:a?.cutting_edge_count);
   if(reported===requested)return true;
